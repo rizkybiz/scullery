@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/rizkybiz/scullery-api/internal/config"
+	"github.com/rizkybiz/scullery-api/internal/migrate"
 	"github.com/rizkybiz/scullery-api/internal/server"
 )
 
@@ -33,6 +35,14 @@ func run() error {
 	// Logs are JSON on stdout; the platform (Loki) handles collection.
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.LogLevel}))
 	slog.SetDefault(logger)
+
+	// Admin process: `scullery-api migrate up|down|status`.
+	if len(os.Args) > 1 {
+		if os.Args[1] != "migrate" || len(os.Args) != 3 {
+			return fmt.Errorf("usage: scullery-api [migrate up|down|status]")
+		}
+		return migrate.Run(context.Background(), cfg.DatabaseURL, os.Args[2], os.Stdout)
+	}
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
