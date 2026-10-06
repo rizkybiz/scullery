@@ -31,3 +31,8 @@ migrate-status:
 .PHONY: hooks
 hooks:
 	git config core.hooksPath .githooks
+
+# The same static checks and unit tests CI runs.
+.PHONY: verify
+verify:
+	./scripts/ci/verify.sh
