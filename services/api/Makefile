@@ -26,3 +26,8 @@ migrate-up:
 
 migrate-status:
 	DATABASE_URL="postgres://scullery:scullery@localhost:5432/scullery?sslmode=disable" go run ./cmd/scullery-api migrate status
+
+# One-time per clone: use the versioned git hooks (commit-msg, pre-commit).
+.PHONY: hooks
+hooks:
+	git config core.hooksPath .githooks
