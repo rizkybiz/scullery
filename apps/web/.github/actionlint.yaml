@@ -1,0 +1,4 @@
+# Tells actionlint about our custom self-hosted runner label.
+self-hosted-runner:
+  labels:
+    - docker-build
