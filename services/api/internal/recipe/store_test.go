@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -186,5 +188,167 @@ func TestGetUnknownRecipeIsNotFound(t *testing.T) {
 
 	if !errors.Is(err, ErrNotFound) {
 		t.Fatalf("err = %v, want ErrNotFound", err)
+	}
+}
+
+// seed saves recipes with the given titles; favorites are marked by a "*" prefix
+// that is stripped from the title.
+func seed(t *testing.T, s *Store, titles ...string) {
+	t.Helper()
+	for _, title := range titles {
+		fav := strings.HasPrefix(title, "*")
+		if _, err := s.Create(context.Background(), NewRecipe{Title: strings.TrimPrefix(title, "*"), IsFavorite: fav}); err != nil {
+			t.Fatalf("seed %q: %v", title, err)
+		}
+	}
+}
+
+func titles(l List) []string {
+	out := make([]string, len(l.Recipes))
+	for i, r := range l.Recipes {
+		out[i] = r.Title
+	}
+	return out
+}
+
+func TestListIsAlphabeticalAndCaseInsensitive(t *testing.T) {
+	s := NewStore(dbtest.New(t))
+	seed(t, s, "banana bread", "Apple pie", "cherry tart")
+
+	got, err := s.List(context.Background(), ListParams{Limit: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !slices.Equal(titles(got), []string{"Apple pie", "banana bread", "cherry tart"}) {
+		t.Errorf("titles = %v", titles(got))
+	}
+	if got.Total != 3 {
+		t.Errorf("total = %d, want 3", got.Total)
+	}
+}
+
+func TestListOfNothingIsAnEmptyListNotNull(t *testing.T) {
+	s := NewStore(dbtest.New(t))
+
+	got, err := s.List(context.Background(), ListParams{Limit: 10})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Recipes == nil || len(got.Recipes) != 0 || got.Total != 0 {
+		t.Errorf("got %+v, want an empty non-nil list and total 0", got)
+	}
+}
+
+func TestListPagesDoNotOverlapAndTotalCoversAllPages(t *testing.T) {
+	s := NewStore(dbtest.New(t))
+	seed(t, s, "a", "b", "c", "d", "e")
+	ctx := context.Background()
+
+	var all []string
+	for offset := int32(0); offset < 6; offset += 2 {
+		page, err := s.List(ctx, ListParams{Limit: 2, Offset: offset})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if page.Total != 5 {
+			t.Errorf("offset %d: total = %d, want 5 on every page", offset, page.Total)
+		}
+		all = append(all, titles(page)...)
+	}
+
+	if !slices.Equal(all, []string{"a", "b", "c", "d", "e"}) {
+		t.Errorf("pages concatenated = %v, want each recipe exactly once, in order", all)
+	}
+}
+
+func TestListOffsetPastTheEndIsEmptyButKeepsTheTotal(t *testing.T) {
+	s := NewStore(dbtest.New(t))
+	seed(t, s, "a", "b")
+
+	got, err := s.List(context.Background(), ListParams{Limit: 10, Offset: 50})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Recipes) != 0 || got.Total != 2 {
+		t.Errorf("got %d recipes, total %d; want none and 2", len(got.Recipes), got.Total)
+	}
+}
+
+func TestListSearch(t *testing.T) {
+	s := NewStore(dbtest.New(t))
+	seed(t, s, "Garlic bread", "Tomato soup", "Chocolate cake", "Lemon cake", "Garlic butter shrimp")
+	ctx := context.Background()
+
+	tests := []struct {
+		name   string
+		search string
+		want   []string
+	}{
+		{"a word", "garlic", []string{"Garlic bread", "Garlic butter shrimp"}},
+		{"stemming: plural finds singular", "tomatoes", []string{"Tomato soup"}},
+		{"exclusion", "cake -chocolate", []string{"Lemon cake"}},
+		{"quoted phrase", `"tomato soup"`, []string{"Tomato soup"}},
+		{"no match", "pizza", []string{}},
+		{"blank means no search", "   ", []string{"Chocolate cake", "Garlic bread", "Garlic butter shrimp", "Lemon cake", "Tomato soup"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := s.List(ctx, ListParams{Search: ptr(tt.search), Limit: 10})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !slices.Equal(titles(got), tt.want) {
+				t.Errorf("titles = %v, want %v", titles(got), tt.want)
+			}
+			if got.Total != int64(len(tt.want)) {
+				t.Errorf("total = %d, want %d (the count must use the same filter)", got.Total, len(tt.want))
+			}
+		})
+	}
+}
+
+func TestListSearchPutsTheBestMatchFirst(t *testing.T) {
+	s := NewStore(dbtest.New(t))
+	ctx := context.Background()
+	// Alphabetically "Aardvark" would come first; the better match must beat that.
+	if _, err := s.Create(ctx, NewRecipe{Title: "Aardvark stew", Description: "Contains a little garlic."}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Create(ctx, NewRecipe{Title: "Garlic garlic garlic", Description: "All about garlic."}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := s.List(ctx, ListParams{Search: ptr("garlic"), Limit: 10})
+
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(titles(got), []string{"Garlic garlic garlic", "Aardvark stew"}) {
+		t.Errorf("titles = %v, want the stronger match first", titles(got))
+	}
+}
+
+func TestListFavoriteFilter(t *testing.T) {
+	s := NewStore(dbtest.New(t))
+	seed(t, s, "*Keeper", "Meh", "*Also good")
+	ctx := context.Background()
+
+	yes, err := s.List(ctx, ListParams{Favorite: ptr(true), Limit: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	no, err := s.List(ctx, ListParams{Favorite: ptr(false), Limit: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !slices.Equal(titles(yes), []string{"Also good", "Keeper"}) || yes.Total != 2 {
+		t.Errorf("favorites = %v (total %d)", titles(yes), yes.Total)
+	}
+	if !slices.Equal(titles(no), []string{"Meh"}) || no.Total != 1 {
+		t.Errorf("non-favorites = %v (total %d)", titles(no), no.Total)
 	}
 }

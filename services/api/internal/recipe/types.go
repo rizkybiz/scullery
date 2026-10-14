@@ -98,3 +98,33 @@ type Step struct {
 	Instruction  string    `json:"instruction"`
 	TimerSeconds *int32    `json:"timer_seconds" nullable:"true"`
 }
+
+// Summary is a recipe as shown in a list: enough to browse by, without the
+// ingredients and steps. Fetch the whole recipe by id when one is opened.
+type Summary struct {
+	ID          uuid.UUID `json:"id" format:"uuid"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Servings    *float64  `json:"servings" nullable:"true"`
+	YieldText   *string   `json:"yield_text" nullable:"true"`
+	PrepMinutes *int32    `json:"prep_minutes" nullable:"true"`
+	CookMinutes *int32    `json:"cook_minutes" nullable:"true"`
+	IsFavorite  bool      `json:"is_favorite"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// List is one page of recipes.
+type List struct {
+	Recipes []Summary `json:"recipes" nullable:"false" doc:"This page, best match first when searching, otherwise alphabetical."`
+	Total   int64     `json:"total" doc:"How many recipes match the filters in all, across every page."`
+	Limit   int32     `json:"limit" doc:"The page size that was used."`
+	Offset  int32     `json:"offset" doc:"How many matching recipes were skipped."`
+}
+
+// ListParams selects which recipes to list.
+type ListParams struct {
+	Search   *string // words to look for in titles and descriptions; blank means no search
+	Favorite *bool   // only favorites (true), only non-favorites (false), or all (nil)
+	Limit    int32
+	Offset   int32
+}

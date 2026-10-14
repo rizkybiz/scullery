@@ -195,12 +195,11 @@ func writeChildren(ctx context.Context, q *dbgen.Queries, recipeID uuid.UUID, in
 // see the same moment: a concurrent edit can never produce a recipe whose
 // ingredients are from before the edit and whose steps are from after it.
 func (s *Store) Get(ctx context.Context, id uuid.UUID) (Recipe, error) {
-	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	q, done, err := s.beginRead(ctx)
 	if err != nil {
-		return Recipe{}, fmt.Errorf("begin: %w", err)
+		return Recipe{}, err
 	}
-	defer tx.Rollback(ctx) // read-only: nothing to commit, closing it is all that is needed
-	q := dbgen.New(s.pool).WithTx(tx)
+	defer done()
 
 	row, err := q.GetRecipe(ctx, id)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -240,6 +239,49 @@ func (s *Store) Get(ctx context.Context, id uuid.UUID) (Recipe, error) {
 	}
 	for i, r := range steps {
 		out.Steps[i] = Step(r)
+	}
+	return out, nil
+}
+
+// beginRead starts a read-only, repeatable-read transaction: everything read
+// through the returned queries sees one consistent moment. Call done when
+// finished; there is nothing to commit.
+func (s *Store) beginRead(ctx context.Context) (q *dbgen.Queries, done func(), err error) {
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return nil, nil, fmt.Errorf("begin: %w", err)
+	}
+	return dbgen.New(s.pool).WithTx(tx), func() { _ = tx.Rollback(ctx) }, nil
+}
+
+// List returns one page of recipes matching the filters, and how many match in
+// all. The page and the count are read together, so they agree with each other.
+func (s *Store) List(ctx context.Context, p ListParams) (List, error) {
+	p.Search = trimOptional(p.Search)
+
+	q, done, err := s.beginRead(ctx)
+	if err != nil {
+		return List{}, err
+	}
+	defer done()
+
+	rows, err := q.ListRecipes(ctx, dbgen.ListRecipesParams{
+		Search:     p.Search,
+		Favorite:   p.Favorite,
+		PageSize:   p.Limit,
+		PageOffset: p.Offset,
+	})
+	if err != nil {
+		return List{}, fmt.Errorf("list recipes: %w", err)
+	}
+	total, err := q.CountRecipes(ctx, dbgen.CountRecipesParams{Search: p.Search, Favorite: p.Favorite})
+	if err != nil {
+		return List{}, fmt.Errorf("count recipes: %w", err)
+	}
+
+	out := List{Recipes: make([]Summary, len(rows)), Total: total, Limit: p.Limit, Offset: p.Offset}
+	for i, r := range rows {
+		out.Recipes[i] = Summary(r)
 	}
 	return out, nil
 }

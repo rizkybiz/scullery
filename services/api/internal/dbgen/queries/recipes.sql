@@ -43,3 +43,34 @@ SELECT id, position, section, instruction, timer_seconds
 FROM step
 WHERE recipe_id = $1
 ORDER BY position;
+
+-- name: ListRecipes :many
+-- One page of recipes, for the browse screen. The two optional filters are NULL
+-- when not given. With a search term the best matches come first; without one,
+-- recipes are alphabetical. `id` breaks ties so paging is stable.
+-- Search covers what the generated `search` column indexes: title and description.
+SELECT id, title, description, servings, yield_text, prep_minutes, cook_minutes,
+       is_favorite, updated_at
+FROM recipe
+WHERE (sqlc.narg('search')::text IS NULL
+        OR search @@ websearch_to_tsquery('english', sqlc.narg('search')::text))
+  AND (sqlc.narg('favorite')::boolean IS NULL
+        OR is_favorite = sqlc.narg('favorite')::boolean)
+ORDER BY
+    CASE WHEN sqlc.narg('search')::text IS NULL
+         THEN 0
+         ELSE -ts_rank(search, websearch_to_tsquery('english', sqlc.narg('search')::text))
+    END,
+    lower(title),
+    id
+LIMIT sqlc.arg('page_size') OFFSET sqlc.arg('page_offset');
+
+-- name: CountRecipes :one
+-- How many recipes match the same filters, ignoring paging, so a screen can show
+-- "21-40 of 134".
+SELECT count(*)
+FROM recipe
+WHERE (sqlc.narg('search')::text IS NULL
+        OR search @@ websearch_to_tsquery('english', sqlc.narg('search')::text))
+  AND (sqlc.narg('favorite')::boolean IS NULL
+        OR is_favorite = sqlc.narg('favorite')::boolean);

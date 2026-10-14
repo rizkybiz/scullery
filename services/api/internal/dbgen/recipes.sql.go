@@ -12,6 +12,29 @@ import (
 	"github.com/google/uuid"
 )
 
+const countRecipes = `-- name: CountRecipes :one
+SELECT count(*)
+FROM recipe
+WHERE ($1::text IS NULL
+        OR search @@ websearch_to_tsquery('english', $1::text))
+  AND ($2::boolean IS NULL
+        OR is_favorite = $2::boolean)
+`
+
+type CountRecipesParams struct {
+	Search   *string
+	Favorite *bool
+}
+
+// How many recipes match the same filters, ignoring paging, so a screen can show
+// "21-40 of 134".
+func (q *Queries) CountRecipes(ctx context.Context, arg CountRecipesParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countRecipes, arg.Search, arg.Favorite)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createIngredient = `-- name: CreateIngredient :exec
 INSERT INTO ingredient (
     id, recipe_id, position, section, raw_text, quantity_min, quantity_max,
@@ -221,6 +244,82 @@ func (q *Queries) ListIngredients(ctx context.Context, recipeID uuid.UUID) ([]Li
 			&i.Preparation,
 			&i.Note,
 			&i.Optional,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRecipes = `-- name: ListRecipes :many
+SELECT id, title, description, servings, yield_text, prep_minutes, cook_minutes,
+       is_favorite, updated_at
+FROM recipe
+WHERE ($1::text IS NULL
+        OR search @@ websearch_to_tsquery('english', $1::text))
+  AND ($2::boolean IS NULL
+        OR is_favorite = $2::boolean)
+ORDER BY
+    CASE WHEN $1::text IS NULL
+         THEN 0
+         ELSE -ts_rank(search, websearch_to_tsquery('english', $1::text))
+    END,
+    lower(title),
+    id
+LIMIT $4 OFFSET $3
+`
+
+type ListRecipesParams struct {
+	Search     *string
+	Favorite   *bool
+	PageOffset int32
+	PageSize   int32
+}
+
+type ListRecipesRow struct {
+	ID          uuid.UUID
+	Title       string
+	Description string
+	Servings    *float64
+	YieldText   *string
+	PrepMinutes *int32
+	CookMinutes *int32
+	IsFavorite  bool
+	UpdatedAt   time.Time
+}
+
+// One page of recipes, for the browse screen. The two optional filters are NULL
+// when not given. With a search term the best matches come first; without one,
+// recipes are alphabetical. `id` breaks ties so paging is stable.
+// Search covers what the generated `search` column indexes: title and description.
+func (q *Queries) ListRecipes(ctx context.Context, arg ListRecipesParams) ([]ListRecipesRow, error) {
+	rows, err := q.db.Query(ctx, listRecipes,
+		arg.Search,
+		arg.Favorite,
+		arg.PageOffset,
+		arg.PageSize,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListRecipesRow{}
+	for rows.Next() {
+		var i ListRecipesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.Servings,
+			&i.YieldText,
+			&i.PrepMinutes,
+			&i.CookMinutes,
+			&i.IsFavorite,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
