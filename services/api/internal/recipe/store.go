@@ -25,21 +25,30 @@ func NewStore(pool *pgxpool.Pool) *Store {
 // A request that breaks a rule returns a *ValidationError listing every problem;
 // any other error is a failure of the system, not of the request.
 func (s *Store) Create(ctx context.Context, in NewRecipe) (Recipe, error) {
+	in, err := s.validated(ctx, in)
+	if err != nil {
+		return Recipe{}, err
+	}
+	return s.insert(ctx, in)
+}
+
+// validated normalizes a request and checks it against the rules, including the
+// list of units in the database.
+func (s *Store) validated(ctx context.Context, in NewRecipe) (NewRecipe, error) {
 	in = normalize(in)
 
 	units, err := dbgen.New(s.pool).ListUnits(ctx)
 	if err != nil {
-		return Recipe{}, fmt.Errorf("list units: %w", err)
+		return NewRecipe{}, fmt.Errorf("list units: %w", err)
 	}
 	known := make(map[string]bool, len(units))
 	for _, u := range units {
 		known[u.Code] = true
 	}
 	if problems := validate(in, known); len(problems) > 0 {
-		return Recipe{}, &ValidationError{Problems: problems}
+		return NewRecipe{}, &ValidationError{Problems: problems}
 	}
-
-	return s.insert(ctx, in)
+	return in, nil
 }
 
 // insert writes an already-validated recipe in a single transaction.
@@ -76,8 +85,23 @@ func (s *Store) insert(ctx context.Context, in NewRecipe) (Recipe, error) {
 		return Recipe{}, fmt.Errorf("insert recipe: %w", err)
 	}
 
-	out := Recipe{
-		ID:          recipeID,
+	out := recipeFrom(recipeID, in)
+	out.CreatedAt, out.UpdatedAt = stamps.CreatedAt, stamps.UpdatedAt
+	if out.Ingredients, out.Steps, err = writeChildren(ctx, q, recipeID, in); err != nil {
+		return Recipe{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return Recipe{}, fmt.Errorf("commit: %w", err)
+	}
+	return out, nil
+}
+
+// recipeFrom builds the recipe-level part of the response from what was just
+// saved. The caller fills in the timestamps and the child lists.
+func recipeFrom(id uuid.UUID, in NewRecipe) Recipe {
+	return Recipe{
+		ID:          id,
 		Title:       in.Title,
 		Description: in.Description,
 		Servings:    in.Servings,
@@ -88,16 +112,17 @@ func (s *Store) insert(ctx context.Context, in NewRecipe) (Recipe, error) {
 		SourceName:  in.SourceName,
 		Notes:       in.Notes,
 		IsFavorite:  in.IsFavorite,
-		Ingredients: make([]Ingredient, len(in.Ingredients)),
-		Steps:       make([]Step, len(in.Steps)),
-		CreatedAt:   stamps.CreatedAt,
-		UpdatedAt:   stamps.UpdatedAt,
 	}
+}
 
+// writeChildren inserts a recipe's ingredients and steps, numbering them in the
+// order given, and returns them as saved. It runs on the caller's transaction.
+func writeChildren(ctx context.Context, q *dbgen.Queries, recipeID uuid.UUID, in NewRecipe) ([]Ingredient, []Step, error) {
+	ingredients := make([]Ingredient, len(in.Ingredients))
 	for i, ing := range in.Ingredients {
 		id, err := uuid.NewV7()
 		if err != nil {
-			return Recipe{}, fmt.Errorf("new id: %w", err)
+			return nil, nil, fmt.Errorf("new id: %w", err)
 		}
 		saved := Ingredient{
 			ID:          id,
@@ -126,15 +151,16 @@ func (s *Store) insert(ctx context.Context, in NewRecipe) (Recipe, error) {
 			Note:        saved.Note,
 			Optional:    saved.Optional,
 		}); err != nil {
-			return Recipe{}, fmt.Errorf("insert ingredient %d: %w", i, err)
+			return nil, nil, fmt.Errorf("insert ingredient %d: %w", i, err)
 		}
-		out.Ingredients[i] = saved
+		ingredients[i] = saved
 	}
 
+	steps := make([]Step, len(in.Steps))
 	for i, st := range in.Steps {
 		id, err := uuid.NewV7()
 		if err != nil {
-			return Recipe{}, fmt.Errorf("new id: %w", err)
+			return nil, nil, fmt.Errorf("new id: %w", err)
 		}
 		saved := Step{
 			ID:           id,
@@ -151,13 +177,9 @@ func (s *Store) insert(ctx context.Context, in NewRecipe) (Recipe, error) {
 			Instruction:  saved.Instruction,
 			TimerSeconds: saved.TimerSeconds,
 		}); err != nil {
-			return Recipe{}, fmt.Errorf("insert step %d: %w", i, err)
+			return nil, nil, fmt.Errorf("insert step %d: %w", i, err)
 		}
-		out.Steps[i] = saved
+		steps[i] = saved
 	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return Recipe{}, fmt.Errorf("commit: %w", err)
-	}
-	return out, nil
+	return ingredients, steps, nil
 }
