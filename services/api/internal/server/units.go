@@ -43,7 +43,10 @@ func registerUnits(api huma.API, deps Deps) {
 		out := &listUnitsOutput{}
 		out.Body.Units = make([]unit, len(rows))
 		for i, r := range rows {
-			out.Body.Units[i] = unit{Code: r.Code, Name: r.Name, Dimension: r.Dimension, BaseFactor: r.BaseFactor}
+			// A conversion, not a copy: Go allows it between structs with identical
+			// fields (tags are ignored), so adding a column to the unit table stops
+			// this compiling until someone decides whether the API should expose it.
+			out.Body.Units[i] = unit(r)
 		}
 		return out, nil
 	})
