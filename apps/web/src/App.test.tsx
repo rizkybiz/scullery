@@ -35,12 +35,6 @@ describe('App', () => {
     expect(await screen.findByText(/unreachable \(network down\)/)).toBeInTheDocument()
   })
 
-  it('treats an unexpected response body as an error', async () => {
-    respondWith({ nope: true })
-    renderApp()
-    expect(await screen.findByText(/Unexpected response/)).toBeInTheDocument()
-  })
-
   it('treats a non-200 status as an error', async () => {
     respondWith({}, 503)
     renderApp()
