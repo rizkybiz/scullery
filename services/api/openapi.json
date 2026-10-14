@@ -955,6 +955,79 @@
         "tags": [
           "recipes"
         ]
+      },
+      "put": {
+        "description": "Overwrites the recipe with the one sent: every field, and the whole ingredient and step lists. Anything left out is cleared, so send the complete recipe. It keeps its id and creation time. If two people save at the same moment, the later save wins.",
+        "operationId": "replace-recipe",
+        "parameters": [
+          {
+            "description": "The recipe to overwrite.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The recipe to overwrite.",
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewRecipe"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recipe"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Replace a recipe",
+        "tags": [
+          "recipes"
+        ]
       }
     },
     "/units": {

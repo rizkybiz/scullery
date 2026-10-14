@@ -27,6 +27,15 @@ type getRecipeOutput struct {
 	Body recipe.Recipe
 }
 
+type replaceRecipeInput struct {
+	ID   uuid.UUID `path:"id" format:"uuid" doc:"The recipe to overwrite."`
+	Body recipe.NewRecipe
+}
+
+type replaceRecipeOutput struct {
+	Body recipe.Recipe
+}
+
 type listRecipesInput struct {
 	Q        string `query:"q" maxLength:"200" doc:"Words to look for in titles and descriptions. Supports \"quoted phrases\" and -excluded words. Best matches come first; without it, recipes are alphabetical."`
 	Favorite string `query:"favorite" enum:"true,false" doc:"true for only favorites, false for only the rest. Leave out for all."`
@@ -84,6 +93,32 @@ func registerRecipes(api huma.API, deps Deps) {
 			return nil, huma.Error500InternalServerError("could not load the recipe")
 		}
 		return &getRecipeOutput{Body: found}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "replace-recipe",
+		Method:      http.MethodPut,
+		Path:        "/recipes/{id}",
+		Summary:     "Replace a recipe",
+		Description: "Overwrites the recipe with the one sent: every field, and the whole ingredient and step lists. " +
+			"Anything left out is cleared, so send the complete recipe. It keeps its id and creation time. " +
+			"If two people save at the same moment, the later save wins.",
+		Tags:   []string{"recipes"},
+		Errors: []int{http.StatusNotFound},
+	}, func(ctx context.Context, in *replaceRecipeInput) (*replaceRecipeOutput, error) {
+		saved, err := store.Replace(ctx, in.ID, in.Body)
+
+		var invalid *recipe.ValidationError
+		switch {
+		case errors.As(err, &invalid):
+			return nil, validationProblem(invalid)
+		case errors.Is(err, recipe.ErrNotFound):
+			return nil, huma.Error404NotFound("recipe not found")
+		case err != nil:
+			deps.Logger.ErrorContext(ctx, "replace recipe", "id", in.ID, "error", err)
+			return nil, huma.Error500InternalServerError("could not save the recipe")
+		}
+		return &replaceRecipeOutput{Body: saved}, nil
 	})
 
 	huma.Register(api, huma.Operation{

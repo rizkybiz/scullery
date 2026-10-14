@@ -382,3 +382,126 @@ func TestListRecipesHidesDatabaseErrors(t *testing.T) {
 		t.Fatalf("status = %d body = %s, want a generic 500", rec.Code, rec.Body)
 	}
 }
+
+func putJSON(t *testing.T, h http.Handler, path string, body any) *httptest.ResponseRecorder {
+	t.Helper()
+	raw, err := json.Marshal(body)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPut, path, bytes.NewReader(raw))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	return rec
+}
+
+// createdID creates a recipe through the API and returns its id.
+func createdID(t *testing.T, h http.Handler, body map[string]any) string {
+	t.Helper()
+	rec := postJSON(t, h, "/recipes", body)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("create: %d %s", rec.Code, rec.Body)
+	}
+	var out struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatal(err)
+	}
+	return out.ID
+}
+
+func TestReplaceRecipe(t *testing.T) {
+	h, _ := newTestServer(t)
+	id := createdID(t, h, map[string]any{
+		"title":       "Old",
+		"servings":    2,
+		"ingredients": []map[string]any{{"name": "old a"}, {"name": "old b"}},
+		"steps":       []map[string]any{{"instruction": "old"}},
+	})
+
+	rec := putJSON(t, h, "/recipes/"+id, map[string]any{
+		"title":       "New",
+		"ingredients": []map[string]any{{"name": "new a", "quantity_min": 1, "unit_code": "cup"}},
+	})
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200: %s", rec.Code, rec.Body)
+	}
+	var got struct {
+		ID          string           `json:"id"`
+		Title       string           `json:"title"`
+		Servings    *float64         `json:"servings"`
+		Ingredients []map[string]any `json:"ingredients"`
+		Steps       []map[string]any `json:"steps"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.ID != id || got.Title != "New" || got.Servings != nil {
+		t.Errorf("got %+v, want the same id, the new title and servings cleared", got)
+	}
+	if len(got.Ingredients) != 1 || got.Ingredients[0]["raw_text"] != "1 cup new a" || len(got.Steps) != 0 {
+		t.Errorf("lists not replaced: %+v / %+v", got.Ingredients, got.Steps)
+	}
+
+	// A later GET sees exactly what PUT returned.
+	if again := getPath(h, "/recipes/"+id); again.Body.String() != rec.Body.String() {
+		t.Errorf("GET differs from the PUT response\n put: %s\n get: %s", rec.Body, again.Body)
+	}
+}
+
+func TestReplaceRecipeUnknownIDIs404(t *testing.T) {
+	h, pool := newTestServer(t)
+
+	rec := putJSON(t, h, "/recipes/0198f3a2-0000-7000-8000-000000000000", map[string]any{"title": "Ghost"})
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404: %s", rec.Code, rec.Body)
+	}
+	if n := recipeCount(t, pool); n != 0 {
+		t.Errorf("PUT to an unknown id created %d recipe(s); it must never create", n)
+	}
+}
+
+func TestReplaceRecipeRejectsBadInputAndKeepsTheOldOne(t *testing.T) {
+	h, _ := newTestServer(t)
+	id := createdID(t, h, map[string]any{"title": "Keep me"})
+
+	rec := putJSON(t, h, "/recipes/"+id, map[string]any{
+		"title":       " ",
+		"ingredients": []map[string]any{{"name": "a", "unit_code": "nope"}},
+	})
+
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("status = %d, want 422: %s", rec.Code, rec.Body)
+	}
+	for _, loc := range []string{"body.title", "body.ingredients[0].unit_code"} {
+		if !strings.Contains(rec.Body.String(), loc) {
+			t.Errorf("no error reported at %s: %s", loc, rec.Body)
+		}
+	}
+	if !strings.Contains(getPath(h, "/recipes/"+id).Body.String(), `"title":"Keep me"`) {
+		t.Error("the recipe changed despite the rejected edit")
+	}
+}
+
+func TestReplaceRecipeMalformedIDIs422(t *testing.T) {
+	h, _ := newTestServer(t)
+
+	if rec := putJSON(t, h, "/recipes/not-a-uuid", map[string]any{"title": "x"}); rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("status = %d, want 422: %s", rec.Code, rec.Body)
+	}
+}
+
+func TestReplaceRecipeHidesDatabaseErrors(t *testing.T) {
+	h, pool := newTestServer(t)
+	pool.Close()
+
+	rec := putJSON(t, h, "/recipes/0198f3a2-0000-7000-8000-000000000000", map[string]any{"title": "x"})
+
+	if rec.Code != http.StatusInternalServerError || strings.Contains(rec.Body.String(), "closed pool") {
+		t.Fatalf("status = %d body = %s, want a generic 500", rec.Code, rec.Body)
+	}
+}
