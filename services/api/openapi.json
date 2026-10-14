@@ -82,10 +82,18 @@
               "ok"
             ],
             "type": "string"
+          },
+          "version": {
+            "description": "The build running: a sha-\u003ccommit\u003e tag, or dev for a local build.",
+            "examples": [
+              "sha-ef246ad"
+            ],
+            "type": "string"
           }
         },
         "required": [
-          "status"
+          "status",
+          "version"
         ],
         "type": "object"
       },
