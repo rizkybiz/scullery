@@ -74,3 +74,27 @@ WHERE (sqlc.narg('search')::text IS NULL
         OR search @@ websearch_to_tsquery('english', sqlc.narg('search')::text))
   AND (sqlc.narg('favorite')::boolean IS NULL
         OR is_favorite = sqlc.narg('favorite')::boolean);
+
+-- name: UpdateRecipe :one
+-- Overwrites every field a client controls. source_data and image_id are not
+-- touched: the API does not expose them yet, so an edit must not erase them.
+-- updated_at is set by the table's trigger; created_at is kept.
+UPDATE recipe SET
+    title        = $2,
+    description  = $3,
+    servings     = $4,
+    yield_text   = $5,
+    prep_minutes = $6,
+    cook_minutes = $7,
+    source_url   = $8,
+    source_name  = $9,
+    notes        = $10,
+    is_favorite  = $11
+WHERE id = $1
+RETURNING created_at, updated_at;
+
+-- name: DeleteIngredients :exec
+DELETE FROM ingredient WHERE recipe_id = $1;
+
+-- name: DeleteSteps :exec
+DELETE FROM step WHERE recipe_id = $1;

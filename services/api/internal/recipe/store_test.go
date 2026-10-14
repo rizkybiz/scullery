@@ -352,3 +352,149 @@ func TestListFavoriteFilter(t *testing.T) {
 		t.Errorf("non-favorites = %v (total %d)", titles(no), no.Total)
 	}
 }
+
+func TestReplaceOverwritesFieldsAndChildren(t *testing.T) {
+	ctx := context.Background()
+	s := NewStore(dbtest.New(t))
+	created, err := s.Create(ctx, NewRecipe{
+		Title:       "Old title",
+		Servings:    ptr(2.0),
+		IsFavorite:  true,
+		Ingredients: []NewIngredient{{Name: "old a"}, {Name: "old b"}, {Name: "old c"}},
+		Steps:       []NewStep{{Instruction: "old step"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := s.Replace(ctx, created.ID, NewRecipe{
+		Title:       "New title",
+		Ingredients: []NewIngredient{{Name: "new a", QuantityMin: ptr(1.0), UnitCode: ptr("cup")}},
+		Steps:       []NewStep{{Instruction: "new one"}, {Instruction: "new two"}},
+	})
+	if err != nil {
+		t.Fatalf("Replace: %v", err)
+	}
+
+	if got.ID != created.ID || !got.CreatedAt.Equal(created.CreatedAt) {
+		t.Errorf("id or created_at changed: %v/%v -> %v/%v", created.ID, created.CreatedAt, got.ID, got.CreatedAt)
+	}
+	if !got.UpdatedAt.After(created.UpdatedAt) {
+		t.Errorf("updated_at %v did not advance past %v", got.UpdatedAt, created.UpdatedAt)
+	}
+	// A field left out of the replacement is cleared, not kept: it is a full replace.
+	if got.Title != "New title" || got.Servings != nil || got.IsFavorite {
+		t.Errorf("fields not overwritten: %+v", got)
+	}
+
+	// What is stored is what was returned, and nothing of the old lists remains.
+	again, err := s.Get(ctx, created.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, _ := json.Marshal(got)
+	have, _ := json.Marshal(again)
+	if string(want) != string(have) {
+		t.Errorf("stored recipe differs from the Replace result\n replace: %s\n get:     %s", want, have)
+	}
+	if len(again.Ingredients) != 1 || len(again.Steps) != 2 {
+		t.Errorf("lists = %d ingredients / %d steps, want 1 / 2", len(again.Ingredients), len(again.Steps))
+	}
+	if n := count(t, s, "ingredient"); n != 1 {
+		t.Errorf("ingredient rows in the database = %d, want 1 (old ones must be gone)", n)
+	}
+}
+
+func TestReplaceLeavesOtherRecipesAndHiddenColumnsAlone(t *testing.T) {
+	ctx := context.Background()
+	s := NewStore(dbtest.New(t))
+	other, err := s.Create(ctx, NewRecipe{Title: "Other", Ingredients: []NewIngredient{{Name: "x"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	mine, err := s.Create(ctx, NewRecipe{Title: "Mine"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// source_data is not part of the API yet; an edit must not erase it.
+	if _, err := s.pool.Exec(ctx, `UPDATE recipe SET source_data = '{"from":"import"}' WHERE id = $1`, mine.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := s.Replace(ctx, mine.ID, NewRecipe{Title: "Mine, edited"}); err != nil {
+		t.Fatal(err)
+	}
+
+	var data string
+	if err := s.pool.QueryRow(ctx, `SELECT source_data::text FROM recipe WHERE id = $1`, mine.ID).Scan(&data); err != nil || data != `{"from": "import"}` {
+		t.Errorf("source_data = %q, err %v; want it preserved", data, err)
+	}
+	if o, err := s.Get(ctx, other.ID); err != nil || o.Title != "Other" || len(o.Ingredients) != 1 {
+		t.Errorf("another recipe was disturbed: %+v, err %v", o, err)
+	}
+}
+
+func TestReplaceUnknownRecipeIsNotFoundAndCreatesNothing(t *testing.T) {
+	s := NewStore(dbtest.New(t))
+
+	_, err := s.Replace(context.Background(), uuid.New(), NewRecipe{Title: "Ghost", Ingredients: []NewIngredient{{Name: "x"}}})
+
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("err = %v, want ErrNotFound", err)
+	}
+	if n := count(t, s, "recipe") + count(t, s, "ingredient"); n != 0 {
+		t.Errorf("rows created for an unknown id: %d", n)
+	}
+}
+
+func TestReplaceRejectsInvalidRecipeAndKeepsTheOldOne(t *testing.T) {
+	ctx := context.Background()
+	s := NewStore(dbtest.New(t))
+	created, err := s.Create(ctx, NewRecipe{Title: "Keep me", Ingredients: []NewIngredient{{Name: "a"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = s.Replace(ctx, created.ID, NewRecipe{Title: " "})
+
+	var invalid *ValidationError
+	if !errors.As(err, &invalid) {
+		t.Fatalf("err = %v, want a *ValidationError", err)
+	}
+	after, err := s.Get(ctx, created.ID)
+	if err != nil || after.Title != "Keep me" || len(after.Ingredients) != 1 {
+		t.Errorf("the recipe changed despite the rejected edit: %+v, err %v", after, err)
+	}
+}
+
+// If the rewrite fails after the old ingredients were deleted, the transaction
+// must restore them. As with insert, validation normally stops bad data first, so
+// this calls replace directly with a quantity too large for its column.
+func TestReplaceRollsBackToTheOldRecipeOnFailure(t *testing.T) {
+	ctx := context.Background()
+	s := NewStore(dbtest.New(t))
+	created, err := s.Create(ctx, NewRecipe{
+		Title:       "Original",
+		Ingredients: []NewIngredient{{Name: "keep a"}, {Name: "keep b"}},
+		Steps:       []NewStep{{Instruction: "keep step"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = s.replace(ctx, created.ID, NewRecipe{
+		Title:       "Half rewritten",
+		Ingredients: []NewIngredient{{Name: "fine"}, {Name: "too much", QuantityMin: ptr(99999999.0)}},
+	})
+	if err == nil {
+		t.Fatal("want an error from the oversized quantity")
+	}
+
+	after, err := s.Get(ctx, created.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if after.Title != "Original" || len(after.Ingredients) != 2 || len(after.Steps) != 1 {
+		t.Errorf("the old recipe was not restored: %+v", after)
+	}
+}

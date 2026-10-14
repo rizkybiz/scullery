@@ -285,3 +285,69 @@ func (s *Store) List(ctx context.Context, p ListParams) (List, error) {
 	}
 	return out, nil
 }
+
+// Replace overwrites a recipe with a new version of it: the recipe keeps its id
+// and creation time, and its ingredients and steps are replaced by the ones sent.
+// It returns ErrNotFound for an unknown id and a *ValidationError for a request
+// that breaks a rule; the rules are checked first, so a bad request is reported
+// as such even for an id that does not exist.
+func (s *Store) Replace(ctx context.Context, id uuid.UUID, in NewRecipe) (Recipe, error) {
+	in, err := s.validated(ctx, in)
+	if err != nil {
+		return Recipe{}, err
+	}
+	return s.replace(ctx, id, in)
+}
+
+// replace rewrites an already-validated recipe in a single transaction. If any
+// step fails the old recipe, ingredients and steps are left exactly as they were.
+//
+// Ingredients and steps get new ids each time: clients refer to a recipe by its
+// id, and its lists by position.
+func (s *Store) replace(ctx context.Context, id uuid.UUID, in NewRecipe) (Recipe, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return Recipe{}, fmt.Errorf("begin: %w", err)
+	}
+	defer tx.Rollback(ctx) // see insert
+	q := dbgen.New(s.pool).WithTx(tx)
+
+	// The UPDATE also locks the row until commit, so two edits of the same recipe
+	// at the same moment take turns instead of interleaving their child rows.
+	stamps, err := q.UpdateRecipe(ctx, dbgen.UpdateRecipeParams{
+		ID:          id,
+		Title:       in.Title,
+		Description: in.Description,
+		Servings:    in.Servings,
+		YieldText:   in.YieldText,
+		PrepMinutes: in.PrepMinutes,
+		CookMinutes: in.CookMinutes,
+		SourceUrl:   in.SourceURL,
+		SourceName:  in.SourceName,
+		Notes:       in.Notes,
+		IsFavorite:  in.IsFavorite,
+	})
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Recipe{}, ErrNotFound
+	}
+	if err != nil {
+		return Recipe{}, fmt.Errorf("update recipe: %w", err)
+	}
+	if err := q.DeleteIngredients(ctx, id); err != nil {
+		return Recipe{}, fmt.Errorf("delete ingredients: %w", err)
+	}
+	if err := q.DeleteSteps(ctx, id); err != nil {
+		return Recipe{}, fmt.Errorf("delete steps: %w", err)
+	}
+
+	out := recipeFrom(id, in)
+	out.CreatedAt, out.UpdatedAt = stamps.CreatedAt, stamps.UpdatedAt
+	if out.Ingredients, out.Steps, err = writeChildren(ctx, q, id, in); err != nil {
+		return Recipe{}, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return Recipe{}, fmt.Errorf("commit: %w", err)
+	}
+	return out, nil
+}

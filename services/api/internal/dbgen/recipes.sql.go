@@ -155,6 +155,24 @@ func (q *Queries) CreateStep(ctx context.Context, arg CreateStepParams) error {
 	return err
 }
 
+const deleteIngredients = `-- name: DeleteIngredients :exec
+DELETE FROM ingredient WHERE recipe_id = $1
+`
+
+func (q *Queries) DeleteIngredients(ctx context.Context, recipeID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteIngredients, recipeID)
+	return err
+}
+
+const deleteSteps = `-- name: DeleteSteps :exec
+DELETE FROM step WHERE recipe_id = $1
+`
+
+func (q *Queries) DeleteSteps(ctx context.Context, recipeID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteSteps, recipeID)
+	return err
+}
+
 const getRecipe = `-- name: GetRecipe :one
 SELECT id, title, description, servings, yield_text, prep_minutes, cook_minutes,
        source_url, source_name, notes, is_favorite, created_at, updated_at
@@ -370,4 +388,61 @@ func (q *Queries) ListSteps(ctx context.Context, recipeID uuid.UUID) ([]ListStep
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateRecipe = `-- name: UpdateRecipe :one
+UPDATE recipe SET
+    title        = $2,
+    description  = $3,
+    servings     = $4,
+    yield_text   = $5,
+    prep_minutes = $6,
+    cook_minutes = $7,
+    source_url   = $8,
+    source_name  = $9,
+    notes        = $10,
+    is_favorite  = $11
+WHERE id = $1
+RETURNING created_at, updated_at
+`
+
+type UpdateRecipeParams struct {
+	ID          uuid.UUID
+	Title       string
+	Description string
+	Servings    *float64
+	YieldText   *string
+	PrepMinutes *int32
+	CookMinutes *int32
+	SourceUrl   *string
+	SourceName  *string
+	Notes       string
+	IsFavorite  bool
+}
+
+type UpdateRecipeRow struct {
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// Overwrites every field a client controls. source_data and image_id are not
+// touched: the API does not expose them yet, so an edit must not erase them.
+// updated_at is set by the table's trigger; created_at is kept.
+func (q *Queries) UpdateRecipe(ctx context.Context, arg UpdateRecipeParams) (UpdateRecipeRow, error) {
+	row := q.db.QueryRow(ctx, updateRecipe,
+		arg.ID,
+		arg.Title,
+		arg.Description,
+		arg.Servings,
+		arg.YieldText,
+		arg.PrepMinutes,
+		arg.CookMinutes,
+		arg.SourceUrl,
+		arg.SourceName,
+		arg.Notes,
+		arg.IsFavorite,
+	)
+	var i UpdateRecipeRow
+	err := row.Scan(&i.CreatedAt, &i.UpdatedAt)
+	return i, err
 }
