@@ -21,10 +21,14 @@ type Deps struct {
 	// without serving requests (spec generation, health-only tests); a handler
 	// that needs the database must not be called then.
 	Pool *pgxpool.Pool
+	// Logger records errors that the API deliberately hides from callers (a
+	// failed query becomes a generic 500). New sets it; do not set it yourself.
+	Logger *slog.Logger
 }
 
 // New builds the root HTTP handler, including middleware.
 func New(logger *slog.Logger, version string, deps Deps) http.Handler {
+	deps.Logger = logger
 	mux, _ := newAPI(version, deps)
 
 	// Middleware wraps the mux; the first wrapper listed is the outermost.
@@ -44,6 +48,7 @@ func newAPI(version string, deps Deps) (*http.ServeMux, huma.API) {
 	api := humago.New(mux, cfg)
 
 	registerHealth(api)
+	registerUnits(api, deps)
 	return mux, api
 }
 

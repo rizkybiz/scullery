@@ -88,6 +88,71 @@
           "status"
         ],
         "type": "object"
+      },
+      "ListUnitsOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "units": {
+            "description": "Every unit, grouped by dimension and ordered smallest to largest within it.",
+            "items": {
+              "$ref": "#/components/schemas/Unit"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "units"
+        ],
+        "type": "object"
+      },
+      "Unit": {
+        "additionalProperties": false,
+        "properties": {
+          "base_factor": {
+            "description": "How many millilitres (volume) or grams (mass) one unit is. Null for count units, which never convert.",
+            "examples": [
+              14.786765
+            ],
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "code": {
+            "description": "Short identifier. Ingredients refer to a unit by this code.",
+            "examples": [
+              "tbsp"
+            ],
+            "type": "string"
+          },
+          "dimension": {
+            "description": "What the unit measures. Only units of the same dimension can be added together.",
+            "enum": [
+              "volume",
+              "mass",
+              "count"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "description": "Name to show to people.",
+            "examples": [
+              "tablespoon"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "dimension",
+          "base_factor"
+        ],
+        "type": "object"
       }
     }
   },
@@ -123,6 +188,38 @@
           }
         },
         "summary": "Get healthz"
+      }
+    },
+    "/units": {
+      "get": {
+        "description": "Reference data for the ingredient form's unit dropdown.",
+        "operationId": "list-units",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListUnitsOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List units of measure",
+        "tags": [
+          "units"
+        ]
       }
     }
   }
