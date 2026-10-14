@@ -27,6 +27,17 @@ type getRecipeOutput struct {
 	Body recipe.Recipe
 }
 
+type listRecipesInput struct {
+	Q        string `query:"q" maxLength:"200" doc:"Words to look for in titles and descriptions. Supports \"quoted phrases\" and -excluded words. Best matches come first; without it, recipes are alphabetical."`
+	Favorite string `query:"favorite" enum:"true,false" doc:"true for only favorites, false for only the rest. Leave out for all."`
+	Limit    int32  `query:"limit" default:"50" minimum:"1" maximum:"100" doc:"Page size."`
+	Offset   int32  `query:"offset" default:"0" minimum:"0" doc:"How many matching recipes to skip."`
+}
+
+type listRecipesOutput struct {
+	Body recipe.List
+}
+
 func registerRecipes(api huma.API, deps Deps) {
 	store := recipe.NewStore(deps.Pool)
 
@@ -73,6 +84,36 @@ func registerRecipes(api huma.API, deps Deps) {
 			return nil, huma.Error500InternalServerError("could not load the recipe")
 		}
 		return &getRecipeOutput{Body: found}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "list-recipes",
+		Method:      http.MethodGet,
+		Path:        "/recipes",
+		Summary:     "List recipes",
+		Description: "One page of recipes, each without its ingredients and steps (fetch a recipe by id for those). " +
+			"`total` counts every match across all pages, so a screen can show \"21-40 of 134\".",
+		Tags:   []string{"recipes"},
+		Errors: []int{http.StatusUnprocessableEntity},
+	}, func(ctx context.Context, in *listRecipesInput) (*listRecipesOutput, error) {
+		// huma does not support pointer query parameters, so "not given" arrives as
+		// an empty string; turn it back into nil for the store.
+		var favorite *bool
+		if in.Favorite != "" {
+			v := in.Favorite == "true"
+			favorite = &v
+		}
+		page, err := store.List(ctx, recipe.ListParams{
+			Search:   &in.Q,
+			Favorite: favorite,
+			Limit:    in.Limit,
+			Offset:   in.Offset,
+		})
+		if err != nil {
+			deps.Logger.ErrorContext(ctx, "list recipes", "error", err)
+			return nil, huma.Error500InternalServerError("could not list recipes")
+		}
+		return &listRecipesOutput{Body: page}, nil
 	})
 }
 

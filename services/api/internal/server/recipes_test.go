@@ -259,3 +259,126 @@ func TestGetRecipeHidesDatabaseErrors(t *testing.T) {
 		t.Fatalf("status = %d body = %s, want a generic 500", rec.Code, rec.Body)
 	}
 }
+
+type listBody struct {
+	Recipes []struct {
+		ID         string `json:"id"`
+		Title      string `json:"title"`
+		IsFavorite bool   `json:"is_favorite"`
+	} `json:"recipes"`
+	Total  int `json:"total"`
+	Limit  int `json:"limit"`
+	Offset int `json:"offset"`
+}
+
+func listRecipes(t *testing.T, h http.Handler, query string) (listBody, *httptest.ResponseRecorder) {
+	t.Helper()
+	rec := getPath(h, "/recipes"+query)
+	var body listBody
+	if rec.Code == http.StatusOK {
+		if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+			t.Fatalf("decode: %v: %s", err, rec.Body)
+		}
+	}
+	return body, rec
+}
+
+func TestListRecipesWhenEmptyReturnsAnEmptyList(t *testing.T) {
+	h, _ := newTestServer(t)
+
+	body, rec := listRecipes(t, h, "")
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d: %s", rec.Code, rec.Body)
+	}
+	if !strings.Contains(rec.Body.String(), `"recipes":[]`) {
+		t.Errorf("want an empty list, not null, in: %s", rec.Body)
+	}
+	if body.Total != 0 || body.Limit != 50 || body.Offset != 0 {
+		t.Errorf("got %+v, want total 0 with the default limit 50 and offset 0", body)
+	}
+}
+
+func TestListRecipesSearchFilterAndPaging(t *testing.T) {
+	h, _ := newTestServer(t)
+	for _, r := range []map[string]any{
+		{"title": "Garlic bread", "is_favorite": true},
+		{"title": "Tomato soup"},
+		{"title": "Garlic butter shrimp"},
+		{"title": "Lemon cake", "is_favorite": true},
+	} {
+		if rec := postJSON(t, h, "/recipes", r); rec.Code != http.StatusCreated {
+			t.Fatalf("seed: %d %s", rec.Code, rec.Body)
+		}
+	}
+
+	t.Run("search", func(t *testing.T) {
+		body, _ := listRecipes(t, h, "?q=garlic")
+		if body.Total != 2 || len(body.Recipes) != 2 {
+			t.Errorf("garlic: %+v, want 2", body)
+		}
+	})
+	t.Run("search with spaces and quotes needs URL encoding but works", func(t *testing.T) {
+		body, _ := listRecipes(t, h, "?q=%22tomato+soup%22")
+		if body.Total != 1 || body.Recipes[0].Title != "Tomato soup" {
+			t.Errorf("phrase: %+v", body)
+		}
+	})
+	t.Run("favorites only", func(t *testing.T) {
+		body, _ := listRecipes(t, h, "?favorite=true")
+		if body.Total != 2 {
+			t.Errorf("favorites: %+v, want 2", body)
+		}
+		for _, r := range body.Recipes {
+			if !r.IsFavorite {
+				t.Errorf("%q is not a favorite", r.Title)
+			}
+		}
+	})
+	t.Run("non-favorites only", func(t *testing.T) {
+		if body, _ := listRecipes(t, h, "?favorite=false"); body.Total != 2 {
+			t.Errorf("non-favorites: %+v, want 2", body)
+		}
+	})
+	t.Run("search and filter together", func(t *testing.T) {
+		body, _ := listRecipes(t, h, "?q=garlic&favorite=true")
+		if body.Total != 1 || body.Recipes[0].Title != "Garlic bread" {
+			t.Errorf("garlic favorites: %+v", body)
+		}
+	})
+	t.Run("paging echoes limit and offset and keeps the total", func(t *testing.T) {
+		body, _ := listRecipes(t, h, "?limit=2&offset=2")
+		if len(body.Recipes) != 2 || body.Total != 4 || body.Limit != 2 || body.Offset != 2 {
+			t.Errorf("page 2: %+v", body)
+		}
+		// Alphabetical: Garlic bread, Garlic butter shrimp, Lemon cake, Tomato soup.
+		if body.Recipes[0].Title != "Lemon cake" || body.Recipes[1].Title != "Tomato soup" {
+			t.Errorf("page 2 titles: %+v", body.Recipes)
+		}
+	})
+}
+
+func TestListRecipesRejectsBadParameters(t *testing.T) {
+	h, _ := newTestServer(t)
+	for _, query := range []string{
+		"?limit=0", "?limit=101", "?limit=abc", "?offset=-1", "?favorite=maybe",
+		"?q=" + strings.Repeat("x", 201),
+	} {
+		t.Run(query[:min(len(query), 20)], func(t *testing.T) {
+			if rec := getPath(h, "/recipes"+query); rec.Code != http.StatusUnprocessableEntity {
+				t.Errorf("status = %d, want 422: %s", rec.Code, rec.Body)
+			}
+		})
+	}
+}
+
+func TestListRecipesHidesDatabaseErrors(t *testing.T) {
+	h, pool := newTestServer(t)
+	pool.Close()
+
+	rec := getPath(h, "/recipes")
+
+	if rec.Code != http.StatusInternalServerError || strings.Contains(rec.Body.String(), "closed pool") {
+		t.Fatalf("status = %d body = %s, want a generic 500", rec.Code, rec.Body)
+	}
+}
