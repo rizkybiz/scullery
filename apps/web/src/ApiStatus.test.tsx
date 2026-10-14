@@ -24,9 +24,15 @@ describe('ApiStatus', () => {
   })
 
   it('shows the API status when /healthz succeeds', async () => {
-    respondWith({ status: 'ok' })
+    respondWith({ status: 'ok', version: 'sha-abc1234' })
     renderStatus()
-    expect(await screen.findByText(/API:\s*ok/)).toBeInTheDocument()
+    expect(await screen.findByText(/API:\s*ok \(sha-abc1234\)/)).toBeInTheDocument()
+  })
+
+  it('shows which web build is running', () => {
+    respondWith({ status: 'ok', version: 'x' })
+    renderStatus()
+    expect(screen.getByText(/Web: dev/)).toBeInTheDocument()
   })
 
   it('shows that the API is unreachable when the request fails', async () => {

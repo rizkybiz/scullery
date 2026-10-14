@@ -23,7 +23,7 @@ describe('routing', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockImplementation(() =>
-        Promise.resolve(new Response(JSON.stringify({ status: 'ok' }))),
+        Promise.resolve(new Response(JSON.stringify({ status: 'ok', version: 'test' }))),
       ),
     )
   })

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { getHealth } from './api/health.ts'
+import { webVersion } from './version.ts'
 
 // A React component is a function that returns a description of the UI (JSX,
 // the HTML-looking syntax below). React calls it to draw the screen, and calls
@@ -23,7 +24,8 @@ export default function ApiStatus() {
           enforces it, much like handling every variant of a Go sum type. */}
       {health.isPending && 'checking…'}
       {health.isError && `unreachable (${health.error.message})`}
-      {health.isSuccess && health.data.status}
+      {health.isSuccess && `${health.data.status} (${health.data.version})`}
+      {' · '}Web: {webVersion}
     </p>
   )
 }
