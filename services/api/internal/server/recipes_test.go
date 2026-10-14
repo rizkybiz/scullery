@@ -505,3 +505,98 @@ func TestReplaceRecipeHidesDatabaseErrors(t *testing.T) {
 		t.Fatalf("status = %d body = %s, want a generic 500", rec.Code, rec.Body)
 	}
 }
+
+func deletePath(h http.Handler, path string) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodDelete, path, nil))
+	return rec
+}
+
+func TestDeleteRecipe(t *testing.T) {
+	h, pool := newTestServer(t)
+	id := createdID(t, h, map[string]any{
+		"title":       "Doomed",
+		"ingredients": []map[string]any{{"name": "a"}},
+		"steps":       []map[string]any{{"instruction": "x"}},
+	})
+	keep := createdID(t, h, map[string]any{"title": "Keep"})
+
+	rec := deletePath(h, "/recipes/"+id)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("status = %d, want 204: %s", rec.Code, rec.Body)
+	}
+	if rec.Body.Len() != 0 {
+		t.Errorf("a 204 must have no body, got %q", rec.Body)
+	}
+	if got := getPath(h, "/recipes/"+id); got.Code != http.StatusNotFound {
+		t.Errorf("GET after delete = %d, want 404", got.Code)
+	}
+	if got := getPath(h, "/recipes/"+keep); got.Code != http.StatusOK {
+		t.Errorf("the other recipe: GET = %d, want 200", got.Code)
+	}
+	if n := recipeCount(t, pool); n != 1 {
+		t.Errorf("recipes left = %d, want 1", n)
+	}
+}
+
+func TestDeleteRecipeUnknownIDIs404(t *testing.T) {
+	h, _ := newTestServer(t)
+
+	if rec := deletePath(h, "/recipes/0198f3a2-0000-7000-8000-000000000000"); rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404: %s", rec.Code, rec.Body)
+	}
+}
+
+func TestDeleteRecipeTwiceIs404ThenNothingChanges(t *testing.T) {
+	h, _ := newTestServer(t)
+	id := createdID(t, h, map[string]any{"title": "Once"})
+
+	first := deletePath(h, "/recipes/"+id)
+	second := deletePath(h, "/recipes/"+id)
+
+	if first.Code != http.StatusNoContent || second.Code != http.StatusNotFound {
+		t.Errorf("statuses = %d then %d, want 204 then 404", first.Code, second.Code)
+	}
+}
+
+func TestDeleteRecipeUsedAsSubRecipeIs409(t *testing.T) {
+	h, pool := newTestServer(t)
+	dough := createdID(t, h, map[string]any{"title": "Pizza dough"})
+	pizza := createdID(t, h, map[string]any{"title": "Pizza", "ingredients": []map[string]any{{"name": "pizza dough"}}})
+	// The API cannot set sub_recipe_id yet; link them directly.
+	if _, err := pool.Exec(context.Background(), `UPDATE ingredient SET sub_recipe_id = $1 WHERE recipe_id = $2`, dough, pizza); err != nil {
+		t.Fatal(err)
+	}
+
+	rec := deletePath(h, "/recipes/"+dough)
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("status = %d, want 409: %s", rec.Code, rec.Body)
+	}
+	if !strings.Contains(rec.Body.String(), "another recipe") {
+		t.Errorf("the message should say why: %s", rec.Body)
+	}
+	if got := getPath(h, "/recipes/"+dough); got.Code != http.StatusOK {
+		t.Errorf("the refused delete removed the recipe: GET = %d", got.Code)
+	}
+}
+
+func TestDeleteRecipeMalformedIDIs422(t *testing.T) {
+	h, _ := newTestServer(t)
+
+	if rec := deletePath(h, "/recipes/not-a-uuid"); rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("status = %d, want 422: %s", rec.Code, rec.Body)
+	}
+}
+
+func TestDeleteRecipeHidesDatabaseErrors(t *testing.T) {
+	h, pool := newTestServer(t)
+	pool.Close()
+
+	rec := deletePath(h, "/recipes/0198f3a2-0000-7000-8000-000000000000")
+
+	if rec.Code != http.StatusInternalServerError || strings.Contains(rec.Body.String(), "closed pool") {
+		t.Fatalf("status = %d body = %s, want a generic 500", rec.Code, rec.Body)
+	}
+}

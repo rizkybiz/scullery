@@ -36,6 +36,10 @@ type replaceRecipeOutput struct {
 	Body recipe.Recipe
 }
 
+type deleteRecipeInput struct {
+	ID uuid.UUID `path:"id" format:"uuid" doc:"The recipe to delete."`
+}
+
 type listRecipesInput struct {
 	Q        string `query:"q" maxLength:"200" doc:"Words to look for in titles and descriptions. Supports \"quoted phrases\" and -excluded words. Best matches come first; without it, recipes are alphabetical."`
 	Favorite string `query:"favorite" enum:"true,false" doc:"true for only favorites, false for only the rest. Leave out for all."`
@@ -119,6 +123,31 @@ func registerRecipes(api huma.API, deps Deps) {
 			return nil, huma.Error500InternalServerError("could not save the recipe")
 		}
 		return &replaceRecipeOutput{Body: saved}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "delete-recipe",
+		Method:      http.MethodDelete,
+		Path:        "/recipes/{id}",
+		Summary:     "Delete a recipe",
+		Description: "Removes the recipe with its ingredients and steps. This cannot be undone. " +
+			"A recipe that another recipe uses as an ingredient (a sub-recipe) cannot be deleted until that use is removed.",
+		Tags:          []string{"recipes"},
+		DefaultStatus: http.StatusNoContent,
+		Errors:        []int{http.StatusNotFound, http.StatusConflict},
+	}, func(ctx context.Context, in *deleteRecipeInput) (*struct{}, error) {
+		err := store.Delete(ctx, in.ID)
+
+		switch {
+		case errors.Is(err, recipe.ErrNotFound):
+			return nil, huma.Error404NotFound("recipe not found")
+		case errors.Is(err, recipe.ErrInUse):
+			return nil, huma.Error409Conflict("this recipe is used as an ingredient in another recipe; remove it from there first")
+		case err != nil:
+			deps.Logger.ErrorContext(ctx, "delete recipe", "id", in.ID, "error", err)
+			return nil, huma.Error500InternalServerError("could not delete the recipe")
+		}
+		return nil, nil
 	})
 
 	huma.Register(api, huma.Operation{
