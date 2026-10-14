@@ -131,3 +131,144 @@ func (q *Queries) CreateStep(ctx context.Context, arg CreateStepParams) error {
 	)
 	return err
 }
+
+const getRecipe = `-- name: GetRecipe :one
+SELECT id, title, description, servings, yield_text, prep_minutes, cook_minutes,
+       source_url, source_name, notes, is_favorite, created_at, updated_at
+FROM recipe
+WHERE id = $1
+`
+
+type GetRecipeRow struct {
+	ID          uuid.UUID
+	Title       string
+	Description string
+	Servings    *float64
+	YieldText   *string
+	PrepMinutes *int32
+	CookMinutes *int32
+	SourceUrl   *string
+	SourceName  *string
+	Notes       string
+	IsFavorite  bool
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+// Named columns, not SELECT *: the table also holds the full-text index and the
+// raw import payload, which are not part of what the API returns.
+func (q *Queries) GetRecipe(ctx context.Context, id uuid.UUID) (GetRecipeRow, error) {
+	row := q.db.QueryRow(ctx, getRecipe, id)
+	var i GetRecipeRow
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.Servings,
+		&i.YieldText,
+		&i.PrepMinutes,
+		&i.CookMinutes,
+		&i.SourceUrl,
+		&i.SourceName,
+		&i.Notes,
+		&i.IsFavorite,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const listIngredients = `-- name: ListIngredients :many
+SELECT id, position, section, raw_text, quantity_min, quantity_max, unit_code,
+       name, preparation, note, optional
+FROM ingredient
+WHERE recipe_id = $1
+ORDER BY position
+`
+
+type ListIngredientsRow struct {
+	ID          uuid.UUID
+	Position    int32
+	Section     *string
+	RawText     string
+	QuantityMin *float64
+	QuantityMax *float64
+	UnitCode    *string
+	Name        string
+	Preparation *string
+	Note        *string
+	Optional    bool
+}
+
+func (q *Queries) ListIngredients(ctx context.Context, recipeID uuid.UUID) ([]ListIngredientsRow, error) {
+	rows, err := q.db.Query(ctx, listIngredients, recipeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListIngredientsRow{}
+	for rows.Next() {
+		var i ListIngredientsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Position,
+			&i.Section,
+			&i.RawText,
+			&i.QuantityMin,
+			&i.QuantityMax,
+			&i.UnitCode,
+			&i.Name,
+			&i.Preparation,
+			&i.Note,
+			&i.Optional,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSteps = `-- name: ListSteps :many
+SELECT id, position, section, instruction, timer_seconds
+FROM step
+WHERE recipe_id = $1
+ORDER BY position
+`
+
+type ListStepsRow struct {
+	ID           uuid.UUID
+	Position     int32
+	Section      *string
+	Instruction  string
+	TimerSeconds *int32
+}
+
+func (q *Queries) ListSteps(ctx context.Context, recipeID uuid.UUID) ([]ListStepsRow, error) {
+	rows, err := q.db.Query(ctx, listSteps, recipeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListStepsRow{}
+	for rows.Next() {
+		var i ListStepsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Position,
+			&i.Section,
+			&i.Instruction,
+			&i.TimerSeconds,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

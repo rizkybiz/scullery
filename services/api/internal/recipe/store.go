@@ -2,13 +2,18 @@ package recipe
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/rizkybiz/scullery-api/internal/dbgen"
 )
+
+// ErrNotFound is returned when no recipe has the requested id.
+var ErrNotFound = errors.New("recipe not found")
 
 // Store saves and loads recipes.
 type Store struct {
@@ -182,4 +187,59 @@ func writeChildren(ctx context.Context, q *dbgen.Queries, recipeID uuid.UUID, in
 		steps[i] = saved
 	}
 	return ingredients, steps, nil
+}
+
+// Get loads one recipe with its ingredients and steps, or ErrNotFound.
+//
+// The three reads run in one read-only, repeatable-read transaction, so they all
+// see the same moment: a concurrent edit can never produce a recipe whose
+// ingredients are from before the edit and whose steps are from after it.
+func (s *Store) Get(ctx context.Context, id uuid.UUID) (Recipe, error) {
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return Recipe{}, fmt.Errorf("begin: %w", err)
+	}
+	defer tx.Rollback(ctx) // read-only: nothing to commit, closing it is all that is needed
+	q := dbgen.New(s.pool).WithTx(tx)
+
+	row, err := q.GetRecipe(ctx, id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Recipe{}, ErrNotFound
+	}
+	if err != nil {
+		return Recipe{}, fmt.Errorf("get recipe: %w", err)
+	}
+	ingredients, err := q.ListIngredients(ctx, id)
+	if err != nil {
+		return Recipe{}, fmt.Errorf("list ingredients: %w", err)
+	}
+	steps, err := q.ListSteps(ctx, id)
+	if err != nil {
+		return Recipe{}, fmt.Errorf("list steps: %w", err)
+	}
+
+	out := Recipe{
+		ID:          row.ID,
+		Title:       row.Title,
+		Description: row.Description,
+		Servings:    row.Servings,
+		YieldText:   row.YieldText,
+		PrepMinutes: row.PrepMinutes,
+		CookMinutes: row.CookMinutes,
+		SourceURL:   row.SourceUrl,
+		SourceName:  row.SourceName,
+		Notes:       row.Notes,
+		IsFavorite:  row.IsFavorite,
+		CreatedAt:   row.CreatedAt,
+		UpdatedAt:   row.UpdatedAt,
+		Ingredients: make([]Ingredient, len(ingredients)),
+		Steps:       make([]Step, len(steps)),
+	}
+	for i, r := range ingredients {
+		out.Ingredients[i] = Ingredient(r)
+	}
+	for i, r := range steps {
+		out.Steps[i] = Step(r)
+	}
+	return out, nil
 }

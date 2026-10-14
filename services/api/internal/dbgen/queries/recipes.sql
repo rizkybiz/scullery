@@ -22,3 +22,24 @@ INSERT INTO ingredient (
 -- name: CreateStep :exec
 INSERT INTO step (id, recipe_id, position, section, instruction, timer_seconds)
 VALUES ($1, $2, $3, $4, $5, $6);
+
+-- name: GetRecipe :one
+-- Named columns, not SELECT *: the table also holds the full-text index and the
+-- raw import payload, which are not part of what the API returns.
+SELECT id, title, description, servings, yield_text, prep_minutes, cook_minutes,
+       source_url, source_name, notes, is_favorite, created_at, updated_at
+FROM recipe
+WHERE id = $1;
+
+-- name: ListIngredients :many
+SELECT id, position, section, raw_text, quantity_min, quantity_max, unit_code,
+       name, preparation, note, optional
+FROM ingredient
+WHERE recipe_id = $1
+ORDER BY position;
+
+-- name: ListSteps :many
+SELECT id, position, section, instruction, timer_seconds
+FROM step
+WHERE recipe_id = $1
+ORDER BY position;

@@ -2,8 +2,11 @@ package recipe
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
+
+	"github.com/google/uuid"
 
 	"github.com/rizkybiz/scullery-api/internal/db/dbtest"
 )
@@ -115,5 +118,73 @@ func TestInsertRollsBackEverythingOnFailure(t *testing.T) {
 		if n := count(t, s, table); n != 0 {
 			t.Errorf("%s rows left behind = %d, want 0 (the transaction should have rolled back)", table, n)
 		}
+	}
+}
+
+func TestGetReturnsWhatCreateSaved(t *testing.T) {
+	ctx := context.Background()
+	s := NewStore(dbtest.New(t))
+
+	created, err := s.Create(ctx, NewRecipe{
+		Title:       "Garlic bread",
+		Description: "Crisp outside, soft inside.",
+		Servings:    ptr(4.0),
+		YieldText:   ptr("1 loaf"),
+		Ingredients: []NewIngredient{{Name: "butter", QuantityMin: ptr(2.0), UnitCode: ptr("tbsp")}, {Name: "garlic", QuantityMin: ptr(2.0), QuantityMax: ptr(3.0), UnitCode: ptr("clove"), Section: ptr("Topping")}, {Name: "salt"}},
+		Steps:       []NewStep{{Instruction: "Mix."}, {Instruction: "Bake.", TimerSeconds: ptr(int32(600))}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := s.Get(ctx, created.ID)
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+
+	// Compare as JSON: that is what clients see, and it avoids false differences
+	// from time.Time's internal representation.
+	want, _ := json.Marshal(created)
+	have, _ := json.Marshal(got)
+	if string(want) != string(have) {
+		t.Errorf("Get differs from what Create returned\n create: %s\n get:    %s", want, have)
+	}
+}
+
+func TestGetReturnsIngredientsAndStepsInPositionOrder(t *testing.T) {
+	ctx := context.Background()
+	s := NewStore(dbtest.New(t))
+	created, err := s.Create(ctx, NewRecipe{
+		Title:       "Ordered",
+		Ingredients: []NewIngredient{{Name: "a"}, {Name: "b"}, {Name: "c"}},
+		Steps:       []NewStep{{Instruction: "one"}, {Instruction: "two"}, {Instruction: "three"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Reverse the stored positions so row order on disk differs from list order.
+	// The unique constraint is deferred, so a reversal is allowed in one statement.
+	for _, table := range []string{"ingredient", "step"} {
+		if _, err := s.pool.Exec(ctx, `UPDATE `+table+` SET position = 2 - position WHERE recipe_id = $1`, created.ID); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	got, err := s.Get(ctx, created.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.Ingredients[0].Name != "c" || got.Ingredients[2].Name != "a" || got.Steps[0].Instruction != "three" {
+		t.Errorf("not in position order: %+v / %+v", got.Ingredients, got.Steps)
+	}
+}
+
+func TestGetUnknownRecipeIsNotFound(t *testing.T) {
+	s := NewStore(dbtest.New(t))
+
+	_, err := s.Get(context.Background(), uuid.New())
+
+	if !errors.Is(err, ErrNotFound) {
+		t.Fatalf("err = %v, want ErrNotFound", err)
 	}
 }
