@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/rizkybiz/scullery-api/internal/config"
+	"github.com/rizkybiz/scullery-api/internal/db"
 	"github.com/rizkybiz/scullery-api/internal/migrate"
 	"github.com/rizkybiz/scullery-api/internal/server"
 )
@@ -44,15 +45,23 @@ func run() error {
 		return migrate.Run(context.Background(), cfg.DatabaseURL, os.Args[2], os.Stdout)
 	}
 
+	// Disposability: stop gracefully on SIGINT/SIGTERM.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	// Fail fast: a wrong DATABASE_URL or an unreachable database should stop the
+	// process at startup, where a deploy notices, not on the first request.
+	pool, err := db.Connect(ctx, cfg.DatabaseURL)
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,
 		Handler:           server.New(logger, version),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-
-	// Disposability: stop gracefully on SIGINT/SIGTERM.
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
 
 	errCh := make(chan error, 1)
 	go func() {

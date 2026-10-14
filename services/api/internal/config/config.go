@@ -12,7 +12,7 @@ import (
 type Config struct {
 	Port        string
 	LogLevel    slog.Level
-	DatabaseURL string // unused until the Postgres layer lands
+	DatabaseURL string // required to serve and to migrate
 }
 
 // Load reads configuration from the environment, applying defaults.
