@@ -27,6 +27,18 @@ go mod tidy -diff
 echo "== go vet"
 go vet ./...
 
+# The generated query code must match the SQL it came from. `sqlc diff` exits
+# non-zero (and prints the difference) when it does not; fix it with `make sqlc`.
+# CI runs the official image, pinned to the version in tools/go.mod, because the
+# runner has no C compiler and building sqlc from source needs one.
+echo "== sqlc generated code is up to date"
+sqlc_version="$(go list -m -modfile=tools/go.mod -f '{{.Version}}' github.com/sqlc-dev/sqlc)"
+if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+  docker run --rm -v "$PWD:/src:ro" -w /src "sqlc/sqlc:${sqlc_version#v}" diff
+else
+  go tool -modfile=tools/go.mod sqlc diff
+fi
+
 if [ -z "${TEST_DATABASE_URL:-}" ]; then
   if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     echo "== starting a throwaway postgres for the tests"
