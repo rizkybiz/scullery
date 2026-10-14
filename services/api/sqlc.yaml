@@ -1,0 +1,43 @@
+# sqlc turns the SQL in internal/dbgen/queries/ into typed Go. The schema it
+# checks queries against is the migrations themselves (sqlc understands goose
+# files and ignores their Down sections). Regenerate with `make sqlc`.
+version: "2"
+sql:
+  - engine: postgresql
+    schema: migrations
+    queries: internal/dbgen/queries
+    gen:
+      go:
+        package: dbgen
+        out: internal/dbgen
+        sql_package: pgx/v5
+        emit_empty_slices: true
+        emit_pointers_for_null_types: true
+        overrides:
+          # UUIDs as github.com/google/uuid.UUID (the app generates UUIDv7s).
+          - db_type: uuid
+            go_type: github.com/google/uuid.UUID
+          - db_type: uuid
+            nullable: true
+            go_type:
+              import: github.com/google/uuid
+              type: UUID
+              pointer: true
+          # Plain time.Time, so the HTTP layer needs no pgx types.
+          - db_type: timestamptz
+            go_type: time.Time
+          - db_type: timestamptz
+            nullable: true
+            go_type:
+              import: time
+              type: Time
+              pointer: true
+          # Quantities and servings are small decimals; float64 round-trips
+          # numeric(10,4) values like 0.3333 exactly enough for a recipe.
+          - db_type: pg_catalog.numeric
+            go_type: float64
+          - db_type: pg_catalog.numeric
+            nullable: true
+            go_type:
+              type: float64
+              pointer: true

@@ -27,6 +27,13 @@ migrate-up:
 migrate-status:
 	DATABASE_URL="postgres://scullery:scullery@localhost:5432/scullery?sslmode=disable" go run ./cmd/scullery-api migrate status
 
+# Regenerate the typed query code in internal/dbgen from the SQL in
+# internal/dbgen/queries. sqlc is pinned in tools/go.mod, so there is nothing to
+# install; the first run compiles it (about a minute) and later runs are fast.
+.PHONY: sqlc
+sqlc:
+	go tool -modfile=tools/go.mod sqlc generate
+
 # One-time per clone: use the versioned git hooks (commit-msg, pre-commit).
 .PHONY: hooks
 hooks:
