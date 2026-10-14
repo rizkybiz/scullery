@@ -49,6 +49,7 @@ func newAPI(version string, deps Deps) (*http.ServeMux, huma.API) {
 
 	registerHealth(api)
 	registerUnits(api, deps)
+	registerRecipes(api, deps)
 	return mux, api
 }
 

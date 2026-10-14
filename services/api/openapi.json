@@ -89,6 +89,85 @@
         ],
         "type": "object"
       },
+      "Ingredient": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "optional": {
+            "type": "boolean"
+          },
+          "position": {
+            "description": "0-based place in the list.",
+            "format": "int32",
+            "type": "integer"
+          },
+          "preparation": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity_max": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "quantity_min": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "raw_text": {
+            "description": "The line as a person would write it, built from the parts.",
+            "examples": [
+              "2-3 clove garlic, minced"
+            ],
+            "type": "string"
+          },
+          "section": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unit_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "section",
+          "raw_text",
+          "quantity_min",
+          "quantity_max",
+          "unit_code",
+          "name",
+          "preparation",
+          "note",
+          "optional"
+        ],
+        "type": "object"
+      },
       "ListUnitsOutputBody": {
         "additionalProperties": false,
         "properties": {
@@ -105,6 +184,388 @@
         },
         "required": [
           "units"
+        ],
+        "type": "object"
+      },
+      "NewIngredient": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "description": "The ingredient as written. Must not be blank.",
+            "examples": [
+              "butter"
+            ],
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "note": {
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "optional": {
+            "type": "boolean"
+          },
+          "preparation": {
+            "examples": [
+              "softened"
+            ],
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity_max": {
+            "description": "Top of a range such as 2-3 cloves. Needs quantity_min and must not be below it.",
+            "examples": [
+              3
+            ],
+            "format": "double",
+            "maximum": 999999,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "quantity_min": {
+            "description": "Amount, as a decimal (0.5, not 1/2).",
+            "examples": [
+              2
+            ],
+            "format": "double",
+            "maximum": 999999,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "section": {
+            "description": "Heading this line is grouped under.",
+            "examples": [
+              "For the sauce"
+            ],
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unit_code": {
+            "description": "A code from GET /units.",
+            "examples": [
+              "tbsp"
+            ],
+            "maxLength": 20,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "NewRecipe": {
+        "additionalProperties": false,
+        "properties": {
+          "cook_minutes": {
+            "examples": [
+              30
+            ],
+            "format": "int32",
+            "maximum": 525600,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "description": {
+            "description": "A sentence or two about the dish.",
+            "maxLength": 5000,
+            "type": "string"
+          },
+          "ingredients": {
+            "description": "In the order they should be shown.",
+            "items": {
+              "$ref": "#/components/schemas/NewIngredient"
+            },
+            "maxItems": 200,
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "is_favorite": {
+            "type": "boolean"
+          },
+          "notes": {
+            "description": "Free-form notes.",
+            "maxLength": 20000,
+            "type": "string"
+          },
+          "prep_minutes": {
+            "examples": [
+              15
+            ],
+            "format": "int32",
+            "maximum": 525600,
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "servings": {
+            "description": "How many people it feeds; used to scale quantities.",
+            "examples": [
+              4
+            ],
+            "exclusiveMinimum": 0,
+            "format": "double",
+            "maximum": 999999,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "source_name": {
+            "description": "Where it came from in words (a person, a book).",
+            "examples": [
+              "Grandma's card"
+            ],
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "description": "Where the recipe came from, if it came from a web page.",
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "steps": {
+            "description": "In the order they should be done.",
+            "items": {
+              "$ref": "#/components/schemas/NewStep"
+            },
+            "maxItems": 200,
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "title": {
+            "description": "Name of the recipe. Must not be blank.",
+            "examples": [
+              "Weeknight marinara"
+            ],
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "yield_text": {
+            "description": "What it makes, when servings does not fit.",
+            "examples": [
+              "12 cookies"
+            ],
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "type": "object"
+      },
+      "NewStep": {
+        "additionalProperties": false,
+        "properties": {
+          "instruction": {
+            "description": "Must not be blank.",
+            "examples": [
+              "Simmer for 20 minutes."
+            ],
+            "maxLength": 5000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "section": {
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timer_seconds": {
+            "description": "Lets cooking mode offer a timer for this step.",
+            "examples": [
+              1200
+            ],
+            "format": "int32",
+            "maximum": 86400,
+            "minimum": 1,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "instruction"
+        ],
+        "type": "object"
+      },
+      "Recipe": {
+        "additionalProperties": false,
+        "properties": {
+          "cook_minutes": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "ingredients": {
+            "description": "Always present, possibly empty.",
+            "items": {
+              "$ref": "#/components/schemas/Ingredient"
+            },
+            "type": "array"
+          },
+          "is_favorite": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "prep_minutes": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "servings": {
+            "format": "double",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "source_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "steps": {
+            "description": "Always present, possibly empty.",
+            "items": {
+              "$ref": "#/components/schemas/Step"
+            },
+            "type": "array"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "yield_text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "description",
+          "servings",
+          "yield_text",
+          "prep_minutes",
+          "cook_minutes",
+          "source_url",
+          "source_name",
+          "notes",
+          "is_favorite",
+          "ingredients",
+          "steps",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "Step": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "instruction": {
+            "type": "string"
+          },
+          "position": {
+            "description": "0-based place in the list.",
+            "format": "int32",
+            "type": "integer"
+          },
+          "section": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timer_seconds": {
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "section",
+          "instruction",
+          "timer_seconds"
         ],
         "type": "object"
       },
@@ -188,6 +649,58 @@
           }
         },
         "summary": "Get healthz"
+      }
+    },
+    "/recipes": {
+      "post": {
+        "description": "Saves a recipe with its ingredients and steps in one step: either all of it is stored or none of it. Ingredients and steps are numbered in the order they are sent.",
+        "operationId": "create-recipe",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewRecipe"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recipe"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Create a recipe",
+        "tags": [
+          "recipes"
+        ]
       }
     },
     "/units": {
