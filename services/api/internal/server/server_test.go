@@ -10,7 +10,7 @@ import (
 )
 
 func TestHealthz(t *testing.T) {
-	h := New(slog.New(slog.NewTextHandler(io.Discard, nil)), "test")
+	h := New(slog.New(slog.NewTextHandler(io.Discard, nil)), "test", Deps{})
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
@@ -24,7 +24,7 @@ func TestHealthz(t *testing.T) {
 }
 
 func TestOpenAPIServed(t *testing.T) {
-	h := New(slog.New(slog.NewTextHandler(io.Discard, nil)), "test")
+	h := New(slog.New(slog.NewTextHandler(io.Discard, nil)), "test", Deps{})
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/openapi.json", nil))
