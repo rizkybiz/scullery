@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -31,5 +32,21 @@ func TestOpenAPIServed(t *testing.T) {
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200", rec.Code)
+	}
+}
+
+// The committed openapi.json is the contract the web app generates its types
+// from, so it must match what the server actually serves.
+func TestCommittedOpenAPIIsCurrent(t *testing.T) {
+	want, err := OpenAPI()
+	if err != nil {
+		t.Fatalf("OpenAPI: %v", err)
+	}
+	got, err := os.ReadFile("../../openapi.json")
+	if err != nil {
+		t.Fatalf("read openapi.json: %v (run: make openapi)", err)
+	}
+	if string(got) != string(want) {
+		t.Fatal("openapi.json is out of date; run: make openapi, then commit it")
 	}
 }

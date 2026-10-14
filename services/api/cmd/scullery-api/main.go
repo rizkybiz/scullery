@@ -37,12 +37,23 @@ func run() error {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: cfg.LogLevel}))
 	slog.SetDefault(logger)
 
-	// Admin process: `scullery-api migrate up|down|status`.
+	// Subcommands: `scullery-api migrate up|down|status` (an admin process) and
+	// `scullery-api openapi` (prints the API description; needs no database).
 	if len(os.Args) > 1 {
-		if os.Args[1] != "migrate" || len(os.Args) != 3 {
-			return fmt.Errorf("usage: scullery-api [migrate up|down|status]")
+		const usage = "usage: scullery-api [migrate up|down|status | openapi]"
+		switch {
+		case os.Args[1] == "migrate" && len(os.Args) == 3:
+			return migrate.Run(context.Background(), cfg.DatabaseURL, os.Args[2], os.Stdout)
+		case os.Args[1] == "openapi" && len(os.Args) == 2:
+			spec, err := server.OpenAPI()
+			if err != nil {
+				return err
+			}
+			_, err = os.Stdout.Write(spec)
+			return err
+		default:
+			return fmt.Errorf(usage)
 		}
-		return migrate.Run(context.Background(), cfg.DatabaseURL, os.Args[2], os.Stdout)
 	}
 
 	// Disposability: stop gracefully on SIGINT/SIGTERM.

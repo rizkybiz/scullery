@@ -4,6 +4,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -24,15 +25,43 @@ type Deps struct {
 
 // New builds the root HTTP handler, including middleware.
 func New(logger *slog.Logger, version string, deps Deps) http.Handler {
-	mux := http.NewServeMux()
-
-	cfg := huma.DefaultConfig("Scullery API", version)
-	api := humago.New(mux, cfg)
-
-	registerHealth(api)
+	mux, _ := newAPI(version, deps)
 
 	// Middleware wraps the mux; the first wrapper listed is the outermost.
 	return chain(mux, recoverer(logger), requestLogger(logger))
+}
+
+// newAPI creates the mux and registers every route on it. Both the running
+// server and the OpenAPI generator go through here, so the committed spec can
+// never describe different routes than the server serves.
+func newAPI(version string, deps Deps) (*http.ServeMux, huma.API) {
+	mux := http.NewServeMux()
+	cfg := huma.DefaultConfig("Scullery API", version)
+	// huma's default adds a "$schema" property to every response body and a Link
+	// header pointing at it. We publish openapi.json instead, so drop it: it would
+	// only be noise in responses and in the web app's generated types.
+	cfg.CreateHooks = nil
+	api := humago.New(mux, cfg)
+
+	registerHealth(api)
+	return mux, api
+}
+
+// specVersion is the version written into the committed openapi.json. It is a
+// fixed placeholder, not the build version, so the file only changes when the
+// API does.
+const specVersion = "0.0.0"
+
+// OpenAPI returns the API description as indented JSON. It needs no database:
+// routes are registered but never called. The result is committed as
+// openapi.json (make openapi), and the web app generates its types from it.
+func OpenAPI() ([]byte, error) {
+	_, api := newAPI(specVersion, Deps{})
+	out, err := json.MarshalIndent(api.OpenAPI(), "", "  ")
+	if err != nil {
+		return nil, err
+	}
+	return append(out, '\n'), nil
 }
 
 type healthOutput struct {
