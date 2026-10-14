@@ -4,6 +4,12 @@ import { defineConfig } from 'vitest/config'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  // `define` replaces this name with a literal while building, so the version is
+  // baked into the bundle. CI sets VERSION (for example sha-1a2b3c4); a local run
+  // has none and shows "dev".
+  define: {
+    __WEB_VERSION__: JSON.stringify(process.env['VERSION'] ?? 'dev'),
+  },
   server: {
     // The browser only ever calls same-origin `/api/...`. In production the nginx
     // in this repo's image forwards that to the API container; here in

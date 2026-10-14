@@ -4,7 +4,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-RUN npm run build
+# The build identifier shown in the app (CI passes sha-<commit>).
+ARG VERSION=dev
+RUN VERSION=${VERSION} npm run build
 
 # --- run: nginx serves the files and forwards /api/ to the API ---------------
 FROM nginx:stable-alpine
