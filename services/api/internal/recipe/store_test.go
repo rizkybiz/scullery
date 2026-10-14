@@ -498,3 +498,72 @@ func TestReplaceRollsBackToTheOldRecipeOnFailure(t *testing.T) {
 		t.Errorf("the old recipe was not restored: %+v", after)
 	}
 }
+
+func TestDeleteRemovesTheRecipeAndItsChildrenOnly(t *testing.T) {
+	ctx := context.Background()
+	s := NewStore(dbtest.New(t))
+	doomed, err := s.Create(ctx, NewRecipe{Title: "Doomed", Ingredients: []NewIngredient{{Name: "a"}, {Name: "b"}}, Steps: []NewStep{{Instruction: "x"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	kept, err := s.Create(ctx, NewRecipe{Title: "Kept", Ingredients: []NewIngredient{{Name: "c"}}, Steps: []NewStep{{Instruction: "y"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := s.Delete(ctx, doomed.ID); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+
+	if _, err := s.Get(ctx, doomed.ID); !errors.Is(err, ErrNotFound) {
+		t.Errorf("Get after delete: err = %v, want ErrNotFound", err)
+	}
+	if got, err := s.Get(ctx, kept.ID); err != nil || len(got.Ingredients) != 1 || len(got.Steps) != 1 {
+		t.Errorf("the other recipe was disturbed: %+v, err %v", got, err)
+	}
+	// Children went with it (cascade): only the kept recipe's rows remain.
+	if i, st := count(t, s, "ingredient"), count(t, s, "step"); i != 1 || st != 1 {
+		t.Errorf("rows left = %d ingredients / %d steps, want 1 / 1", i, st)
+	}
+}
+
+func TestDeleteUnknownRecipeIsNotFound(t *testing.T) {
+	s := NewStore(dbtest.New(t))
+
+	if err := s.Delete(context.Background(), uuid.New()); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("err = %v, want ErrNotFound", err)
+	}
+}
+
+func TestDeleteRefusesARecipeUsedAsASubRecipe(t *testing.T) {
+	ctx := context.Background()
+	s := NewStore(dbtest.New(t))
+	dough, err := s.Create(ctx, NewRecipe{Title: "Pizza dough", Ingredients: []NewIngredient{{Name: "flour"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pizza, err := s.Create(ctx, NewRecipe{Title: "Pizza", Ingredients: []NewIngredient{{Name: "pizza dough"}}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The API cannot set sub_recipe_id yet; link them directly.
+	if _, err := s.pool.Exec(ctx, `UPDATE ingredient SET sub_recipe_id = $1 WHERE recipe_id = $2`, dough.ID, pizza.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	err = s.Delete(ctx, dough.ID)
+
+	if !errors.Is(err, ErrInUse) {
+		t.Fatalf("err = %v, want ErrInUse", err)
+	}
+	if got, err := s.Get(ctx, dough.ID); err != nil || len(got.Ingredients) != 1 {
+		t.Errorf("the refused delete changed the recipe: %+v, err %v", got, err)
+	}
+	// Deleting the recipe that uses it is fine, and then the dough can go too.
+	if err := s.Delete(ctx, pizza.ID); err != nil {
+		t.Fatalf("delete pizza: %v", err)
+	}
+	if err := s.Delete(ctx, dough.ID); err != nil {
+		t.Fatalf("delete dough once unused: %v", err)
+	}
+}

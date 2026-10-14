@@ -98,3 +98,8 @@ DELETE FROM ingredient WHERE recipe_id = $1;
 
 -- name: DeleteSteps :exec
 DELETE FROM step WHERE recipe_id = $1;
+
+-- name: DeleteRecipe :execrows
+-- Its ingredients, steps, tag links and tool links go with it (ON DELETE CASCADE).
+-- The one thing that blocks it is another recipe using this one as a sub-recipe.
+DELETE FROM recipe WHERE id = $1;

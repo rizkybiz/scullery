@@ -164,6 +164,20 @@ func (q *Queries) DeleteIngredients(ctx context.Context, recipeID uuid.UUID) err
 	return err
 }
 
+const deleteRecipe = `-- name: DeleteRecipe :execrows
+DELETE FROM recipe WHERE id = $1
+`
+
+// Its ingredients, steps, tag links and tool links go with it (ON DELETE CASCADE).
+// The one thing that blocks it is another recipe using this one as a sub-recipe.
+func (q *Queries) DeleteRecipe(ctx context.Context, id uuid.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteRecipe, id)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const deleteSteps = `-- name: DeleteSteps :exec
 DELETE FROM step WHERE recipe_id = $1
 `

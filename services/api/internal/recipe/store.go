@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/rizkybiz/scullery-api/internal/dbgen"
@@ -14,6 +15,13 @@ import (
 
 // ErrNotFound is returned when no recipe has the requested id.
 var ErrNotFound = errors.New("recipe not found")
+
+// ErrInUse is returned when a recipe cannot be deleted because another recipe
+// uses it as an ingredient (a sub-recipe, such as pizza dough inside a pizza).
+var ErrInUse = errors.New("recipe is used by another recipe")
+
+// foreignKeyViolation is PostgreSQL's error code for breaking a foreign key.
+const foreignKeyViolation = "23503"
 
 // Store saves and loads recipes.
 type Store struct {
@@ -350,4 +358,22 @@ func (s *Store) replace(ctx context.Context, id uuid.UUID, in NewRecipe) (Recipe
 		return Recipe{}, fmt.Errorf("commit: %w", err)
 	}
 	return out, nil
+}
+
+// Delete removes a recipe with its ingredients and steps (and its tag and tool
+// links), or returns ErrNotFound. It returns ErrInUse, and removes nothing, when
+// another recipe uses this one as a sub-recipe.
+func (s *Store) Delete(ctx context.Context, id uuid.UUID) error {
+	n, err := dbgen.New(s.pool).DeleteRecipe(ctx, id)
+
+	var pgErr *pgconn.PgError
+	switch {
+	case errors.As(err, &pgErr) && pgErr.Code == foreignKeyViolation:
+		return ErrInUse
+	case err != nil:
+		return fmt.Errorf("delete recipe: %w", err)
+	case n == 0:
+		return ErrNotFound
+	}
+	return nil
 }
