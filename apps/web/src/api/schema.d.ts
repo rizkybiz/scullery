@@ -144,6 +144,11 @@ export interface components {
              * @example ok
              */
             status: string;
+            /**
+             * @description The build running: a sha-<commit> tag, or dev for a local build.
+             * @example sha-ef246ad
+             */
+            version: string;
         };
         Ingredient: {
             /** Format: uuid */
