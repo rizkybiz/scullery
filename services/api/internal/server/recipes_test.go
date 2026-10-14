@@ -192,3 +192,70 @@ func TestCreateRecipeHidesDatabaseErrors(t *testing.T) {
 		t.Errorf("response leaks the database error: %s", rec.Body)
 	}
 }
+
+func getPath(h http.Handler, path string) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+	return rec
+}
+
+func TestGetRecipeReturnsWhatWasCreated(t *testing.T) {
+	h, _ := newTestServer(t)
+	created := postJSON(t, h, "/recipes", map[string]any{
+		"title":       "Garlic bread",
+		"ingredients": []map[string]any{{"name": "butter", "quantity_min": 2, "unit_code": "tbsp"}, {"name": "garlic"}},
+		"steps":       []map[string]any{{"instruction": "Mix."}, {"instruction": "Bake."}},
+	})
+	if created.Code != http.StatusCreated {
+		t.Fatalf("create status = %d: %s", created.Code, created.Body)
+	}
+	var id struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(created.Body.Bytes(), &id); err != nil {
+		t.Fatal(err)
+	}
+
+	rec := getPath(h, "/recipes/"+id.ID)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200: %s", rec.Code, rec.Body)
+	}
+	if rec.Body.String() != created.Body.String() {
+		t.Errorf("GET differs from the create response\n create: %s\n get:    %s", created.Body, rec.Body)
+	}
+}
+
+func TestGetRecipeUnknownIDIs404(t *testing.T) {
+	h, _ := newTestServer(t)
+
+	rec := getPath(h, "/recipes/0198f3a2-0000-7000-8000-000000000000")
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404: %s", rec.Code, rec.Body)
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/problem+json") {
+		t.Errorf("content type = %q, want problem+json", ct)
+	}
+}
+
+func TestGetRecipeMalformedIDIs422(t *testing.T) {
+	h, _ := newTestServer(t)
+
+	rec := getPath(h, "/recipes/not-a-uuid")
+
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("status = %d, want 422: %s", rec.Code, rec.Body)
+	}
+}
+
+func TestGetRecipeHidesDatabaseErrors(t *testing.T) {
+	h, pool := newTestServer(t)
+	pool.Close()
+
+	rec := getPath(h, "/recipes/0198f3a2-0000-7000-8000-000000000000")
+
+	if rec.Code != http.StatusInternalServerError || strings.Contains(rec.Body.String(), "closed pool") {
+		t.Fatalf("status = %d body = %s, want a generic 500", rec.Code, rec.Body)
+	}
+}

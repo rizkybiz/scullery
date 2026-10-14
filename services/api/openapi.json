@@ -703,6 +703,71 @@
         ]
       }
     },
+    "/recipes/{id}": {
+      "get": {
+        "description": "Returns one recipe with its ingredients and steps, in order.",
+        "operationId": "get-recipe",
+        "parameters": [
+          {
+            "description": "The recipe's id, as returned when it was created.",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The recipe's id, as returned when it was created.",
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Recipe"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          }
+        },
+        "summary": "Get a recipe",
+        "tags": [
+          "recipes"
+        ]
+      }
+    },
     "/units": {
       "get": {
         "description": "Reference data for the ingredient form's unit dropdown.",

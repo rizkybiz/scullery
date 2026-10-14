@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/google/uuid"
 
 	"github.com/rizkybiz/scullery-api/internal/recipe"
 )
@@ -15,6 +16,14 @@ type createRecipeInput struct {
 }
 
 type createRecipeOutput struct {
+	Body recipe.Recipe
+}
+
+type getRecipeInput struct {
+	ID uuid.UUID `path:"id" format:"uuid" doc:"The recipe's id, as returned when it was created."`
+}
+
+type getRecipeOutput struct {
 	Body recipe.Recipe
 }
 
@@ -43,6 +52,27 @@ func registerRecipes(api huma.API, deps Deps) {
 			return nil, huma.Error500InternalServerError("could not save the recipe")
 		}
 		return &createRecipeOutput{Body: saved}, nil
+	})
+
+	huma.Register(api, huma.Operation{
+		OperationID: "get-recipe",
+		Method:      http.MethodGet,
+		Path:        "/recipes/{id}",
+		Summary:     "Get a recipe",
+		Description: "Returns one recipe with its ingredients and steps, in order.",
+		Tags:        []string{"recipes"},
+		Errors:      []int{http.StatusNotFound},
+	}, func(ctx context.Context, in *getRecipeInput) (*getRecipeOutput, error) {
+		found, err := store.Get(ctx, in.ID)
+
+		switch {
+		case errors.Is(err, recipe.ErrNotFound):
+			return nil, huma.Error404NotFound("recipe not found")
+		case err != nil:
+			deps.Logger.ErrorContext(ctx, "get recipe", "id", in.ID, "error", err)
+			return nil, huma.Error500InternalServerError("could not load the recipe")
+		}
+		return &getRecipeOutput{Body: found}, nil
 	})
 }
 
