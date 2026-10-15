@@ -22,6 +22,9 @@ func TestHealthz(t *testing.T) {
 	if body := rec.Body.String(); !strings.Contains(body, `"status":"ok"`) {
 		t.Fatalf("body = %q, want status ok", body)
 	}
+	if body := rec.Body.String(); !strings.Contains(body, `"version":"test"`) {
+		t.Fatalf("body = %q, want the build version", body)
+	}
 }
 
 func TestOpenAPIServed(t *testing.T) {

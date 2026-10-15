@@ -47,7 +47,7 @@ func newAPI(version string, deps Deps) (*http.ServeMux, huma.API) {
 	cfg.CreateHooks = nil
 	api := humago.New(mux, cfg)
 
-	registerHealth(api)
+	registerHealth(api, version)
 	registerUnits(api, deps)
 	registerRecipes(api, deps)
 	return mux, api
@@ -72,14 +72,16 @@ func OpenAPI() ([]byte, error) {
 
 type healthOutput struct {
 	Body struct {
-		Status string `json:"status" example:"ok" doc:"Liveness status"`
+		Status  string `json:"status" example:"ok" doc:"Liveness status"`
+		Version string `json:"version" example:"sha-ef246ad" doc:"The build running: a sha-<commit> tag, or dev for a local build."`
 	}
 }
 
-func registerHealth(api huma.API) {
+func registerHealth(api huma.API, version string) {
 	huma.Get(api, "/healthz", func(_ context.Context, _ *struct{}) (*healthOutput, error) {
 		out := &healthOutput{}
 		out.Body.Status = "ok"
+		out.Body.Version = version
 		return out, nil
 	})
 }
