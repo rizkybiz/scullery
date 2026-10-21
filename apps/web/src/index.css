@@ -74,3 +74,64 @@ body {
   border-top: 3px solid currentColor;
   padding-top: calc(0.9rem - 3px);
 }
+
+/* Recipe list */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.filters input[type='search'] {
+  flex: 1 1 14rem;
+  /* 16px+ stops iOS Safari zooming the page when the field is focused. */
+  font-size: 1rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.recipe-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.recipe-list[aria-busy='true'] {
+  opacity: 0.6;
+}
+
+.recipe-list li + li {
+  border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.recipe-list a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.85rem 0.25rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.recipe-title {
+  font-weight: 600;
+}
+
+.recipe-description,
+.recipe-facts {
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.pager button {
+  min-height: 2.75rem;
+  padding: 0 1rem;
+}
