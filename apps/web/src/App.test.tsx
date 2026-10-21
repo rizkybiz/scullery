@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.tsx'
+import { healthRoute, stubApi } from './test/stubApi.ts'
 
 // Render the app as if the browser were at `url`. MemoryRouter is the router with
 // its "current address" held in memory instead of the address bar.
@@ -19,13 +20,11 @@ function renderAt(url: string) {
 
 describe('routing', () => {
   beforeEach(() => {
-    // The shell shows the API status, so every page makes a health request.
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockImplementation(() =>
-        Promise.resolve(new Response(JSON.stringify({ status: 'ok', version: 'test' }))),
-      ),
-    )
+    // The shell shows the API status and /recipes lists recipes, so both answer.
+    stubApi({
+      ...healthRoute,
+      '/api/recipes': () => ({ body: { recipes: [], total: 0, limit: 20, offset: 0 } }),
+    })
   })
 
   afterEach(() => {
