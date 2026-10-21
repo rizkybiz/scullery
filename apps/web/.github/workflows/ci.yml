@@ -65,8 +65,10 @@ jobs:
       - name: Build
         env:
           REF: ${{ steps.meta.outputs.ref }}
+          SHORT: ${{ steps.meta.outputs.short }}
         run: |
           docker build --pull \
+            --build-arg VERSION="sha-${SHORT}" \
             --label org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY}" \
             --label org.opencontainers.image.revision="${GITHUB_SHA}" \
             -t "${REF}" .

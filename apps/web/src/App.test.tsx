@@ -1,49 +1,55 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { MemoryRouter } from 'react-router'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.tsx'
 
-function renderApp() {
-  // A fresh cache per test so tests cannot leak into each other; retries off so
-  // a failure shows up immediately instead of after several attempts.
+// Render the app as if the browser were at `url`. MemoryRouter is the router with
+// its "current address" held in memory instead of the address bar.
+function renderAt(url: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
-      <App />
+      <MemoryRouter initialEntries={[url]}>
+        <App />
+      </MemoryRouter>
     </QueryClientProvider>,
   )
 }
 
-function respondWith(body: unknown, status = 200) {
-  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status })))
-}
+describe('routing', () => {
+  beforeEach(() => {
+    // The shell shows the API status, so every page makes a health request.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(new Response(JSON.stringify({ status: 'ok', version: 'test' }))),
+      ),
+    )
+  })
 
-describe('App', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
   })
 
-  it('shows the API status when /healthz succeeds', async () => {
-    respondWith({ status: 'ok' })
-    renderApp()
-    expect(await screen.findByText(/API:\s*ok/)).toBeInTheDocument()
+  it('sends / to the recipes page', () => {
+    renderAt('/')
+    expect(screen.getByRole('heading', { name: 'Recipes' })).toBeInTheDocument()
   })
 
-  it('shows that the API is unreachable when the request fails', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')))
-    renderApp()
-    expect(await screen.findByText(/unreachable \(network down\)/)).toBeInTheDocument()
+  it('passes the id in the URL to the recipe page', () => {
+    renderAt('/recipes/abc-123')
+    expect(screen.getByRole('heading', { name: 'Recipe abc-123' })).toBeInTheDocument()
   })
 
-  it('treats an unexpected response body as an error', async () => {
-    respondWith({ nope: true })
-    renderApp()
-    expect(await screen.findByText(/Unexpected response/)).toBeInTheDocument()
+  it('shows a not-found page for unknown URLs, still inside the shell', () => {
+    renderAt('/nope')
+    expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument()
+    expect(screen.getByRole('navigation', { name: 'Main' })).toBeInTheDocument()
   })
 
-  it('treats a non-200 status as an error', async () => {
-    respondWith({}, 503)
-    renderApp()
-    expect(await screen.findByText(/API responded 503/)).toBeInTheDocument()
+  it('marks the current tab', () => {
+    renderAt('/recipes')
+    expect(screen.getByRole('link', { name: 'Recipes' })).toHaveAttribute('aria-current', 'page')
   })
 })
