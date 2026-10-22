@@ -5,6 +5,7 @@ import type { components } from './schema.d.ts'
 // every named body in openapi.json.
 export type RecipeList = components['schemas']['List']
 export type RecipeSummary = components['schemas']['Summary']
+export type Recipe = components['schemas']['Recipe']
 
 export interface ListQuery {
   q: string
@@ -13,9 +14,7 @@ export interface ListQuery {
   offset: number
 }
 
-// The API treats a missing `q` or `favorite` as "no filter", so only send what is
-// set. `favorite` is the string "true" there because the API framework cannot take
-// an optional boolean in a URL.
+// listRecipes returns a list of recipes. Various query parameters are respected
 export async function listRecipes(query: ListQuery, signal: AbortSignal): Promise<RecipeList> {
   const { data, error, response } = await api.GET('/recipes', {
     params: {
@@ -30,6 +29,28 @@ export async function listRecipes(query: ListQuery, signal: AbortSignal): Promis
   })
   if (error) {
     throw new Error(`Could not load recipes (${response.status})`)
+  }
+  return data
+}
+
+// Thrown when the API returns 404 for a specific recipe
+export class RecipeNotFoundError extends Error {}
+
+// getRecipe returns a specific recipe by id from the path parameter
+export async function getRecipe(id: string, signal: AbortSignal): Promise<Recipe> {
+  const { data, error, response } = await api.GET('/recipes/{id}', {
+    params: {
+      path: {
+        id,
+      },
+    },
+    signal,
+  })
+  if (response.status === 404) {
+    throw new RecipeNotFoundError('Recipe not found.')
+  }
+  if (error) {
+    throw new Error(`Could not load the recipe (${response.status})`)
   }
   return data
 }
