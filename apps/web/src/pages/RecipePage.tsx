@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { getRecipe, RecipeNotFoundError } from '../api/recipes.ts'
 
@@ -8,16 +8,16 @@ export default function RecipePage() {
   if (!id) {
     return <p>No recipe id in the URL.</p>
   }
-  return <RecipeView id={id}/>
+  return <RecipeView id={id} />
 }
 
-function RecipeView({ id }: {id: string}) {
+function RecipeView({ id }: { id: string }) {
   const recipe = useQuery({
     queryKey: ['recipe', id],
-    queryFn: ({signal}) => getRecipe(id, signal),
+    queryFn: ({ signal }) => getRecipe(id, signal),
   })
   if (recipe.isPending) {
-    return <p>Loading...</p>
+    return <p>Loading…</p>
   }
   if (recipe.isError) {
     if (recipe.error instanceof RecipeNotFoundError) {
@@ -31,7 +31,9 @@ function RecipeView({ id }: {id: string}) {
     return (
       <>
         <p role="alert">{recipe.error.message}</p>
-        <button type="button" onClick={() => void recipe.refetch()}>Try again</button>
+        <button type="button" onClick={() => void recipe.refetch()}>
+          Try again
+        </button>
       </>
     )
   }

@@ -38,10 +38,10 @@ export class RecipeNotFoundError extends Error {}
 
 // getRecipe returns a specific recipe by id from the path parameter
 export async function getRecipe(id: string, signal: AbortSignal): Promise<Recipe> {
-  const { data, error, response} = await api.GET('/recipes/{id}', {
+  const { data, error, response } = await api.GET('/recipes/{id}', {
     params: {
       path: {
-        id
+        id,
       },
     },
     signal,
