@@ -144,7 +144,8 @@ describe('RecipesPage', () => {
   it('shows an error and lets you try again', async () => {
     let failing = true
     stubApi({
-      '/api/recipes': () => (failing ? { status: 500, body: { title: 'oops' } } : page([recipe(1)])),
+      '/api/recipes': () =>
+        failing ? { status: 500, body: { title: 'oops' } } : page([recipe(1)]),
     })
     renderAt('/recipes')
 
