@@ -88,9 +88,7 @@ export default function RecipesPage() {
 
       {recipes.isSuccess && (
         <>
-          {recipes.data.total === 0 && (
-            <p>{filtering ? 'No recipes match.' : 'No recipes yet.'}</p>
-          )}
+          {recipes.data.total === 0 && <p>{filtering ? 'No recipes match.' : 'No recipes yet.'}</p>}
 
           {recipes.data.total > 0 && recipes.data.recipes.length === 0 && (
             <p>

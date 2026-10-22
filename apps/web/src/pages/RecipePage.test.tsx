@@ -51,8 +51,20 @@ function recipe(overrides: Partial<Recipe> = {}): Recipe {
       },
     ],
     steps: [
-      { id: 's1', position: 0, section: null, instruction: 'Soften the garlic.', timer_seconds: null },
-      { id: 's2', position: 1, section: null, instruction: 'Simmer for 20 minutes.', timer_seconds: 1200 },
+      {
+        id: 's1',
+        position: 0,
+        section: null,
+        instruction: 'Soften the garlic.',
+        timer_seconds: null,
+      },
+      {
+        id: 's2',
+        position: 1,
+        section: null,
+        instruction: 'Simmer for 20 minutes.',
+        timer_seconds: 1200,
+      },
     ],
     created_at: '2026-10-21T00:00:00Z',
     updated_at: '2026-10-21T00:00:00Z',
@@ -113,7 +125,9 @@ describe('RecipePage', () => {
     stubApi({ [`/api/recipes/${ID}`]: () => ({ body: recipe() }) })
     renderAt(`/recipes/${ID}`)
 
-    expect(await screen.findByRole('heading', { level: 2, name: 'Ingredients' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Ingredients' }),
+    ).toBeInTheDocument()
     expect(screen.getByText('2-3 clove garlic, minced')).toBeInTheDocument()
     expect(screen.getByText('1 can crushed tomatoes')).toBeInTheDocument()
 
@@ -154,7 +168,10 @@ describe('RecipePage', () => {
     renderAt(`/recipes/${ID}`)
 
     expect(await screen.findByRole('heading', { name: 'Recipe not found' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Back to recipes' })).toHaveAttribute('href', '/recipes')
+    expect(screen.getByRole('link', { name: 'Back to recipes' })).toHaveAttribute(
+      'href',
+      '/recipes',
+    )
   })
 
   it('shows other failures as an error and lets you try again', async () => {
