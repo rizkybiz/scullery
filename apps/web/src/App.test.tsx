@@ -36,9 +36,15 @@ describe('routing', () => {
     expect(screen.getByRole('heading', { name: 'Recipes' })).toBeInTheDocument()
   })
 
-  it('passes the id in the URL to the recipe page', () => {
+  it('opens the recipe whose id is in the URL', async () => {
+    stubApi({
+      ...healthRoute,
+      '/api/recipes/abc-123': () => ({
+        body: { id: 'abc-123', title: 'Pasta', description: '', ingredients: [], steps: [] },
+      }),
+    })
     renderAt('/recipes/abc-123')
-    expect(screen.getByRole('heading', { name: 'Recipe abc-123' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Pasta' })).toBeInTheDocument()
   })
 
   it('shows a not-found page for unknown URLs, still inside the shell', () => {
