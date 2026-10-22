@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install, typecheck, lint, test and build. Runs identically locally and in CI.
+# Install, typecheck, lint, check formatting, test and build. Runs identically locally and in CI.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -11,6 +11,9 @@ npm run typecheck
 
 echo "== lint"
 npm run lint
+
+echo "== format"
+npm run format:check
 
 echo "== test"
 npm test

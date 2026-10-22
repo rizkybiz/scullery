@@ -38,4 +38,5 @@ ln -s "$root/node_modules" node_modules
 # Scripts are optional until the project defines them (--if-present).
 npm run --if-present typecheck || fail "typecheck failed"
 npm run --if-present lint      || fail "lint failed"
+npm run --if-present format:check || fail "formatting differs (run: npm run format, then re-stage)"
 CI=true npm test --if-present  || fail "tests failed"

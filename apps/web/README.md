@@ -10,6 +10,7 @@ npm run dev       # http://localhost:5173, proxies /api to http://localhost:8080
 npm test          # unit tests (Vitest + Testing Library)
 npm run typecheck # TypeScript, strict mode
 npm run lint      # oxlint
+npm run format    # Prettier: rewrite files to the house style (format:check only reports)
 npm run build     # production build into dist/
 ```
 
