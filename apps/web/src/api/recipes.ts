@@ -36,6 +36,9 @@ export async function listRecipes(query: ListQuery, signal: AbortSignal): Promis
 // Thrown when the API returns 404 for a specific recipe
 export class RecipeNotFoundError extends Error {}
 
+// Thrown when the API returns a 409 for a recipe in use
+export class RecipeInUseError extends Error {}
+
 // getRecipe returns a specific recipe by id from the path parameter
 export async function getRecipe(id: string, signal: AbortSignal): Promise<Recipe> {
   const { data, error, response } = await api.GET('/recipes/{id}', {
@@ -47,10 +50,30 @@ export async function getRecipe(id: string, signal: AbortSignal): Promise<Recipe
     signal,
   })
   if (response.status === 404) {
-    throw new RecipeNotFoundError('Recipe not found.')
+    throw new RecipeNotFoundError(error?.detail ?? 'Recipe not found.')
   }
   if (error) {
     throw new Error(`Could not load the recipe (${response.status})`)
   }
   return data
+}
+
+// deleteRecipe removes a specific recipe
+export async function deleteRecipe(id: string) {
+  const { error, response } = await api.DELETE('/recipes/{id}', {
+    params: {
+      path: {
+        id,
+      },
+    },
+  })
+  if (response.status === 404) {
+    throw new RecipeNotFoundError(error?.detail ?? 'Recipe not found.')
+  }
+  if (response.status === 409) {
+    throw new RecipeInUseError(error?.detail ?? 'This recipe is used in another recipe.')
+  }
+  if (error) {
+    throw new Error(`Could not delete the recipe (${response.status})`)
+  }
 }
