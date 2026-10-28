@@ -1,6 +1,7 @@
 import { Link, useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { getRecipe, RecipeNotFoundError } from '../api/recipes.ts'
+import RecipeActions from '../components/RecipeActions.tsx'
 
 // this function renders a single recipe to the browser
 export default function RecipePage() {
@@ -38,7 +39,9 @@ function RecipeView({ id }: { id: string }) {
     )
   }
 
+  // simplifying recipe data access
   const r = recipe.data
+  // simplifying presentation of servings and prep/cook times
   const facts = [
     r.servings !== null ? `Serves ${r.servings}` : null,
     r.prep_minutes !== null ? `Prep ${r.prep_minutes} min` : null,
@@ -48,10 +51,13 @@ function RecipeView({ id }: { id: string }) {
   return (
     <>
       <Link to="/recipes">All recipes</Link>
-      <h1>
-        {r.title}
-        {r.is_favorite && <span aria-label="Favorite"> ★</span>}
-      </h1>
+      <div className="recipe-header">
+        <h1>
+          {r.title}
+          {r.is_favorite && <span aria-label="Favorite"> ★</span>}
+        </h1>
+        <RecipeActions id={r.id} />
+      </div>
       {r.description && <p>{r.description}</p>}
       {facts.length > 0 && <p>{facts.join(' · ')}</p>}
       {r.ingredients.length > 0 && (
