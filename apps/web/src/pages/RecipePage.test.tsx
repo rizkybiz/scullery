@@ -153,6 +153,13 @@ describe('RecipePage', () => {
     expect(screen.queryByText(/Serves/)).not.toBeInTheDocument()
   })
 
+  it('offers the recipe actions menu', async () => {
+    stubApi({ [`/api/recipes/${ID}`]: () => ({ body: recipe() }) })
+    renderAt(`/recipes/${ID}`)
+
+    expect(await screen.findByRole('button', { name: 'Recipe actions' })).toBeInTheDocument()
+  })
+
   it('links back to the list', async () => {
     stubApi({ [`/api/recipes/${ID}`]: () => ({ body: recipe() }) })
     renderAt(`/recipes/${ID}`)
