@@ -1,6 +1,7 @@
 import { vi } from 'vitest'
 
-type Handler = (url: URL) => { status?: number; body: unknown }
+// `body` is left out for responses that have none, such as 204 No Content.
+type Handler = (url: URL) => { status?: number; body?: unknown }
 
 // Replaces `fetch` with a fake API for the duration of a test. `routes` maps a
 // path such as '/api/recipes' to a function that builds the response from the
@@ -15,7 +16,9 @@ export function stubApi(routes: Record<string, Handler>) {
       return Promise.reject(new Error(`unexpected request: ${url.pathname}`))
     }
     const { status = 200, body } = handler(url)
-    return Promise.resolve(new Response(JSON.stringify(body), { status }))
+    return Promise.resolve(
+      new Response(body === undefined ? null : JSON.stringify(body), { status }),
+    )
   })
   vi.stubGlobal('fetch', fake)
   return fake
