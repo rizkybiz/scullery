@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router'
 import Shell from './Shell.tsx'
+import NewRecipePage from './pages/NewRecipePage.tsx'
 import NotFoundPage from './pages/NotFoundPage.tsx'
 import RecipePage from './pages/RecipePage.tsx'
 import RecipesPage from './pages/RecipesPage.tsx'
@@ -15,6 +16,7 @@ export default function App() {
             redirect at it and nothing else changes. */}
         <Route index element={<Navigate to="/recipes" replace />} />
         <Route path="recipes" element={<RecipesPage />} />
+        <Route path="recipes/new" element={<NewRecipePage />} />
         <Route path="recipes/:id" element={<RecipePage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
