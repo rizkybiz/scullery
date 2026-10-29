@@ -6,6 +6,8 @@ import type { components } from './schema.d.ts'
 export type RecipeList = components['schemas']['List']
 export type RecipeSummary = components['schemas']['Summary']
 export type Recipe = components['schemas']['Recipe']
+export type NewRecipe = components['schemas']['NewRecipe']
+export type ErrorDetail = components['schemas']['ErrorDetail']
 
 export interface ListQuery {
   q: string
@@ -76,4 +78,28 @@ export async function deleteRecipe(id: string) {
   if (error) {
     throw new Error(`Could not delete the recipe (${response.status})`)
   }
+}
+
+// Thrown when the API returns a 422: the recipe was well-formed JSON but broke a
+// rule. `errors` says which field and why; `location` looks like 'body.title'.
+export class RecipeInvalidError extends Error {
+  errors: ErrorDetail[]
+  constructor(message: string, errors: ErrorDetail[]) {
+    super(message)
+    this.errors = errors
+  }
+}
+
+// createRecipe takes a body shaped like NewRecipe and creates a new recipe.
+export async function createRecipe(recipe: NewRecipe): Promise<Recipe> {
+  const { data, error, response } = await api.POST('/recipes', {
+    body: recipe,
+  })
+  if (response.status === 422) {
+    throw new RecipeInvalidError(error?.detail ?? 'The recipe has errors', error?.errors ?? [])
+  }
+  if (error) {
+    throw new Error(`Could not create the recipe (${response.status})`)
+  }
+  return data
 }
