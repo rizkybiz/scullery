@@ -71,6 +71,14 @@ describe('RecipesPage', () => {
     expect(screen.getByLabelText('Favorite')).toBeInTheDocument()
   })
 
+  it('links to the new recipe form', async () => {
+    stubApi({ '/api/recipes': () => page([recipe(1)]) })
+    renderAt('/recipes')
+
+    expect(screen.getByRole('link', { name: 'New recipe' })).toHaveAttribute('href', '/recipes/new')
+    await screen.findByText('Recipe 1')
+  })
+
   it('says so when there are no recipes at all', async () => {
     stubApi({ '/api/recipes': () => page([]) })
     renderAt('/recipes')
