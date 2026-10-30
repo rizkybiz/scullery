@@ -9,7 +9,7 @@ export type Recipe = components['schemas']['Recipe']
 export type NewRecipe = components['schemas']['NewRecipe']
 export type ErrorDetail = components['schemas']['ErrorDetail']
 
-export interface ListQuery {
+export type ListQuery = {
   q: string
   favoritesOnly: boolean
   limit: number
