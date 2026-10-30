@@ -55,7 +55,12 @@ export default function RecipesPage() {
 
   return (
     <>
-      <h1>Recipes</h1>
+      <div className="recipe-header">
+        <h1>Recipes</h1>
+        <Link to="/recipes/new" className="button" aria-label="New recipe">
+          +
+        </Link>
+      </div>
 
       <div className="filters">
         <input
