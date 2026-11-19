@@ -14,7 +14,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "preview": "vite preview",
-    "gen:api": "openapi-typescript ../scullery-api/openapi.json -o src/api/schema.d.ts",
+    "gen:api": "openapi-typescript ../../services/api/openapi.json -o src/api/schema.d.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
