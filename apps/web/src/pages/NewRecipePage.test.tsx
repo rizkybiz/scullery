@@ -1,10 +1,26 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { stubApi } from '../test/stubApi.ts'
 import NewRecipePage from './NewRecipePage.tsx'
+
+const units = [
+  { code: 'cup', name: 'cup', dimension: 'volume', base_factor: 236.588236 },
+  { code: 'tbsp', name: 'tablespoon', dimension: 'volume', base_factor: 14.786765 },
+  { code: 'clove', name: 'clove', dimension: 'count', base_factor: null },
+]
+
+// stubApi, plus the units list every render of the form now fetches.
+function stubForm(routes: Parameters<typeof stubApi>[0]) {
+  return stubApi({ '/api/units': () => ({ body: { units } }), ...routes })
+}
+
+// The POSTs the page made (the units fetch is a GET, so it is left out).
+function posts(fake: ReturnType<typeof stubApi>) {
+  return fake.mock.calls.filter(([input]) => (input as Request).method === 'POST')
+}
 
 const NEW_ID = '01a15eb1-6431-756c-aa9b-c2060b5162d2'
 
@@ -50,7 +66,7 @@ describe('NewRecipePage', () => {
   })
 
   it('posts what was typed, with numbers as numbers', async () => {
-    const fake = stubApi({ '/api/recipes': () => ({ status: 201, body: created }) })
+    const fake = stubForm({ '/api/recipes': () => ({ status: 201, body: created }) })
     renderForm()
 
     await userEvent.type(screen.getByLabelText('Title'), 'Weeknight marinara')
@@ -73,7 +89,7 @@ describe('NewRecipePage', () => {
   })
 
   it('does not send an empty number field as 0', async () => {
-    const fake = stubApi({ '/api/recipes': () => ({ status: 201, body: created }) })
+    const fake = stubForm({ '/api/recipes': () => ({ status: 201, body: created }) })
     renderForm()
 
     await userEvent.type(screen.getByLabelText('Title'), 'Toast')
@@ -89,7 +105,7 @@ describe('NewRecipePage', () => {
   })
 
   it('trims the title', async () => {
-    const fake = stubApi({ '/api/recipes': () => ({ status: 201, body: created }) })
+    const fake = stubForm({ '/api/recipes': () => ({ status: 201, body: created }) })
     renderForm()
 
     await userEvent.type(screen.getByLabelText('Title'), '  Toast  ')
@@ -100,7 +116,7 @@ describe('NewRecipePage', () => {
   })
 
   it('goes to the new recipe once it is saved', async () => {
-    stubApi({ '/api/recipes': () => ({ status: 201, body: created }) })
+    stubForm({ '/api/recipes': () => ({ status: 201, body: created }) })
     renderForm()
 
     await userEvent.type(screen.getByLabelText('Title'), 'Weeknight marinara')
@@ -122,7 +138,7 @@ describe('NewRecipePage', () => {
   })
 
   it('asks for a title without calling the API when it is blank', async () => {
-    const fake = stubApi({ '/api/recipes': () => ({ status: 201, body: created }) })
+    const fake = stubForm({ '/api/recipes': () => ({ status: 201, body: created }) })
     renderForm()
 
     await userEvent.type(screen.getByLabelText('Title'), '   ')
@@ -130,7 +146,7 @@ describe('NewRecipePage', () => {
 
     expect(await screen.findByText('Title is required')).toBeInTheDocument()
     expect(screen.getByLabelText('Title')).toHaveAccessibleDescription('Title is required')
-    expect(fake).not.toHaveBeenCalled()
+    expect(posts(fake)).toHaveLength(0)
 
     // The message goes away once there is a title, and the form can be saved.
     await userEvent.type(screen.getByLabelText('Title'), 'Toast')
@@ -141,7 +157,7 @@ describe('NewRecipePage', () => {
 
   it('shows the API’s complaint next to the field and stays on the form', async () => {
     // Servings below zero passes the browser's checks but not the API's.
-    stubApi({
+    stubForm({
       '/api/recipes': () => ({
         status: 422,
         body: {
@@ -167,7 +183,7 @@ describe('NewRecipePage', () => {
   })
 
   it('shows any other failure as an alert and keeps what was typed', async () => {
-    stubApi({ '/api/recipes': () => ({ status: 500, body: { title: 'oops', status: 500 } }) })
+    stubForm({ '/api/recipes': () => ({ status: 500, body: { title: 'oops', status: 500 } }) })
     renderForm()
 
     await userEvent.type(screen.getByLabelText('Title'), 'Toast')
@@ -175,5 +191,146 @@ describe('NewRecipePage', () => {
 
     expect(await screen.findByRole('alert')).toBeInTheDocument()
     expect(screen.getByLabelText('Title')).toHaveValue('Toast')
+  })
+})
+
+// The <li> rows of the ingredient list.
+function ingredientRows() {
+  return within(screen.getByRole('list', { name: 'Ingredients' })).getAllByRole('listitem')
+}
+
+describe('NewRecipePage ingredient rows', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('starts with one empty row of structured fields', () => {
+    stubForm({})
+    renderForm()
+
+    expect(screen.getByRole('heading', { level: 2, name: 'Ingredients' })).toBeInTheDocument()
+    const rows = ingredientRows()
+    expect(rows).toHaveLength(1)
+    for (const label of ['Quantity', 'Unit', 'Ingredient', 'Preparation']) {
+      expect(within(rows[0]!).getByLabelText(label)).toBeInTheDocument()
+    }
+    expect(screen.getByRole('button', { name: 'Add ingredient' })).toBeInTheDocument()
+  })
+
+  it('fills the unit dropdown from the API, with "No unit" first', async () => {
+    stubForm({})
+    renderForm()
+
+    const unit = within(ingredientRows()[0]!).getByLabelText('Unit')
+    await within(unit).findByRole('option', { name: 'tablespoon' })
+    const names = within(unit)
+      .getAllByRole('option')
+      .map((option) => option.textContent)
+    expect(names).toEqual(['No unit', 'cup', 'tablespoon', 'clove'])
+  })
+
+  it('adds a row and removes a row', async () => {
+    stubForm({})
+    renderForm()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add ingredient' }))
+    expect(ingredientRows()).toHaveLength(2)
+
+    await userEvent.click(within(ingredientRows()[0]!).getByRole('button', { name: 'Remove' }))
+    expect(ingredientRows()).toHaveLength(1)
+  })
+
+  it('keeps what was typed in the other rows when one is removed', async () => {
+    stubForm({})
+    renderForm()
+    await userEvent.type(within(ingredientRows()[0]!).getByLabelText('Ingredient'), 'flour')
+    await userEvent.click(screen.getByRole('button', { name: 'Add ingredient' }))
+    await userEvent.type(within(ingredientRows()[1]!).getByLabelText('Ingredient'), 'sugar')
+
+    await userEvent.click(within(ingredientRows()[0]!).getByRole('button', { name: 'Remove' }))
+
+    expect(ingredientRows()).toHaveLength(1)
+    expect(within(ingredientRows()[0]!).getByLabelText('Ingredient')).toHaveValue('sugar')
+  })
+
+  it('posts the ingredients in order, with the unit as its code', async () => {
+    const fake = stubForm({ '/api/recipes': () => ({ status: 201, body: created }) })
+    renderForm()
+    await userEvent.type(screen.getByLabelText('Title'), 'Shortbread')
+
+    const first = ingredientRows()[0]!
+    await userEvent.type(within(first).getByLabelText('Quantity'), '2')
+    await within(first).findByRole('option', { name: 'cup' })
+    await userEvent.selectOptions(within(first).getByLabelText('Unit'), 'cup')
+    await userEvent.type(within(first).getByLabelText('Ingredient'), 'flour')
+    await userEvent.type(within(first).getByLabelText('Preparation'), 'sifted')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Add ingredient' }))
+    await userEvent.type(within(ingredientRows()[1]!).getByLabelText('Ingredient'), 'salt')
+    await userEvent.click(screen.getByRole('button', { name: 'Save Recipe' }))
+
+    await screen.findByText(/Detail page/)
+    const { json } = await lastBody(fake)
+    const ingredients = (json as { ingredients: Record<string, unknown>[] }).ingredients
+    expect(ingredients[0]).toMatchObject({
+      quantity_min: 2,
+      unit_code: 'cup',
+      name: 'flour',
+      preparation: 'sifted',
+    })
+    expect(ingredients[1]).toMatchObject({ name: 'salt' })
+    // Left blank means unknown: absent or null, never 0 or ''.
+    for (const key of ['quantity_min', 'unit_code', 'preparation']) {
+      expect(ingredients[1]![key] ?? null).toBeNull()
+    }
+  })
+
+  it('leaves out a row that was never filled in', async () => {
+    const fake = stubForm({ '/api/recipes': () => ({ status: 201, body: created }) })
+    renderForm()
+    await userEvent.type(screen.getByLabelText('Title'), 'Toast')
+    await userEvent.click(screen.getByRole('button', { name: 'Save Recipe' }))
+
+    await screen.findByText(/Detail page/)
+    const { json } = await lastBody(fake)
+    expect((json as { ingredients?: unknown[] }).ingredients ?? []).toHaveLength(0)
+  })
+
+  it('asks for a name, without calling the API, when a row has details but no name', async () => {
+    const fake = stubForm({ '/api/recipes': () => ({ status: 201, body: created }) })
+    renderForm()
+    await userEvent.type(screen.getByLabelText('Title'), 'Toast')
+    await userEvent.type(within(ingredientRows()[0]!).getByLabelText('Quantity'), '2')
+    await userEvent.click(screen.getByRole('button', { name: 'Save Recipe' }))
+
+    const row = ingredientRows()[0]!
+    expect(await within(row).findByText('Ingredient is required')).toBeInTheDocument()
+    expect(within(row).getByLabelText('Ingredient')).toHaveAccessibleDescription(
+      'Ingredient is required',
+    )
+    expect(posts(fake)).toHaveLength(0)
+  })
+
+  it('shows an API complaint on the row it is about, even after blank rows were skipped', async () => {
+    // Row 1 is blank and not sent, so the API's "ingredients[0]" is the SECOND row on screen.
+    stubForm({
+      '/api/recipes': () => ({
+        status: 422,
+        body: {
+          title: 'Unprocessable Entity',
+          status: 422,
+          detail: 'validation failed',
+          errors: [{ location: 'body.ingredients[0].name', message: 'name is no good' }],
+        },
+      }),
+    })
+    renderForm()
+    await userEvent.type(screen.getByLabelText('Title'), 'Toast')
+    await userEvent.click(screen.getByRole('button', { name: 'Add ingredient' }))
+    await userEvent.type(within(ingredientRows()[1]!).getByLabelText('Ingredient'), 'flour')
+    await userEvent.click(screen.getByRole('button', { name: 'Save Recipe' }))
+
+    expect(await within(ingredientRows()[1]!).findByText('name is no good')).toBeInTheDocument()
+    expect(within(ingredientRows()[0]!).queryByText('name is no good')).not.toBeInTheDocument()
   })
 })

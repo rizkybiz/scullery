@@ -1,8 +1,11 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState, type SubmitEvent } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
-import FormField from '../components/FormField.tsx'
 import { createRecipe, RecipeInvalidError, type NewRecipe } from '../api/recipes.ts'
+import { listUnits } from '../api/units.ts'
+import FormField from '../components/FormField.tsx'
+import IngredientRows from '../components/IngredientRows.tsx'
+import { newIngredientRow, type IngredientRow } from '../forms/ingredientRow.ts'
 
 // FormState is here to simplify manipulation of the form data
 type FormState = {
@@ -32,6 +35,11 @@ function toNewRecipe(data: FormState): NewRecipe {
     cook_minutes: strToNumOrNull(data.cookTime),
   }
 }
+
+// toNewIngredient is a helper function which takes an ingredient row in
+// and returns a NewIngredient for the POST call.
+function toNewIngredient()
+
 // NewRecipePage is the "add a recipe" form, shown at /recipes/new.
 export default function NewRecipePage() {
   const [formData, setFormData] = useState<FormState>({
@@ -41,6 +49,7 @@ export default function NewRecipePage() {
     prepTime: '',
     cookTime: '',
   })
+  const [rows, setRows] = useState<IngredientRow[]>([newIngredientRow()])
   const set = (name: keyof typeof formData) => (v: string) =>
     setFormData({ ...formData, [name]: v })
   const queryClient = useQueryClient()
@@ -56,6 +65,11 @@ export default function NewRecipePage() {
   // Set when a submit was stopped because the title was blank. The message only
   // shows while the title is still blank, so it disappears once the user types.
   const [titleMissing, setTitleMissing] = useState(false)
+
+  const units = useQuery({
+    queryKey: ['units'],
+    queryFn: ({ signal }) => listUnits(signal),
+  })
 
   function handleSubmit(event: SubmitEvent) {
     event.preventDefault()
@@ -117,6 +131,12 @@ export default function NewRecipePage() {
           type="number"
           value={formData.cookTime}
           onChange={set('cookTime')}
+        />
+        <IngredientRows
+          rows={rows}
+          onChange={setRows}
+          units={units.data ?? []}
+          errorFor={() => undefined}
         />
         <button type="submit" disabled={create.isPending}>
           {create.isPending ? 'Saving…' : 'Save Recipe'}
