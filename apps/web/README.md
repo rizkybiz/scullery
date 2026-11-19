@@ -126,35 +126,14 @@ npm run start     # serve the production build (run build first)
 
 The app does not call the API yet. The server-only API client, and the
 `SCULLERY_API_URL` setting that points it at the Go service, arrive in a later
-commit of this port (see D3). The "Container image" and "CI" sections below still
-describe the Vite app and are removed in the next commit.
+commit of this port (see D3).
 
-## Container image
+## Deployment and CI
 
-`Dockerfile` builds the app with Node and serves it with nginx. Configuration is by
-environment variable:
-
-| Variable | Default | Meaning |
-|---|---|---|
-| `API_UPSTREAM` | `http://api:8080` | Where nginx forwards `/api/` (the prefix is stripped) |
-
-## CI
-
-GitHub Actions (`.github/workflows/ci.yml`) runs on the self-hosted `docker-build`
-runner. The logic lives in `scripts/ci/` so it runs the same locally:
-
-| Check | Local command |
-|---|---|
-| install, typecheck, lint, test, build | `scripts/ci/verify.sh` |
-| Conventional Commits for every commit in a PR | `scripts/ci/check-commits.sh <base> <head>` |
-| Built image run beside the published API image: page, deep-link fallback, caching headers, `/api` proxy | `scripts/ci/image-checks.sh <image>` |
-
-- **Pull requests** build and test but never publish.
-- **Pushes to `main`** also push the image to `registry.example.com/scullery/web`
-  as an immutable `sha-<short>` tag and a moving `main` tag. The run summary shows the
-  digest; **deploy by pinning the `sha-` tag**, never `main`.
-- `ZOT_CI_PASSWORD` (repository secret) is the registry password for the `ci` user.
-- Dependabot opens weekly update PRs (npm minor/patch updates are grouped into one).
+The app is built and served by Vercel, so there is no container image to build.
+CI on GitHub-hosted runners is not set up yet. `scripts/ci/check-commits.sh <base> <head>`
+checks that every commit in a range follows Conventional Commits and is the piece
+that CI will reuse.
 
 ## Contributing
 - One-time per clone: enable the versioned git hooks (Conventional Commit messages; staged-snapshot checks before each commit):
