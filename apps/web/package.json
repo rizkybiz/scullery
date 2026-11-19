@@ -17,6 +17,8 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@vercel/oidc": "4.0.9",
+    "google-auth-library": "11.3.4",
     "next": "16.4.6",
     "openapi-fetch": "0.17.0",
     "react": "19.3.0",

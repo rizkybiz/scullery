@@ -1,5 +1,6 @@
 import 'server-only'
 import createClient from 'openapi-fetch'
+import { getIdToken } from './gcp-auth.ts'
 import type { paths } from './schema.d.ts'
 
 // The one place this app talks to the Scullery API.
@@ -17,11 +18,12 @@ import type { paths } from './schema.d.ts'
 
 type ApiClient = ReturnType<typeof createClient<paths>>
 
-// Headers the API requires on every request. Empty for now: the API runs on the
-// local network. When it moves behind Cloud Run's IAM check, this is the one place
-// that attaches the caller's identity token, so no other code changes.
-async function authHeaders(): Promise<Record<string, string>> {
-  return {}
+// Headers the API requires on every request. Empty when the API runs on the local
+// network. When it sits behind Cloud Run's IAM check, this adds the ID token that proves
+// the request comes from our Vercel project (see gcp-auth.ts); no other code changes.
+async function authHeaders(baseUrl: string): Promise<Record<string, string>> {
+  const token = await getIdToken(baseUrl)
+  return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
 let client: ApiClient | undefined
@@ -46,7 +48,7 @@ export function getApi(): ApiClient {
     // The wrapper looks up `globalThis.fetch` on every call and adds the auth
     // headers to the request the client has built.
     fetch: async (request) => {
-      for (const [name, value] of Object.entries(await authHeaders())) {
+      for (const [name, value] of Object.entries(await authHeaders(baseUrl))) {
         request.headers.set(name, value)
       }
       return globalThis.fetch(request)

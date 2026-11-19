@@ -58,6 +58,13 @@ requests only from this app.
   Pages and actions stay thin.
 - _Config:_ the API address is `SCULLERY_API_URL`, with no `NEXT_PUBLIC_` prefix
   (that prefix would bundle it into browser JavaScript).
+- _Signing in to Cloud Run:_ `gcp-auth.ts` turns a Vercel OIDC token into a Google ID token
+  for the API's URL (Vercel token, Google STS, a service account, ID token; see
+  `infra/terraform`) and the API client adds it as `Authorization: Bearer`. No secret is
+  stored. Tokens are cached per audience until five minutes before they expire, and a burst
+  of requests shares one exchange. With none of the four `GCP_*` variables set nothing is
+  added (local development); with only some set, it fails loudly. Checked against a real
+  Cloud Run service: 200 with a valid identity, 401 for a token meant for another audience.
 
 **D4. The create-recipe form is a client component**
 
@@ -178,6 +185,10 @@ apps/web/src/
   (the `minutes` profile's 5 minute client window), so history navigation can show a page
   the browser already has. Opening a deleted recipe's page that way is harmless: deleting
   again counts as success.
+- **The Vercel OIDC token inside a cached function is untested:** on Vercel the token arrives
+  with the request, but `use cache` functions (`listRecipes`, `getRecipe`) run without request
+  data, so whether they can still fetch it there is unknown. Locally the token comes from an
+  environment variable, which hides the question. It has to be tested on a Vercel deployment.
 - **Not yet tested on Vercel:** `use cache` is in-memory per deployment instance by default,
   so whether `updateTag` reaches every instance of a serverless deployment has to be
   measured there, not assumed from `next start`.
