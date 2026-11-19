@@ -12,7 +12,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
-    "gen:api": "openapi-typescript ../../services/api/openapi.json -o src/api/schema.d.ts",
+    "gen:api": "openapi-typescript ../../services/api/openapi.json -o src/lib/api/schema.d.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

@@ -124,9 +124,22 @@ npm run build     # production build into .next/
 npm run start     # serve the production build (run build first)
 ```
 
-The app does not call the API yet. The server-only API client, and the
-`SCULLERY_API_URL` setting that points it at the Go service, arrive in a later
-commit of this port (see D3).
+### Running against the API locally
+
+The app calls the Scullery API from the server (see D3). Start the API, then tell
+the app where it is:
+
+```sh
+(cd ../../services/api && docker compose up --build -d)   # Postgres + migration + API on :8080
+cp .env.example .env.local                                # SCULLERY_API_URL=http://localhost:8080
+npm run dev
+```
+
+| Variable | Meaning |
+|---|---|
+| `SCULLERY_API_URL` | Base URL of the Scullery API. Server-only: no `NEXT_PUBLIC_` prefix. If it is missing, the first API call fails with a message saying so. |
+
+Stop the API with `docker compose down` (add `-v` to also delete the database).
 
 ## Deployment and CI
 

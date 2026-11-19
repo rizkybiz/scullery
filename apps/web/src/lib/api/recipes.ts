@@ -1,4 +1,4 @@
-import { api } from './client.ts'
+import { getApi } from './client.ts'
 import type { components } from './schema.d.ts'
 
 // Types generated from the API, given short names. `components['schemas']` holds
@@ -17,8 +17,8 @@ export type ListQuery = {
 }
 
 // listRecipes returns a list of recipes. Various query parameters are respected
-export async function listRecipes(query: ListQuery, signal: AbortSignal): Promise<RecipeList> {
-  const { data, error, response } = await api.GET('/recipes', {
+export async function listRecipes(query: ListQuery): Promise<RecipeList> {
+  const { data, error, response } = await getApi().GET('/recipes', {
     params: {
       query: {
         q: query.q || undefined,
@@ -27,7 +27,6 @@ export async function listRecipes(query: ListQuery, signal: AbortSignal): Promis
         offset: query.offset,
       },
     },
-    signal,
   })
   if (error) {
     throw new Error(`Could not load recipes (${response.status})`)
@@ -42,14 +41,13 @@ export class RecipeNotFoundError extends Error {}
 export class RecipeInUseError extends Error {}
 
 // getRecipe returns a specific recipe by id from the path parameter
-export async function getRecipe(id: string, signal: AbortSignal): Promise<Recipe> {
-  const { data, error, response } = await api.GET('/recipes/{id}', {
+export async function getRecipe(id: string): Promise<Recipe> {
+  const { data, error, response } = await getApi().GET('/recipes/{id}', {
     params: {
       path: {
         id,
       },
     },
-    signal,
   })
   if (response.status === 404) {
     throw new RecipeNotFoundError(error?.detail ?? 'Recipe not found.')
@@ -62,7 +60,7 @@ export async function getRecipe(id: string, signal: AbortSignal): Promise<Recipe
 
 // deleteRecipe removes a specific recipe
 export async function deleteRecipe(id: string) {
-  const { error, response } = await api.DELETE('/recipes/{id}', {
+  const { error, response } = await getApi().DELETE('/recipes/{id}', {
     params: {
       path: {
         id,
@@ -92,7 +90,7 @@ export class RecipeInvalidError extends Error {
 
 // createRecipe takes a body shaped like NewRecipe and creates a new recipe.
 export async function createRecipe(recipe: NewRecipe): Promise<Recipe> {
-  const { data, error, response } = await api.POST('/recipes', {
+  const { data, error, response } = await getApi().POST('/recipes', {
     body: recipe,
   })
   if (response.status === 422) {

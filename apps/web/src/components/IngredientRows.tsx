@@ -1,4 +1,4 @@
-import type { Unit } from '../api/units.ts'
+import type { Unit } from '../lib/api/units.ts'
 import { newIngredientRow, type IngredientRow } from '../forms/ingredientRow.ts'
 import FormField from './FormField.tsx'
 
