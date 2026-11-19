@@ -135,4 +135,3 @@ CI on GitHub-hosted runners is not set up yet.
 
 ## Contributing
 - Work on a feature branch and open a PR; never commit to `main`.
-- Commit conventions and the atomic-commit workflow are in `.claude/skills/atomic-commits/SKILL.md`.
