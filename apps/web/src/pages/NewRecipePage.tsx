@@ -36,10 +36,6 @@ function toNewRecipe(data: FormState): NewRecipe {
   }
 }
 
-// toNewIngredient is a helper function which takes an ingredient row in
-// and returns a NewIngredient for the POST call.
-function toNewIngredient()
-
 // NewRecipePage is the "add a recipe" form, shown at /recipes/new.
 export default function NewRecipePage() {
   const [formData, setFormData] = useState<FormState>({
