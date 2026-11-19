@@ -1,0 +1,195 @@
+:root {
+  color-scheme: light dark;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+}
+
+/* 16px side gutters, centred and capped, so it reads well on an iPad. */
+.app {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+.status[data-state='success'] {
+  color: #2f6f4f;
+}
+
+.status[data-state='error'] {
+  color: #b3261e;
+}
+
+/* App shell: header on top, tab bar pinned to the bottom edge. */
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.shell-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.shell-header .status {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.shell .app {
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tabbar {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  background: Canvas;
+  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  /* Keep clear of the iPad's home indicator. */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tabbar a {
+  flex: 1;
+  padding: 0.9rem 0.5rem;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  /* 44px+ is Apple's minimum comfortable touch target. */
+  min-height: 1.5rem;
+}
+
+.tabbar a[aria-current='page'] {
+  font-weight: 700;
+  border-top: 3px solid currentColor;
+  padding-top: calc(0.9rem - 3px);
+}
+
+/* Recipe list */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.filters input[type='search'] {
+  flex: 1 1 14rem;
+  /* 16px+ stops iOS Safari zooming the page when the field is focused. */
+  font-size: 1rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.recipe-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.recipe-list[aria-busy='true'] {
+  opacity: 0.6;
+}
+
+.recipe-list li + li {
+  border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.recipe-list a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.85rem 0.25rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.recipe-title {
+  font-weight: 600;
+}
+
+.recipe-description,
+.recipe-facts {
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1rem;
+}
+
+.pager button {
+  min-height: 2.75rem;
+  padding: 0 1rem;
+}
+
+/* Recipe page header and the actions (kebab) menu */
+.recipe-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.recipe-header h1 {
+  margin: 0.5rem 0;
+}
+
+.actions {
+  position: relative;
+}
+
+.actions-toggle {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  font-size: 1.25rem;
+}
+
+.actions-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 10rem;
+  padding: 0.25rem;
+  background: Canvas;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+.actions-menu button {
+  min-height: 2.75rem;
+  text-align: left;
+}
+
+.actions-confirm {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.actions-confirm button {
+  min-height: 2.75rem;
+  padding: 0 1rem;
+}
