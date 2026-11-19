@@ -69,6 +69,20 @@ requests only from this app.
   fast pages without losing freshness.
 - _Status:_ to be finalized with measurements in the last commit of the port.
 
+**D6. No automated unit tests (for now)**
+
+- _Decision:_ Vitest, Testing Library and the existing unit tests are removed.
+- _Why:_ speed. The app is being rebuilt on a different rendering model, and the
+  old tests were written for client-side pages that no longer exist. Rewriting
+  them for Server Components would cost more than the port itself.
+- _What still guards changes:_ strict TypeScript, lint, formatting checks, and an
+  API contract generated from the Go service's OpenAPI spec (schema drift fails
+  the type check). AI import behavior is covered separately by a small evaluation
+  set (see the project write-up).
+- _Trade-off:_ no automated check of behavior. Regressions in things like form
+  error handling are caught by hand, not by a test. A real product would restore
+  tests, starting with the data layer and the form.
+
 ### Planned layout
 
 ```
@@ -76,7 +90,7 @@ apps/web/src/
   app/                 routes (layout, page, not-found, recipes/...)
   lib/api/             server-only API client and data access layer
   components/          shared components (client components marked 'use client')
-  forms/               form logic (pure functions, unit-tested)
+  forms/               form logic (pure functions)
 ```
 
 ### Security rules for this app
@@ -103,7 +117,6 @@ Needs Node 22+ (`.nvmrc` pins 24: `nvm install` then `nvm use`).
 ```sh
 npm ci            # install exactly what package-lock.json says
 npm run dev       # http://localhost:5173, proxies /api to http://localhost:8080
-npm test          # unit tests (Vitest + Testing Library)
 npm run typecheck # TypeScript, strict mode
 npm run lint      # oxlint
 npm run format    # Prettier: rewrite files to the house style (format:check only reports)
