@@ -11,6 +11,8 @@ const config: NextConfig = {
   turbopack: {
     root: __dirname,
   },
+  // enabling partialPrefetching as this will be default true in a future release
+  partialPrefetching: true,
 }
 
 export default config
