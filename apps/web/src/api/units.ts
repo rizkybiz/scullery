@@ -1,5 +1,5 @@
-import type { components } from './schema.d.ts'
 import { api } from './client.ts'
+import type { components } from './schema.d.ts'
 
 export type Unit = components['schemas']['Unit']
 
