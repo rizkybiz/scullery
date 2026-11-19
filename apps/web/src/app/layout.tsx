@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import Link from 'next/link'
-import type { ReactNode } from 'react'
+import { Suspense, type ReactNode } from 'react'
 import '../index.css'
+import ApiStatus from '../components/ApiStatus.tsx'
 
 export const metadata: Metadata = {
   title: 'Scullery',
@@ -27,6 +28,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <div className="shell">
           <header className="shell-header">
             <strong>Scullery</strong>
+            <Suspense fallback={<p className="status">API: checking...</p>}>
+              <ApiStatus />
+            </Suspense>
           </header>
 
           <main className="app">{children}</main>

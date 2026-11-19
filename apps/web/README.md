@@ -68,6 +68,15 @@ requests only from this app.
 - _Why:_ a static shell around cached data, with dynamic parts streamed in, gives
   fast pages without losing freshness.
 - _Status:_ to be finalized with measurements in the last commit of the port.
+- _Worked example (API status in the header):_ `ApiStatus` is an async Server
+  Component that calls the API on every request, so it cannot be part of the
+  prerendered shell. The layout wraps it in `<Suspense>`: the header and tab bar
+  are prerendered, the fallback ("API: checking...") sits in the shell, and the live
+  status streams in at request time. `next build` reports the routes as
+  `Partial Prerender`: static HTML with dynamic, server-streamed content. If the API
+  is down, the status line shows an error and the rest of the page is unaffected,
+  because only the fetch is wrapped in `try/catch` and the line degrades in place
+  instead of replacing the page with an error boundary.
 
 **D6. No automated unit tests (for now)**
 
