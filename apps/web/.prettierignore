@@ -8,3 +8,4 @@ src/lib/api/schema.d.ts
 *.yaml
 .next
 next-env.d.ts
+.vercel
