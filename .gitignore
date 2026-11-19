@@ -1,2 +1,13 @@
 # Local AI-assistant configuration and skills; not part of the product.
 .claude/
+
+# Vercel CLI link and any env file it pulls (these can hold a short-lived OIDC token).
+.vercel/
+.env*.local
+
+# Terraform: provider downloads, local state (can contain secrets) and variable files.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
