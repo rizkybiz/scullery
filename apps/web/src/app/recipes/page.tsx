@@ -54,6 +54,9 @@ export default function RecipesPage(props: PageProps<'/recipes'>) {
     <>
       <div className="recipe-header">
         <h1>Recipes</h1>
+        <Link href="/recipes/new" className="button" aria-label="New recipe">
+          +
+        </Link>
       </div>
       <Suspense fallback={<p>Loading…</p>}>
         <RecipeListSection searchParams={props.searchParams} />

@@ -205,3 +205,70 @@ body {
   min-height: 2.75rem;
   padding: 0 1rem;
 }
+
+/* "+" in the recipe list header: a link that looks like a button. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+  font-size: 1.25rem;
+}
+
+/* The new recipe form. 16px text stops iOS Safari zooming when a field is focused. */
+.recipe-form label {
+  display: block;
+  margin-top: 0.75rem;
+}
+
+.recipe-form input,
+.recipe-form select,
+.recipe-form textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+}
+
+.recipe-form ul,
+.recipe-form ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.recipe-form li {
+  margin-top: 1rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+}
+
+.recipe-form button {
+  min-height: 2.75rem;
+  margin-top: 0.75rem;
+  padding: 0 1rem;
+}
+
+.recipe-form [aria-invalid='true'] {
+  border-color: #b3261e;
+}
+
+.field-error {
+  display: block;
+  color: #b3261e;
+  font-size: 0.9rem;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}

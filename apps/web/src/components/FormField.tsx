@@ -39,7 +39,11 @@ export default function FormField({
           />
         )}
       </label>
-      {error && <span id={errorId}>{error}</span>}
+      {error && (
+        <span id={errorId} className="field-error">
+          {error}
+        </span>
+      )}
     </>
   )
 }

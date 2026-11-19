@@ -68,6 +68,19 @@ requests only from this app.
   the write path.
 - _Trade-off:_ client JavaScript for this page. Kept to the form itself, not the
   page around it.
+- _Worked example (new recipe form):_ the form keeps every value as a string in `useState`
+  and submits plain data to `createRecipeAction` through `useActionState`. Because the
+  inputs are controlled, nothing typed is lost when the server sends errors back. The
+  conversion lives in `src/forms/recipeForm.ts`, which imports nothing from the framework:
+  it trims text, parses numbers, drops rows left blank, and catches what a person can fix
+  at once. The API still validates, in two stages (schema rules, then rules such as "the
+  unit exists"). Its error locations (`body.ingredients[1].unit_code`) are translated back
+  to the form's row numbers, because blank rows were dropped before sending. Checked
+  against the API's real 422 responses for both stages.
+- _Units and the build:_ the unit dropdown's data is cached for days (tag `units`), and the
+  form page calls `connection()` so it renders per request. Without that, Next would call
+  the API while running `next build`. Verified by building with the API address pointed at
+  a dead port.
 
 **D5. Cache Components for caching (planned)**
 
@@ -146,6 +159,9 @@ apps/web/src/
 - **No authentication yet (blocks the first deployment):** a Server Action is a public
   endpoint, so until sign-in exists anyone who can reach the app can delete recipes. Sign-in
   must land, and every action must check the session (D2), before the app is deployed.
+- **The form's browser behavior is untested by machine (D6):** adding, editing and removing
+  rows runs only in the browser. The conversion and error mapping were checked against the
+  real API, and the Server Action end to end, but no test for them is kept in the repo.
 - **Deletes are permanent:** the API deletes for good. A soft delete with an undo window
   would need an API change (a deleted-at column, a restore endpoint, a purge job).
 - **Offline/PWA:** deferred. A server-first app makes offline viewing harder; it can

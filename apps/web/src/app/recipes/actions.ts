@@ -2,7 +2,20 @@
 
 import { updateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { deleteRecipe, RecipeInUseError, RecipeNotFoundError } from '../../lib/api/recipes.ts'
+import {
+  buildRecipe,
+  isRecipeFormInput,
+  mapApiErrors,
+  type FormErrors,
+} from '../../forms/recipeForm.ts'
+import {
+  createRecipe,
+  deleteRecipe,
+  RecipeInUseError,
+  RecipeInvalidError,
+  RecipeNotFoundError,
+  type Recipe,
+} from '../../lib/api/recipes.ts'
 
 // What the delete form gets back when the delete did not happen. On success the
 // action redirects instead of returning, so `null` is only the initial state.
@@ -44,4 +57,43 @@ export async function deleteRecipeAction(id: string, _previous: DeleteState): Pr
   updateTag('recipes')
   updateTag(`recipe:${id}`)
   redirect('/recipes')
+}
+
+// What the create form gets back when the recipe was not saved. On success the action
+// redirects instead of returning, so `null` is only the initial state.
+export type CreateState = FormErrors | null
+
+// createRecipeAction saves a new recipe from the form and opens it.
+//
+// Like every Server Action it is a public endpoint, so it does not trust what it is
+// sent: the shape is checked first, and the content is checked by buildRecipe and then
+// by the API. Once sign-in exists it must check the session here too (README, D2).
+// Problems come back as messages for the form to show beside the right fields.
+export async function createRecipeAction(
+  _previous: CreateState,
+  input: unknown,
+): Promise<CreateState> {
+  if (!isRecipeFormInput(input)) {
+    return { message: 'That form could not be read. Reload the page and try again.' }
+  }
+
+  const built = buildRecipe(input)
+  if (!built.ok) return built.errors
+
+  let created: Recipe
+  try {
+    created = await createRecipe(built.recipe)
+  } catch (error) {
+    // createRecipe is not cached, so the error keeps its class and its details.
+    if (error instanceof RecipeInvalidError) {
+      return mapApiErrors(error.errors, built.ingredientRows, built.stepRows)
+    }
+    console.error('Could not create recipe', error)
+    return { message: 'Could not save the recipe.' }
+  }
+
+  // As in deleteRecipeAction: expire the cached list first, redirect last and outside
+  // the try/catch, since redirect() works by throwing.
+  updateTag('recipes')
+  redirect(`/recipes/${created.id}`)
 }
