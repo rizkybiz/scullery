@@ -92,6 +92,13 @@ requests only from this app.
   of an error thrown from a cached function with a generic one. The list therefore
   shows fixed wording and logs the real error on the server, which also keeps internal
   details off the page.
+- _Recipe page and "not found":_ `getRecipe` is cached under its own tag, `recipe:<id>`,
+  so changing one recipe invalidates only its page and the list. A missing recipe comes
+  back as `null` (the API answers 404 for an unknown id and 422 for one that is not a
+  UUID), not as a thrown error, for two reasons: an error thrown from a cached function
+  loses its message and probably its class in production, so the page could not tell
+  "no such recipe" from "the API is down"; and a missing recipe is an expected answer.
+  The page calls `notFound()` outside any `try/catch`, because it works by throwing.
 
 **D6. No automated unit tests (for now)**
 
@@ -133,6 +140,11 @@ apps/web/src/
   a private cache scope.
 - **Cache storage:** `use cache` defaults to in-memory storage per deployment.
   How it behaves across serverless instances on Vercel still needs to be tested.
+- **Missing recipe returns HTTP 200:** the recipe page streams (the shell is sent before
+  the recipe is fetched), so by the time `notFound()` runs the status line is already
+  sent. Next adds a `noindex` tag, which is fine for a private app. A public site
+  that needs a real 404 would look the recipe up before streaming starts, at the cost
+  of the static shell on that route.
 
 ## Development
 

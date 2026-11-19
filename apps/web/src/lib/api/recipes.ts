@@ -47,14 +47,28 @@ export async function listRecipes(query: ListQuery): Promise<RecipeList> {
   return data
 }
 
-// Thrown when the API returns 404 for a specific recipe
+// Thrown by deleteRecipe when the API returns 404. (getRecipe returns null instead.)
 export class RecipeNotFoundError extends Error {}
 
 // Thrown when the API returns a 409 for a recipe in use
 export class RecipeInUseError extends Error {}
 
-// getRecipe returns a specific recipe by id from the path parameter
-export async function getRecipe(id: string): Promise<Recipe> {
+// getRecipe returns a recipe by id, or null when there is no such recipe.
+//
+// Cached, tagged with this recipe's own tag so that editing or deleting one recipe
+// invalidates only its page (and the list), not every other recipe.
+//
+// "Not found" is returned as a value (null), not thrown. An error thrown from a
+// cached function loses its message in a production build (and so, very likely,
+// its class), so the page could not reliably tell "no such recipe" from "the API
+// is down" with instanceof. A missing recipe is an expected answer, not a failure.
+// The API answers 404 for an unknown id and 422 for one that is not a UUID at all;
+// to a visitor both mean there is nothing at this URL.
+export async function getRecipe(id: string): Promise<Recipe | null> {
+  'use cache'
+  cacheTag(`recipe:${id}`)
+  cacheLife('minutes')
+
   const { data, error, response } = await getApi().GET('/recipes/{id}', {
     params: {
       path: {
@@ -62,8 +76,8 @@ export async function getRecipe(id: string): Promise<Recipe> {
       },
     },
   })
-  if (response.status === 404) {
-    throw new RecipeNotFoundError(error?.detail ?? 'Recipe not found.')
+  if (response.status === 404 || response.status === 422) {
+    return null
   }
   if (error) {
     throw new Error(`Could not load the recipe (${response.status})`)
