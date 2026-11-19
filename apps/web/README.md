@@ -39,6 +39,16 @@ requests only from this app.
   browser, so actions return UI-shaped results, never raw API responses.
 - _Alternatives:_ Route Handlers (explicit REST endpoints). More ceremony for the
   same result here, since only this app calls them.
+- _Worked example (delete):_ the actions menu is a small Client Component (open, closed,
+  confirming is browser state). Its confirm step is a `<form>` wired with
+  `useActionState`, which supplies the pending state and the action's returned error.
+  `deleteRecipeAction` checks its input, calls the API, treats "already gone" as
+  success, returns the API's message when the recipe is used by another recipe, and on
+  success calls `updateTag('recipes')` and `updateTag('recipe:<id>')` before
+  `redirect('/recipes')`. The order matters: `redirect()` works by throwing, so nothing
+  after it runs, and it must stay outside the `try/catch`.
+- _Checked:_ none of `SCULLERY_API_URL`, the API address or any server-only code appears
+  in the browser bundle (`.next/static`).
 
 **D3. A server-only data access layer**
 
@@ -133,8 +143,28 @@ apps/web/src/
 
 ### Known limitations
 
+- **No authentication yet (blocks the first deployment):** a Server Action is a public
+  endpoint, so until sign-in exists anyone who can reach the app can delete recipes. Sign-in
+  must land, and every action must check the session (D2), before the app is deployed.
+- **Deletes are permanent:** the API deletes for good. A soft delete with an undo window
+  would need an API change (a deleted-at column, a restore endpoint, a purge job).
 - **Offline/PWA:** deferred. A server-first app makes offline viewing harder; it can
   be added later with a service worker.
+- **Writes that bypass the app are not seen until the cache expires:** tested by deleting
+  a recipe directly on the API; the cached list kept showing it. Changes made through this
+  app invalidate the tags immediately; anything else waits out `cacheLife('minutes')`.
+- **`next dev` does not invalidate promptly; a production build does:** the delete action
+  was submitted for real (a temporary form on a throwaway page, since removed) on both. In a
+  production build the recipe page and the list were fresh immediately. On the dev server
+  both kept showing the deleted recipe for at least 10 seconds, and a hard reload (which
+  bypasses the dev cache) showed it gone. The cause on the dev server is not established.
+- **Client-side navigation can reuse a page:** responses carry `x-nextjs-stale-time: 300`
+  (the `minutes` profile's 5 minute client window), so history navigation can show a page
+  the browser already has. Opening a deleted recipe's page that way is harmless: deleting
+  again counts as success.
+- **Not yet tested on Vercel:** `use cache` is in-memory per deployment instance by default,
+  so whether `updateTag` reaches every instance of a serverless deployment has to be
+  measured there, not assumed from `next start`.
 - **Shared cache:** `"use cache"` is shared across users. That is correct for one
   household's recipes. A multi-tenant product would key the cache per tenant or use
   a private cache scope.

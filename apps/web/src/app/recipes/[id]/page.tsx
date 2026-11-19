@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
+import RecipeActions from '../../../components/RecipeActions.tsx'
 import { getRecipe, type Recipe } from '../../../lib/api/recipes.ts'
 
 type RecipeResult =
@@ -76,7 +77,7 @@ async function RecipeView({ params }: { params: PageProps<'/recipes/[id]'>['para
             </span>
           )}
         </h1>
-        {/* The actions menu (delete) goes here in a later commit. */}
+        <RecipeActions id={recipe.id} />
       </div>
 
       {recipe.description && <p>{recipe.description}</p>}
