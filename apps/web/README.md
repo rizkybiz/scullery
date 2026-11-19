@@ -77,6 +77,21 @@ requests only from this app.
   is down, the status line shows an error and the rest of the page is unaffected,
   because only the fetch is wrapped in `try/catch` and the line degrades in place
   instead of replacing the page with an error boundary.
+- _Worked example (recipe list):_ `listRecipes` is cached with `"use cache"`, the tag
+  `recipes` and `cacheLife('minutes')`. The cache key is the arguments, so every
+  distinct search, filter and page is cached separately and shared by all visitors.
+  Changes made through this app will invalidate the tag; `cacheLife` is the safety net
+  for changes that bypass it (a direct write to the API), which can be stale for up to
+  that window. The page is synchronous and passes the `searchParams` promise to an
+  async child inside `<Suspense>`, so the heading stays in the static shell and
+  everything that depends on the URL streams in.
+- _Search is a GET form_ (`next/form`), so the view lives in the URL (`?q=`, `favorite=`,
+  `page=`) and Back, reload and shared links work with no client JavaScript. The cost
+  is no search-as-you-type; that would be a small client component with a debounce.
+- _Errors across the cache boundary:_ in a production build, Next replaces the message
+  of an error thrown from a cached function with a generic one. The list therefore
+  shows fixed wording and logs the real error on the server, which also keeps internal
+  details off the page.
 
 **D6. No automated unit tests (for now)**
 

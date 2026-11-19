@@ -1,3 +1,4 @@
+import { cacheLife, cacheTag } from 'next/cache'
 import { getApi } from './client.ts'
 import type { components } from './schema.d.ts'
 
@@ -16,8 +17,20 @@ export type ListQuery = {
   offset: number
 }
 
-// listRecipes returns a list of recipes. Various query parameters are respected
+// listRecipes returns a list of recipes. Various query parameters are respected.
+//
+// Cached: "use cache" stores the result keyed by the arguments, so each distinct
+// search, filter and page is cached separately and shared by every visitor.
+// Two things end an entry's life:
+//  - the tag 'recipes': anything that creates, edits or deletes a recipe through
+//    this app invalidates it, so the change shows up immediately;
+//  - cacheLife('minutes'): the safety net for changes that bypass this app (a
+//    direct write to the API), which can be stale for up to that window.
 export async function listRecipes(query: ListQuery): Promise<RecipeList> {
+  'use cache'
+  cacheTag('recipes')
+  cacheLife('minutes')
+
   const { data, error, response } = await getApi().GET('/recipes', {
     params: {
       query: {

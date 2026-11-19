@@ -135,9 +135,21 @@ body {
   margin-top: 1rem;
 }
 
-.pager button {
+.pager button,
+.pager-link {
   min-height: 2.75rem;
   padding: 0 1rem;
+}
+
+/* Previous/Next are links (the server renders them); a span stands in when there is
+   nowhere to go. */
+.pager-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.pager-link[aria-disabled='true'] {
+  opacity: 0.4;
 }
 
 /* Recipe page header and the actions (kebab) menu */
