@@ -40,11 +40,6 @@ sqlc:
 openapi:
 	go run ./cmd/scullery-api openapi > openapi.json.tmp && mv openapi.json.tmp openapi.json || { rm -f openapi.json.tmp; exit 1; }
 
-# One-time per clone: use the versioned git hooks (commit-msg, pre-commit).
-.PHONY: hooks
-hooks:
-	git config core.hooksPath .githooks
-
 # The same static checks and unit tests CI runs.
 .PHONY: verify
 verify:

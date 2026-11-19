@@ -131,14 +131,8 @@ commit of this port (see D3).
 ## Deployment and CI
 
 The app is built and served by Vercel, so there is no container image to build.
-CI on GitHub-hosted runners is not set up yet. `scripts/ci/check-commits.sh <base> <head>`
-checks that every commit in a range follows Conventional Commits and is the piece
-that CI will reuse.
+CI on GitHub-hosted runners is not set up yet.
 
 ## Contributing
-- One-time per clone: enable the versioned git hooks (Conventional Commit messages; staged-snapshot checks before each commit):
-  ```
-  git config core.hooksPath .githooks
-  ```
 - Work on a feature branch and open a PR; never commit to `main`.
 - Commit conventions and the atomic-commit workflow are in `.claude/skills/atomic-commits/SKILL.md`.

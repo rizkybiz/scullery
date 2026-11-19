@@ -1,10 +1,6 @@
 # scullery-api
 
 ## Contributing
-- One-time per clone: enable the versioned git hooks (Conventional Commit messages; staged-snapshot checks before each commit):
-  ```
-  make hooks   # or: git config core.hooksPath .githooks
-  ```
 - Work on a feature branch and open a PR; never commit to `main`.
 - Commit conventions and the atomic-commit workflow are in `.claude/skills/atomic-commits/SKILL.md`.
 
@@ -22,7 +18,6 @@ runner. The logic lives in `scripts/ci/` so it runs the same locally:
 | Check | Local command |
 |---|---|
 | gofmt, `go mod tidy -diff`, `go vet`, generated sqlc code is current, tests (database tests run against a throwaway Postgres) | `make verify` |
-| Conventional Commits for every commit in a PR | `scripts/ci/check-commits.sh <base> <head>` |
 | Built image: migrations up/down/up on Postgres 17, then `/healthz` | `scripts/ci/image-checks.sh <image>` |
 
 - **Pull requests** build and test but never publish.
