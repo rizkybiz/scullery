@@ -6,3 +6,5 @@ src/api/schema.d.ts
 *.md
 *.yml
 *.yaml
+.next
+next-env.d.ts

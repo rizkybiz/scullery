@@ -116,16 +116,18 @@ Needs Node 22+ (`.nvmrc` pins 24: `nvm install` then `nvm use`).
 
 ```sh
 npm ci            # install exactly what package-lock.json says
-npm run dev       # http://localhost:5173, proxies /api to http://localhost:8080
+npm run dev       # Next.js dev server, http://localhost:3000
 npm run typecheck # TypeScript, strict mode
 npm run lint      # oxlint
 npm run format    # Prettier: rewrite files to the house style (format:check only reports)
-npm run build     # production build into dist/
+npm run build     # production build into .next/
+npm run start     # serve the production build (run build first)
 ```
 
-Point the dev server at a different API with `API_URL=http://host:port npm run dev`.
-The browser only ever calls same-origin `/api/...`; Vite proxies it in development
-and nginx does in the container, so no code contains an API address.
+The app does not call the API yet. The server-only API client, and the
+`SCULLERY_API_URL` setting that points it at the Go service, arrive in a later
+commit of this port (see D3). The "Container image" and "CI" sections below still
+describe the Vite app and are removed in the next commit.
 
 ## Container image
 
