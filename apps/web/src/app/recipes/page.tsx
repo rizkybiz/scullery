@@ -184,7 +184,12 @@ function RecipeRow({ recipe }: { recipe: RecipeSummary }) {
       <Link href={`/recipes/${recipe.id}`}>
         <span className="recipe-title">
           {recipe.title}
-          {recipe.is_favorite && <span aria-label="Favorite"> ★</span>}
+          {recipe.is_favorite && (
+            <span role="img" aria-label="Favorite">
+              {' '}
+              ★
+            </span>
+          )}
         </span>
         {recipe.description && <span className="recipe-description">{recipe.description}</span>}
         {facts.length > 0 && <span className="recipe-facts">{facts.join(' · ')}</span>}
