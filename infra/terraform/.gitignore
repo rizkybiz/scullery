@@ -1,0 +1,2 @@
+# A saved plan can contain sensitive values.
+*.tfplan
