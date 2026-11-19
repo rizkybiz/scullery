@@ -28,8 +28,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/rizkybiz/scullery-api/internal/db"
-	"github.com/rizkybiz/scullery-api/internal/migrate"
+	"github.com/rizkybiz/scullery/services/api/internal/db"
+	"github.com/rizkybiz/scullery/services/api/internal/migrate"
 )
 
 const envURL = "TEST_DATABASE_URL"

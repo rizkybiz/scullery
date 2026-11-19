@@ -10,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/rizkybiz/scullery-api/internal/dbgen"
+	"github.com/rizkybiz/scullery/services/api/internal/dbgen"
 )
 
 // ErrNotFound is returned when no recipe has the requested id.

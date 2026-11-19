@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/rizkybiz/scullery-api/internal/db/dbtest"
-	"github.com/rizkybiz/scullery-api/internal/dbgen"
+	"github.com/rizkybiz/scullery/services/api/internal/db/dbtest"
+	"github.com/rizkybiz/scullery/services/api/internal/dbgen"
 )
 
 func TestNewReturnsAMigratedDatabase(t *testing.T) {

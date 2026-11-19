@@ -6,7 +6,7 @@ import (
 
 	"github.com/danielgtaylor/huma/v2"
 
-	"github.com/rizkybiz/scullery-api/internal/dbgen"
+	"github.com/rizkybiz/scullery/services/api/internal/dbgen"
 )
 
 // unit is one unit of measure as the API presents it. It is deliberately its own

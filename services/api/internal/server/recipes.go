@@ -8,7 +8,7 @@ import (
 	"github.com/danielgtaylor/huma/v2"
 	"github.com/google/uuid"
 
-	"github.com/rizkybiz/scullery-api/internal/recipe"
+	"github.com/rizkybiz/scullery/services/api/internal/recipe"
 )
 
 type createRecipeInput struct {

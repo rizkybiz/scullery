@@ -13,7 +13,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/rizkybiz/scullery-api/internal/db/dbtest"
+	"github.com/rizkybiz/scullery/services/api/internal/db/dbtest"
 )
 
 func newTestServer(t *testing.T) (http.Handler, *pgxpool.Pool) {

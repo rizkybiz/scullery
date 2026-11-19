@@ -11,10 +11,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/rizkybiz/scullery-api/internal/config"
-	"github.com/rizkybiz/scullery-api/internal/db"
-	"github.com/rizkybiz/scullery-api/internal/migrate"
-	"github.com/rizkybiz/scullery-api/internal/server"
+	"github.com/rizkybiz/scullery/services/api/internal/config"
+	"github.com/rizkybiz/scullery/services/api/internal/db"
+	"github.com/rizkybiz/scullery/services/api/internal/migrate"
+	"github.com/rizkybiz/scullery/services/api/internal/server"
 )
 
 // version is overridden at build time: -ldflags "-X main.version=1.2.3"

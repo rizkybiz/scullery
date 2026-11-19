@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rizkybiz/scullery-api/internal/db/dbtest"
+	"github.com/rizkybiz/scullery/services/api/internal/db/dbtest"
 )
 
 func TestListUnits(t *testing.T) {

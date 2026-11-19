@@ -1,4 +1,4 @@
-module github.com/rizkybiz/scullery-api
+module github.com/rizkybiz/scullery/services/api
 
 go 1.26.0
 

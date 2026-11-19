@@ -12,7 +12,7 @@ import (
 
 	_ "github.com/jackc/pgx/v5/stdlib" // registers the "pgx" database/sql driver
 
-	"github.com/rizkybiz/scullery-api/migrations"
+	"github.com/rizkybiz/scullery/services/api/migrations"
 )
 
 // Run executes a migrate subcommand: up, down (one step) or status.
