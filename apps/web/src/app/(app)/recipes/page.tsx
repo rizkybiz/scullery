@@ -7,6 +7,7 @@ import {
   type RecipeList,
   type RecipeSummary,
 } from '../../../lib/api/recipes.ts'
+import { requireSession } from '../../../lib/auth/dal.ts'
 
 const PAGE_SIZE = 20
 
@@ -75,6 +76,7 @@ async function RecipeListSection({
 }: {
   searchParams: PageProps<'/recipes'>['searchParams']
 }) {
+  await requireSession() // before any data: the proxy is a first gate, not the boundary
   const params = await searchParams // this await is what makes the section dynamic
   const q = first(params.q) ?? ''
   const favoritesOnly = first(params.favorite) === 'true'

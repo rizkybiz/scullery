@@ -2,6 +2,8 @@
 
 import { updateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { audit } from '../../../lib/audit.ts'
+import { requireSession } from '../../../lib/auth/dal.ts'
 import {
   buildRecipe,
   isRecipeFormInput,
@@ -26,12 +28,14 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 // deleteRecipeAction removes a recipe and sends the visitor back to the list.
 //
 // A Server Action is a public HTTP endpoint: anyone can POST to it directly, so it
-// cannot rely on the page that shows the button. It checks its own input, and once
-// sign-in exists it must check the session here too (README, decision D2).
+// cannot rely on the page that shows the button, or on the proxy. It checks the session
+// itself, FIRST, and then its own input (README, decision D2).
 //
 // `id` is bound by the form (deleteRecipeAction.bind(null, id)); `_previous` is the
 // state useActionState passes in, which this action does not need.
 export async function deleteRecipeAction(id: string, _previous: DeleteState): Promise<DeleteState> {
+  const session = await requireSession()
+
   if (!UUID.test(id)) {
     return { error: 'That is not a valid recipe.' }
   }
@@ -54,6 +58,7 @@ export async function deleteRecipeAction(id: string, _previous: DeleteState): Pr
   // Order matters. updateTag expires the cached list and this recipe's page so the
   // next read is fresh. redirect() works by throwing, so nothing after it runs, and it
   // must stay outside the try/catch above or the catch would swallow it.
+  audit('recipe.deleted', { user: session.name, id })
   updateTag('recipes')
   updateTag(`recipe:${id}`)
   redirect('/recipes')
@@ -65,14 +70,15 @@ export type CreateState = FormErrors | null
 
 // createRecipeAction saves a new recipe from the form and opens it.
 //
-// Like every Server Action it is a public endpoint, so it does not trust what it is
-// sent: the shape is checked first, and the content is checked by buildRecipe and then
-// by the API. Once sign-in exists it must check the session here too (README, D2).
+// Like every Server Action it is a public endpoint, so it trusts nothing it is sent: the
+// session is checked first, then the shape, then the content (buildRecipe, then the API).
 // Problems come back as messages for the form to show beside the right fields.
 export async function createRecipeAction(
   _previous: CreateState,
   input: unknown,
 ): Promise<CreateState> {
+  const session = await requireSession()
+
   if (!isRecipeFormInput(input)) {
     return { message: 'That form could not be read. Reload the page and try again.' }
   }
@@ -94,6 +100,7 @@ export async function createRecipeAction(
 
   // As in deleteRecipeAction: expire the cached list first, redirect last and outside
   // the try/catch, since redirect() works by throwing.
+  audit('recipe.created', { user: session.name, id: created.id })
   updateTag('recipes')
   redirect(`/recipes/${created.id}`)
 }

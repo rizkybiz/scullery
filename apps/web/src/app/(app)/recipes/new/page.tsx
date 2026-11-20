@@ -3,6 +3,7 @@ import { connection } from 'next/server'
 import { Suspense } from 'react'
 import RecipeForm from '../../../../components/RecipeForm.tsx'
 import { listUnits, type Unit } from '../../../../lib/api/units.ts'
+import { requireSession } from '../../../../lib/auth/dal.ts'
 
 // The page itself is a static shell: a link, a heading and a fallback. The form needs
 // the list of units from the API, so it streams in behind <Suspense>.
@@ -34,6 +35,7 @@ async function NewRecipeForm() {
   // while building the site (the units are cached and need no request data), which
   // would make `next build` depend on the API being reachable.
   await connection()
+  await requireSession() // before any data: the proxy is a first gate, not the boundary
   const units = await readUnits()
   return <RecipeForm units={units} />
 }

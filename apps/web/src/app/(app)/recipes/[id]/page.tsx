@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
 import RecipeActions from '../../../../components/RecipeActions.tsx'
 import { getRecipe, type Recipe } from '../../../../lib/api/recipes.ts'
+import { requireSession } from '../../../../lib/auth/dal.ts'
 
 type RecipeResult =
   { state: 'success'; recipe: Recipe | null } | { state: 'error'; message: string }
@@ -35,6 +36,7 @@ export default function RecipePage(props: PageProps<'/recipes/[id]'>) {
 }
 
 async function RecipeView({ params }: { params: PageProps<'/recipes/[id]'>['params'] }) {
+  await requireSession() // before any data: the proxy is a first gate, not the boundary
   const { id } = await params
 
   const result = await readRecipe(id)
