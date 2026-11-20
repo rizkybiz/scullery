@@ -123,12 +123,33 @@ Through the real Vercel-identity chain, with the production `gcp-auth.ts`:
 | the spike's service account calling staging | 403 (separate services, separate identities) |
 | create, read back and delete a recipe | 201, 200, 204: writes work over the private network |
 | a warm database query, from a laptop | about 54 ms |
+| the first request after 17 minutes idle (a real cold start) | about 3.7 s, against about 55 ms warm |
 
 The migration job ran `0001_init.sql` in 85 ms. The database user was created through Cloud
 SQL's API, which let it create tables in the `public` schema without extra grants. The flip
 side is that such users are members of `cloudsqlsuperuser`, so staging and production share a
 more powerful role than a tightly scoped one; dedicated roles created with SQL would be the
 next step for a real customer.
+
+## Cold start
+
+The service scales to zero when idle. Measured on staging after 17 minutes with no traffic, the
+first request took **3.7 s** (the token was minted beforehand, so that is not counted); the next
+took 143 ms and warm requests about 55 ms. The cost is starting the container, attaching it to
+the private network and the Go service's fail-fast connection to the database. Google's docs
+warn that Direct VPC egress can add "startup delays of a minute or more"; we did not see that.
+
+The choices, with their cost:
+
+| Option | Cold start | Cost |
+|---|---|---|
+| `min_instances = 0` (now) | about 3.7 s on the first request after idle | nothing while idle |
+| `min_instances = 1` | none | an idle instance is billed all month (a few dollars; check the pricing page) |
+| a scheduled ping | mostly hidden | Vercel cron on Hobby runs at most daily, too coarse to help |
+
+Two things soften it. The app caches list and recipe reads, so most page views never reach the
+API. And the API is called from the server, so the wait is a slow first page, never a broken one.
+A sensible plan is to leave staging at 0 and set production to 1 for the review window.
 
 ## Things that went wrong, and what they taught
 
