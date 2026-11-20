@@ -63,6 +63,14 @@ requests only from this app.
   The plain logic is in `src/lib/auth` with no framework imports. It was attack-tested
   outside the repo: tampered and forged tokens, `alg: none`, another algorithm, expiry, and
   a list of open-redirect tricks.
+- _Two layers, tested separately:_ `proxy.ts` redirects a request without a valid cookie to
+  `/login` before anything renders (a real 307, with the destination kept). It is not the
+  boundary: every Server Action and every component that reads data calls `requireSession()`
+  itself, which was tested first with no proxy in place (no cookie, a garbage cookie, or one
+  signed with the wrong secret got no data, and create and delete did nothing). It fails
+  closed: a signed cookie with no `AUTH_SECRET` on the server gets a 500, never access.
+  `READ_ONLY` is a kill switch for every write; any value but an explicit off turns it on, so
+  a hurried `1` or a typo cannot quietly do nothing.
 
 **D3. A server-only data access layer**
 
@@ -177,12 +185,15 @@ apps/web/src/
 
 ### Known limitations
 
-- **No authentication yet (blocks the first deployment):** a Server Action is a public
-  endpoint, so until sign-in exists anyone who can reach the app can delete recipes. Sign-in
-  must land, and every action must check the session (D2), before the app is deployed.
-- **The form's browser behavior is untested by machine (D6):** adding, editing and removing
-  rows runs only in the browser. The conversion and error mapping were checked against the
-  real API, and the Server Action end to end, but no test for them is kept in the repo.
+- **Sign-in is deliberately minimal.** Two fixed users, no sign-up, no password reset. There
+  is no rate limit on the login page yet (one Vercel firewall rule is allowed on Hobby,
+  counted by IP, if wanted). There are no per-user quotas, since serverless instances do not
+  share memory and that needs a shared store. The API cannot tell which user made a request:
+  the app calls it as itself, so the user exists only in this app and its log. A token cannot
+  be revoked individually (it is stateless); changing `AUTH_SECRET` signs everyone out. And
+  `READ_ONLY` is an environment variable, so it takes effect with the next deployment (about
+  a minute), not instantly. An instant stop is to remove the service account's `run.invoker`
+  grant in `infra/terraform`.
 - **Deletes are permanent:** the API deletes for good. A soft delete with an undo window
   would need an API change (a deleted-at column, a restore endpoint, a purge job).
 - **Offline/PWA:** deferred. A server-first app makes offline viewing harder; it can
@@ -247,6 +258,20 @@ npm run dev
 | `SCULLERY_API_URL` | Base URL of the Scullery API. Server-only: no `NEXT_PUBLIC_` prefix. If it is missing, the first API call fails with a message saying so. |
 
 Stop the API with `docker compose down` (add `-v` to also delete the database).
+
+### Signing in
+
+Sign-in needs three variables in `.env.local` (see `.env.example`):
+
+```sh
+openssl rand -base64 48                                        # AUTH_SECRET
+read -rs PW && printf '%s' "$PW" | node scripts/hash-password.ts  # AUTH_USER_ADMIN_HASH (type a password of 12+ characters)
+```
+
+Do the same, with a different password, for `AUTH_USER_REVIEWER_HASH`. The script reads the
+password from standard input, so it never lands in shell history or a file, and prints only
+the hash. To give a reviewer access, set their hash and deploy; to take it away, delete the
+variable and deploy. Use a different `AUTH_SECRET` for each environment.
 
 ## Deployment and CI
 
