@@ -25,7 +25,10 @@ export async function proxy(request: NextRequest) {
   return NextResponse.redirect(login)
 }
 
-// Everything except Next's own static files and the favicon.
+// Everything except Next's own static files, the favicon, and /_vercel/: those paths are
+// served by the Vercel platform (Web Analytics' script and event endpoint), not by this app.
+// Gating them redirected the analytics script to /login for anyone not yet signed in, so
+// /login itself was never counted.
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.svg).*)'],
+  matcher: ['/((?!_next/static|_next/image|_vercel/|favicon.svg).*)'],
 }
