@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Exercises a built API image the way a deploy would: runs the migrations
 # up -> down -> up against a throwaway Postgres 17, then starts the API and
-# requests /healthz. Cleans up after itself, even on failure.
+# requests /health. Cleans up after itself, even on failure.
 #   usage: image-checks.sh <image>
 set -euo pipefail
 image="${1:?usage: image-checks.sh <image>}"
@@ -56,7 +56,7 @@ docker run -d --name "$api" --network "$net" \
 
 healthy=0
 for _ in $(seq 1 30); do
-  if docker run --rm --network "$net" busybox:1.37 wget -qO- "http://$api:8080/healthz" >/dev/null 2>&1; then
+  if docker run --rm --network "$net" busybox:1.37 wget -qO- "http://$api:8080/health" >/dev/null 2>&1; then
     healthy=1
     break
   fi
@@ -67,4 +67,4 @@ if [ "$healthy" != 1 ]; then
   docker logs "$api" >&2 || true
   exit 1
 fi
-echo "== /healthz OK"
+echo "== /health OK"

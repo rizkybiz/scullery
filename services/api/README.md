@@ -17,7 +17,7 @@ runner. The logic lives in `scripts/ci/` so it runs the same locally:
 | Check | Local command |
 |---|---|
 | gofmt, `go mod tidy -diff`, `go vet`, generated sqlc code is current, tests (database tests run against a throwaway Postgres) | `make verify` |
-| Built image: migrations up/down/up on Postgres 17, then `/healthz` | `scripts/ci/image-checks.sh <image>` |
+| Built image: migrations up/down/up on Postgres 17, then `/health` | `scripts/ci/image-checks.sh <image>` |
 
 - **Pull requests** build and test but never publish.
 - **Pushes to `main`** also push the image to `registry.example.com/scullery/api`
