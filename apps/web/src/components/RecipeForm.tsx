@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useActionState, useState } from 'react'
-import { createRecipeAction } from '../app/recipes/actions.ts'
+import { createRecipeAction } from '../app/(app)/recipes/actions.ts'
 import { newIngredientRow, type IngredientRow } from '../forms/ingredientRow.ts'
 import type { RecipeFormInput } from '../forms/recipeForm.ts'
 import { newStepRow, type StepRow } from '../forms/stepRow.ts'

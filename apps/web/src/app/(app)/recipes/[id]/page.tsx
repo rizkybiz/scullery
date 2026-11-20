@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Suspense } from 'react'
-import RecipeActions from '../../../components/RecipeActions.tsx'
-import { getRecipe, type Recipe } from '../../../lib/api/recipes.ts'
+import RecipeActions from '../../../../components/RecipeActions.tsx'
+import { getRecipe, type Recipe } from '../../../../lib/api/recipes.ts'
 
 type RecipeResult =
   { state: 'success'; recipe: Recipe | null } | { state: 'error'; message: string }

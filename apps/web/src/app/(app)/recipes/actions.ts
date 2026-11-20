@@ -7,7 +7,7 @@ import {
   isRecipeFormInput,
   mapApiErrors,
   type FormErrors,
-} from '../../forms/recipeForm.ts'
+} from '../../../forms/recipeForm.ts'
 import {
   createRecipe,
   deleteRecipe,
@@ -15,7 +15,7 @@ import {
   RecipeInvalidError,
   RecipeNotFoundError,
   type Recipe,
-} from '../../lib/api/recipes.ts'
+} from '../../../lib/api/recipes.ts'
 
 // What the delete form gets back when the delete did not happen. On success the
 // action redirects instead of returning, so `null` is only the initial state.

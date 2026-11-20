@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { connection } from 'next/server'
 import { Suspense } from 'react'
-import RecipeForm from '../../../components/RecipeForm.tsx'
-import { listUnits, type Unit } from '../../../lib/api/units.ts'
+import RecipeForm from '../../../../components/RecipeForm.tsx'
+import { listUnits, type Unit } from '../../../../lib/api/units.ts'
 
 // The page itself is a static shell: a link, a heading and a fallback. The form needs
 // the list of units from the API, so it streams in behind <Suspense>.

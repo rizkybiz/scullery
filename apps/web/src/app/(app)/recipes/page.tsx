@@ -6,7 +6,7 @@ import {
   type ListQuery,
   type RecipeList,
   type RecipeSummary,
-} from '../../lib/api/recipes.ts'
+} from '../../../lib/api/recipes.ts'
 
 const PAGE_SIZE = 20
 

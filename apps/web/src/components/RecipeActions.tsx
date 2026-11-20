@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState, useState } from 'react'
-import { deleteRecipeAction } from '../app/recipes/actions.ts'
+import { deleteRecipeAction } from '../app/(app)/recipes/actions.ts'
 
 // The recipe's actions menu: a kebab button, a menu with Delete, and a confirm step.
 //
