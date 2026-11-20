@@ -97,11 +97,13 @@ The image is built and pushed by hand for now (CI comes later), then pinned by d
 ```sh
 IMAGE=us-east1-docker.pkg.dev/<project>/scullery/api ; TAG=$(git rev-parse --short HEAD)
 docker build --platform linux/amd64 --build-arg VERSION=$TAG -t $IMAGE:$TAG services/api
+grype docker:$IMAGE:$TAG          # must print nothing; do not push an image with findings
 docker push $IMAGE:$TAG
 gcloud artifacts docker images describe $IMAGE:$TAG --format='value(image_summary.fully_qualified_digest)'
 ```
 
-Put that digest in `api_image.auto.tfvars`, then `terraform plan` and `apply`. A digest cannot be
+Put that digest in `api_image.auto.tfvars`, then `terraform plan` and `apply`. The services/api
+README ("Image supply chain") explains the scan and how the base images are pinned. A digest cannot be
 overwritten the way a tag can, so what runs is exactly what was built. The digest of an image
 built with Docker's default settings is an OCI *index* holding the `linux/amd64` image plus a
 build-provenance attestation, a signed record of how it was built. Then run the migrations:
