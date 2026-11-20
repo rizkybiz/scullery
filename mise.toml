@@ -1,0 +1,8 @@
+# Tool versions for working on this repo. Run `mise install` after cloning.
+# Go matches the API image's builder (services/api/Dockerfile) so local and
+# container builds use the same compiler. Node matches apps/web/.nvmrc.
+[tools]
+node = "24"
+go = "1.26.11"
+terraform = "1.14"
+gitleaks = "8.30"
