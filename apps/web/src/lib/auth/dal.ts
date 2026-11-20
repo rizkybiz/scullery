@@ -1,6 +1,7 @@
 import 'server-only'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { connection } from 'next/server'
 import { cache } from 'react'
 import { authSecret, sessionCookie } from './cookie.ts'
 import { verifySession, type Session } from './session.ts'
@@ -13,9 +14,16 @@ import { verifySession, type Session } from './session.ts'
 
 // getSession reads and verifies the cookie. `cache` makes it run once per request however
 // many components ask. It reads request data, so callers sit inside <Suspense>.
+//
+// Checking expiry reads the clock. With Cache Components, Next can prerender with cookies
+// available (a runtime prefetch) but still refuses the current time there, and logged
+// "unstable value `new Date()`" on every page. connection() says this needs a real
+// request, so the clock is read only then.
 export const getSession = cache(async (): Promise<Session | null> => {
   const token = (await cookies()).get(sessionCookie().name)?.value
-  return token ? verifySession(token, authSecret()) : null
+  if (!token) return null
+  await connection()
+  return verifySession(token, authSecret())
 })
 
 // requireSession is for code that must not run without someone signed in. redirect()
