@@ -5,7 +5,9 @@
 # used as is; otherwise a throwaway Postgres 17 container is started for the test
 # run and removed afterwards, even on failure.
 set -euo pipefail
-cd "$(git rev-parse --show-toplevel)"
+# Run from services/api (two levels up from this script), not the git root: the
+# API began as its own repository, and in the monorepo the root has no go.mod.
+cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 
 pg=""
 cleanup() {
