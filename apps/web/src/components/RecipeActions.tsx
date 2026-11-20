@@ -1,31 +1,22 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
-import { useNavigate } from 'react-router'
-import { deleteRecipe, RecipeNotFoundError, RecipeInUseError } from '../api/recipes.ts'
+'use client'
 
-// RecipeActions renders a menu onto the DOM for recipe actions
+import { useActionState, useState } from 'react'
+import { deleteRecipeAction } from '../app/(app)/recipes/actions.ts'
+
+// The recipe's actions menu: a kebab button, a menu with Delete, and a confirm step.
+//
+// This is a Client Component because the menu is interactive state (open, closed,
+// confirming) that only exists in the browser. Everything that touches data stays on
+// the server: submitting the confirm form runs deleteRecipeAction there.
 export default function RecipeActions({ id }: { id: string }) {
   const [step, setStep] = useState<'closed' | 'menu' | 'confirm'>('closed')
-  const queryClient = useQueryClient()
-  const navigate = useNavigate()
 
-  function finish() {
-    queryClient.removeQueries({ queryKey: ['recipe', id] })
-    void queryClient.invalidateQueries({ queryKey: ['recipes'] })
-    void navigate('/recipes')
-  }
-
-  const remove = useMutation({
-    mutationFn: deleteRecipe,
-    onSuccess: finish,
-    onError: (error) => {
-      if (error instanceof RecipeNotFoundError) {
-        finish()
-      } else if (error instanceof RecipeInUseError) {
-        setStep('closed')
-      }
-    },
-  })
+  // useActionState wraps the Server Action and gives back:
+  //  - state: what the action last returned (an error message, or null),
+  //  - formAction: what to put on <form action>,
+  //  - isPending: true from submit until the action finishes.
+  // bind(null, id) fixes the first argument, so the form only has to submit.
+  const [state, formAction, isPending] = useActionState(deleteRecipeAction.bind(null, id), null)
 
   return (
     <div
@@ -43,6 +34,7 @@ export default function RecipeActions({ id }: { id: string }) {
       >
         ⋮
       </button>
+
       {step === 'menu' && (
         <div className="actions-menu">
           <button type="button" onClick={() => setStep('confirm')}>
@@ -50,18 +42,21 @@ export default function RecipeActions({ id }: { id: string }) {
           </button>
         </div>
       )}
+
       {step === 'confirm' && (
-        <div className="actions-confirm">
-          <span>Delete this recipe?</span>
-          <button type="button" disabled={remove.isPending} onClick={() => remove.mutate(id)}>
-            {remove.isPending ? 'Deleting…' : 'Yes'}
-          </button>
-          <button type="button" disabled={remove.isPending} onClick={() => setStep('closed')}>
-            Cancel
-          </button>
-        </div>
+        <>
+          <form action={formAction} className="actions-confirm">
+            <span>Delete this recipe?</span>
+            <button type="submit" disabled={isPending}>
+              {isPending ? 'Deleting…' : 'Yes'}
+            </button>
+            <button type="button" disabled={isPending} onClick={() => setStep('closed')}>
+              Cancel
+            </button>
+          </form>
+          {state?.error && <p role="alert">{state.error}</p>}
+        </>
       )}
-      {remove.isError && <p role="alert">{remove.error.message}</p>}
     </div>
   )
 }

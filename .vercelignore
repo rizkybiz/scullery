@@ -1,0 +1,11 @@
+# Keep the CLI upload small and free of local secrets. Vercel installs
+# dependencies and builds on its side; infra and the Go API are not part of it.
+**/node_modules
+**/.next
+.git
+infra
+services
+**/.env*
+!**/.env.example
+**/*.tfstate*
+**/.terraform

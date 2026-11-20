@@ -77,8 +77,12 @@ type healthOutput struct {
 	}
 }
 
+// registerHealth serves the health check at /health, not the conventional /healthz.
+// Google Cloud Run answers /healthz itself, with a 404 from its front end that comes before
+// authentication and never reaches the container, so a /healthz endpoint cannot be called from
+// outside (paths ending in "z" can be reserved). Do not rename it back.
 func registerHealth(api huma.API, version string) {
-	huma.Get(api, "/healthz", func(_ context.Context, _ *struct{}) (*healthOutput, error) {
+	huma.Get(api, "/health", func(_ context.Context, _ *struct{}) (*healthOutput, error) {
 		out := &healthOutput{}
 		out.Body.Status = "ok"
 		out.Body.Version = version

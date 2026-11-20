@@ -1,8 +1,11 @@
 dist
 node_modules
 package-lock.json
-src/api/schema.d.ts
+src/lib/api/schema.d.ts
 .claude
 *.md
 *.yml
 *.yaml
+.next
+next-env.d.ts
+.vercel

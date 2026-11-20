@@ -13,7 +13,7 @@ export function newIngredientRow(): IngredientRow {
   return { key: crypto.randomUUID(), quantity: '', unitCode: '', name: '', preparation: '' }
 }
 
-export function isBlankRow(row: IngredientRow): boolean {
+export function isBlankRow(row: Omit<IngredientRow, 'key'>): boolean {
   return [row.name, row.quantity, row.preparation, row.unitCode].every(
     (value) => value.trim() === '',
   )

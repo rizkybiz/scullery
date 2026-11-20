@@ -726,9 +726,9 @@
   },
   "openapi": "3.1.0",
   "paths": {
-    "/healthz": {
+    "/health": {
       "get": {
-        "operationId": "get-healthz",
+        "operationId": "get-health",
         "responses": {
           "200": {
             "content": {
@@ -751,7 +751,7 @@
             "description": "Error"
           }
         },
-        "summary": "Get healthz"
+        "summary": "Get health"
       }
     },
     "/recipes": {
