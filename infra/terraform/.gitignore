@@ -1,2 +1,5 @@
 # A saved plan can contain sensitive values.
 *.tfplan
+
+# ...except the image pin, which is the record of what is deployed and must be committed.
+!api_image.auto.tfvars

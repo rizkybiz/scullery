@@ -20,3 +20,13 @@ variable "vercel_project_name" {
   type        = string
   default     = "scullery"
 }
+
+variable "api_image" {
+  description = "The API image to run, pinned by digest. Set in api_image.auto.tfvars (committed): changing the file IS the deploy, and git shows what ran when."
+  type        = string
+
+  validation {
+    condition     = can(regex("@sha256:[0-9a-f]{64}$", var.api_image))
+    error_message = "Use the image's digest (…@sha256:<64 hex>), not a tag: a tag can be overwritten, a digest cannot."
+  }
+}

@@ -38,3 +38,18 @@ output "image_repository" {
   description = "Where API images are pushed"
   value       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.scullery.repository_id}"
 }
+
+output "staging_url" {
+  description = "Staging API URL"
+  value       = module.staging.url
+}
+
+output "staging_vercel_service_account_email" {
+  description = "GCP_SERVICE_ACCOUNT_EMAIL for the staging environment"
+  value       = module.staging.vercel_service_account_email
+}
+
+output "staging_migrate_job" {
+  description = "Run this Cloud Run job to apply migrations to staging"
+  value       = module.staging.migrate_job
+}

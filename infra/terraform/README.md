@@ -3,10 +3,10 @@
 Google Cloud resources for Scullery, and the trust that lets a Vercel deployment call them
 without a stored secret.
 
-**Status:** the sign-in chain is proven with a stand-in service (Google's public "hello"
-image), and the foundation for the real API is in place: a private network, a registry, and a
-Cloud SQL instance with no public address. The API's Cloud Run services and databases are
-built on top of this next, and the stand-in is then removed.
+**Status:** the sign-in chain is proven, and the **staging** environment of the real API is
+running: a private network, a registry, a Cloud SQL instance with no public address, and the
+Go API on Cloud Run, reached over that private network. Production is the same module with a
+different name, and is next. The stand-in "spike" service is removed once that is done.
 
 ## How a request from Vercel is allowed in
 
@@ -35,6 +35,9 @@ The app side of this is `apps/web/src/lib/api/gcp-auth.ts`.
 | `network.tf` | a private network and subnet; the reserved range and peering that give Cloud SQL a private IP |
 | `registry.tf` | the Artifact Registry repository for the API's container images |
 | `database.tf` | the Cloud SQL instance: Postgres 17, `db-f1-micro`, **private IP only**, TLS required, daily backups |
+| `environments.tf` | one instance of the module below per environment (staging today) |
+| `modules/api_environment/` | one environment of the API: its database and user, a generated password in Secret Manager, a Cloud Run service on the private network, a migration job, and the service account Vercel acts as |
+| `api_image.auto.tfvars` | the API image that runs, pinned by digest. Committed: changing it is the deploy, and git shows what ran when |
 | `outputs.tf` | the values the app needs, as environment variables |
 
 The provider is pinned exactly (`versions.tf`) and `.terraform.lock.hcl` is committed.
@@ -86,6 +89,60 @@ A token takes about 600 ms to obtain and is then cached until five minutes befor
 **Allow a couple of minutes after `apply`.** A first call made about a minute after the IAM
 grants were created failed with `getOpenIdToken denied`; the same call succeeded without any
 change a little over a minute later. IAM changes are eventually consistent.
+
+## Deploying an image
+
+The image is built and pushed by hand for now (CI comes later), then pinned by digest:
+
+```sh
+IMAGE=us-east1-docker.pkg.dev/<project>/scullery/api ; TAG=$(git rev-parse --short HEAD)
+docker build --platform linux/amd64 --build-arg VERSION=$TAG -t $IMAGE:$TAG services/api
+docker push $IMAGE:$TAG
+gcloud artifacts docker images describe $IMAGE:$TAG --format='value(image_summary.fully_qualified_digest)'
+```
+
+Put that digest in `api_image.auto.tfvars`, then `terraform plan` and `apply`. A digest cannot be
+overwritten the way a tag can, so what runs is exactly what was built. The digest of an image
+built with Docker's default settings is an OCI *index* holding the `linux/amd64` image plus a
+build-provenance attestation, a signed record of how it was built. Then run the migrations:
+
+```sh
+gcloud run jobs execute scullery-migrate-staging --region us-east1 --wait
+```
+
+## What was checked on staging
+
+Through the real Vercel-identity chain, with the production `gcp-auth.ts`:
+
+| Request | Result |
+|---|---|
+| no credentials | 403 |
+| a made-up token | 401 |
+| a valid Vercel identity | 200, 22 units read from the private database |
+| the same identity, token meant for another audience | 401 |
+| the spike's service account calling staging | 403 (separate services, separate identities) |
+| create, read back and delete a recipe | 201, 200, 204: writes work over the private network |
+| a warm database query, from a laptop | about 54 ms |
+
+The migration job ran `0001_init.sql` in 85 ms. The database user was created through Cloud
+SQL's API, which let it create tables in the `public` schema without extra grants. The flip
+side is that such users are members of `cloudsqlsuperuser`, so staging and production share a
+more powerful role than a tightly scoped one; dedicated roles created with SQL would be the
+next step for a real customer.
+
+## Things that went wrong, and what they taught
+
+- **Second-generation Cloud Run needs at least 512 MiB.** The first apply, with 256 MiB, failed
+  at the service. It was raised to 512 MiB (the cause is inferred from the state and the fix;
+  the error text was not kept). Terraform had recorded everything created before the failure,
+  so the second apply created only the two missing resources.
+- **`/healthz` is unreachable on Cloud Run.** Google's front end answers it with its own 404
+  *before* authentication, so an unauthenticated request got 404 instead of 403, and the
+  service's own health endpoint cannot be called from outside. Paths ending in `z` can be
+  reserved ([known issues](https://docs.cloud.google.com/run/docs/known-issues)). The startup
+  probe still works, because it runs inside the platform. The first negative tests used this
+  path and proved nothing; they were redone on `/units`. The fix is renaming the endpoint.
+- **IAM is eventually consistent.** Allow a minute or two after granting a role.
 
 ## Costs
 

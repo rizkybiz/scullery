@@ -8,6 +8,10 @@ terraform {
       source  = "hashicorp/google"
       version = "8.12.0" # pinned exactly, like the npm dependencies
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "3.9.1" # generates the database passwords
+    }
   }
 }
 
