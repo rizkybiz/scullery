@@ -4,6 +4,7 @@ import { updateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { audit } from '../../../lib/audit.ts'
 import { requireSession } from '../../../lib/auth/dal.ts'
+import { isReadOnly, READ_ONLY_MESSAGE } from '../../../lib/flags.ts'
 import {
   buildRecipe,
   isRecipeFormInput,
@@ -35,6 +36,9 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 // state useActionState passes in, which this action does not need.
 export async function deleteRecipeAction(id: string, _previous: DeleteState): Promise<DeleteState> {
   const session = await requireSession()
+  // The kill switch: when on, nothing is changed. Signed in first, so a signed-out visitor
+  // learns nothing about the switch.
+  if (isReadOnly()) return { error: READ_ONLY_MESSAGE }
 
   if (!UUID.test(id)) {
     return { error: 'That is not a valid recipe.' }
@@ -78,6 +82,7 @@ export async function createRecipeAction(
   input: unknown,
 ): Promise<CreateState> {
   const session = await requireSession()
+  if (isReadOnly()) return { message: READ_ONLY_MESSAGE }
 
   if (!isRecipeFormInput(input)) {
     return { message: 'That form could not be read. Reload the page and try again.' }
