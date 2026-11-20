@@ -53,3 +53,18 @@ output "staging_migrate_job" {
   description = "Run this Cloud Run job to apply migrations to staging"
   value       = module.staging.migrate_job
 }
+
+output "production_url" {
+  description = "Production API URL (SCULLERY_API_URL in Vercel's Production environment)"
+  value       = module.production.url
+}
+
+output "production_vercel_service_account_email" {
+  description = "GCP_SERVICE_ACCOUNT_EMAIL for the production environment"
+  value       = module.production.vercel_service_account_email
+}
+
+output "production_migrate_job" {
+  description = "Run this Cloud Run job to apply migrations to production"
+  value       = module.production.migrate_job
+}
