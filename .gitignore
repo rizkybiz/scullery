@@ -1,5 +1,5 @@
 # Local AI-assistant configuration and skills; not part of the product.
-.claude/
+*.claude/
 
 # Vercel CLI link and any env file it pulls (these can hold a short-lived OIDC token).
 .vercel/
