@@ -17,6 +17,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@vercel/analytics": "2.0.1",
     "@vercel/oidc": "4.0.9",
     "google-auth-library": "11.3.4",
     "jose": "6.2.18",
