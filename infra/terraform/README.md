@@ -3,10 +3,11 @@
 Google Cloud resources for Scullery, and the trust that lets a Vercel deployment call them
 without a stored secret.
 
-**Status:** the sign-in chain is proven, and the **staging** environment of the real API is
-running: a private network, a registry, a Cloud SQL instance with no public address, and the
-Go API on Cloud Run, reached over that private network. Production is the same module with a
-different name, and is next. The stand-in "spike" service is removed once that is done.
+**Status:** the sign-in chain is proven, and the **staging** and **production** environments of
+the real API are running: a private network, a registry, a Cloud SQL instance with no public
+address, and one Go API per environment on Cloud Run, reached over that private network.
+Production is the same module as staging with a different name and a different set of Vercel
+environments allowed in. The early stand-in ("spike") service has been removed.
 
 ## How a request from Vercel is allowed in
 
@@ -30,12 +31,11 @@ The app side of this is `apps/web/src/lib/api/gcp-auth.ts`.
 | File | Creates |
 |---|---|
 | `apis.tf` | the Google APIs in use (Cloud Run, IAM, STS, IAM Credentials) |
-| `vercel_auth.tf` | workload identity pool + Vercel OIDC provider, the service account, and who may act as it |
-| `spike.tf` | the Cloud Run service (requires sign-in, no public access) and its invoker grant |
+| `vercel_auth.tf` | workload identity pool + Vercel OIDC provider, the trust rules for Vercel tokens |
 | `network.tf` | a private network and subnet; the reserved range and peering that give Cloud SQL a private IP |
 | `registry.tf` | the Artifact Registry repository for the API's container images |
 | `database.tf` | the Cloud SQL instance: Postgres 17, `db-f1-micro`, **private IP only**, TLS required, daily backups |
-| `environments.tf` | one instance of the module below per environment (staging today) |
+| `environments.tf` | one instance of the module below per environment (staging and production) |
 | `modules/api_environment/` | one environment of the API: its database and user, a generated password in Secret Manager, a Cloud Run service on the private network, a migration job, and the service account Vercel acts as |
 | `api_image.auto.tfvars` | the API image that runs, pinned by digest. Committed: changing it is the deploy, and git shows what ran when |
 | `outputs.tf` | the values the app needs, as environment variables |
@@ -46,10 +46,10 @@ The provider is pinned exactly (`versions.tf`) and `.terraform.lock.hcl` is comm
 
 - The provider only accepts tokens from **this** Vercel team's **this** project
   (`attribute_condition` in `vercel_auth.tf`).
-- The spike's service account is usable only by tokens whose `environment` claim is
-  `development`, which is what `vercel env pull` produces locally. Preview and production
-  are not trusted by the spike. The real setup gives staging and production their own service
-  accounts, so a preview deployment can never reach production.
+- Each environment has its own service account, usable only by tokens whose `environment`
+  claim is allowed for it. Staging accepts `development` (what `vercel env pull` produces
+  locally) and `preview`. Production accepts only `production`. So a preview deployment can
+  never reach production.
 - Renaming the Vercel team or project changes the token's issuer, audience and subject, and
   breaks this trust until the variables are updated.
 
@@ -62,8 +62,8 @@ Terraform, and a Google Cloud project with billing enabled.
 cd infra/terraform
 echo 'project_id = "<your-project-id>"' > terraform.tfvars   # git-ignored
 terraform init
-terraform plan -out=spike.tfplan
-terraform apply spike.tfplan
+terraform plan -out=scullery.tfplan
+terraform apply scullery.tfplan
 ```
 
 The outputs map to the app's environment variables (all four or none):
@@ -122,7 +122,8 @@ Through the real Vercel-identity chain, with the production `gcp-auth.ts`:
 | a made-up token | 401 |
 | a valid Vercel identity | 200, 22 units read from the private database |
 | the same identity, token meant for another audience | 401 |
-| the spike's service account calling staging | 403 (separate services, separate identities) |
+| staging's service account calling **production** | 403 (no `run.invoker` there) |
+| production's service account, asked for by a `development` token | refused: `getOpenIdToken` denied (trust allows only `production`) |
 | create, read back and delete a recipe | 201, 200, 204: writes work over the private network |
 | a warm database query, from a laptop | about 54 ms |
 | the first request after 17 minutes idle (a real cold start) | about 3.7 s, against about 55 ms warm |

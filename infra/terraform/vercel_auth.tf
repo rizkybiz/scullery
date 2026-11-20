@@ -38,20 +38,6 @@ resource "google_iam_workload_identity_pool_provider" "vercel" {
   }
 }
 
-# The identity Vercel acts as. For the spike there is one; staging and production get
-# their own so that a preview deployment can never reach production.
-resource "google_service_account" "spike_caller" {
-  account_id   = "vercel-spike-caller"
-  display_name = "Vercel (spike): calls the spike Cloud Run service"
-
-  depends_on = [google_project_service.apis]
-}
-
-# Who may act as that service account: only tokens whose `environment` claim is
-# "development", which is what `vercel env pull` / `vercel dev` produce locally. Preview
-# and production are deliberately not trusted by the spike.
-resource "google_service_account_iam_member" "spike_trust" {
-  service_account_id = google_service_account.spike_caller.name
-  role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.vercel.name}/attribute.environment/development"
-}
+# The identities Vercel acts as are created per environment, in modules/api_environment:
+# staging trusts tokens from "development" and "preview", production trusts only
+# "production". A preview deployment can therefore never reach production.
