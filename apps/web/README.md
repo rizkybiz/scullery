@@ -210,18 +210,16 @@ apps/web/src/
   (the `minutes` profile's 5 minute client window), so history navigation can show a page
   the browser already has. Opening a deleted recipe's page that way is harmless: deleting
   again counts as success.
-- **The Vercel OIDC token inside a cached function is untested:** on Vercel the token arrives
-  with the request, but `use cache` functions (`listRecipes`, `getRecipe`) run without request
-  data, so whether they can still fetch it there is unknown. Locally the token comes from an
-  environment variable, which hides the question. It has to be tested on a Vercel deployment.
-- **Not yet tested on Vercel:** `use cache` is in-memory per deployment instance by default,
-  so whether `updateTag` reaches every instance of a serverless deployment has to be
-  measured there, not assumed from `next start`.
+- **The Vercel OIDC token works inside a cached function:** tested on the first preview
+  deployment (2026-11-20). `listRecipes` and `getRecipe` run without request data, and the
+  signed-in list still rendered from the staging API.
+- **`updateTag` on Vercel is observed, not proven:** one signed-in user deleted a recipe
+  on a preview deployment; the list and the recipe page were fresh immediately. One browser
+  session cannot show that every serverless instance sees the invalidation, and it was not
+  tested under concurrent load. `use cache` is in memory per instance by default.
 - **Shared cache:** `"use cache"` is shared across users. That is correct for one
   household's recipes. A multi-tenant product would key the cache per tenant or use
   a private cache scope.
-- **Cache storage:** `use cache` defaults to in-memory storage per deployment.
-  How it behaves across serverless instances on Vercel still needs to be tested.
 - **Missing recipe returns HTTP 200:** the recipe page streams (the shell is sent before
   the recipe is fetched), so by the time `notFound()` runs the status line is already
   sent. Next adds a `noindex` tag, which is fine for a private app. A public site
@@ -277,6 +275,12 @@ variable and deploy. Use a different `AUTH_SECRET` for each environment.
 
 The app is built and served by Vercel, so there is no container image to build.
 CI on GitHub-hosted runners is not set up yet.
+
+The Vercel project's Root Directory is `apps/web`, so `vercel deploy` must run from the
+repository root (link it there with `vercel link`; `.vercel/` is git-ignored). Running it
+inside `apps/web` fails with "Root Directory does not exist". `.vercelignore` keeps the
+upload under the 100 MB limit by leaving out `node_modules`, `.next`, `infra` and
+`services`.
 
 ## Contributing
 - Work on a feature branch and open a PR; never commit to `main`.
