@@ -4,15 +4,15 @@
  */
 
 export interface paths {
-    "/healthz": {
+    "/health": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get healthz */
-        get: operations["get-healthz"];
+        /** Get health */
+        get: operations["get-health"];
         put?: never;
         post?: never;
         delete?: never;
@@ -374,7 +374,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    "get-healthz": {
+    "get-health": {
         parameters: {
             query?: never;
             header?: never;
