@@ -3,8 +3,10 @@
 Google Cloud resources for Scullery, and the trust that lets a Vercel deployment call them
 without a stored secret.
 
-**Status: spike.** This proves the sign-in chain with a stand-in service (Google's public
-"hello" image). The real API (Cloud Run) and database (Cloud SQL) replace it next.
+**Status:** the sign-in chain is proven with a stand-in service (Google's public "hello"
+image), and the foundation for the real API is in place: a private network, a registry, and a
+Cloud SQL instance with no public address. The API's Cloud Run services and databases are
+built on top of this next, and the stand-in is then removed.
 
 ## How a request from Vercel is allowed in
 
@@ -30,6 +32,9 @@ The app side of this is `apps/web/src/lib/api/gcp-auth.ts`.
 | `apis.tf` | the Google APIs in use (Cloud Run, IAM, STS, IAM Credentials) |
 | `vercel_auth.tf` | workload identity pool + Vercel OIDC provider, the service account, and who may act as it |
 | `spike.tf` | the Cloud Run service (requires sign-in, no public access) and its invoker grant |
+| `network.tf` | a private network and subnet; the reserved range and peering that give Cloud SQL a private IP |
+| `registry.tf` | the Artifact Registry repository for the API's container images |
+| `database.tf` | the Cloud SQL instance: Postgres 17, `db-f1-micro`, **private IP only**, TLS required, daily backups |
 | `outputs.tf` | the values the app needs, as environment variables |
 
 The provider is pinned exactly (`versions.tf`) and `.terraform.lock.hcl` is committed.
@@ -84,9 +89,25 @@ change a little over a minute later. IAM changes are eventually consistent.
 
 ## Costs
 
-Everything here is free or within Cloud Run's free tier (the service scales to zero). Cloud
-SQL, added later, is the first paid resource. Tear down with `terraform destroy`; the enabled
-APIs are deliberately left on.
+The Cloud SQL instance is the first paid resource and bills from the moment it exists
+(roughly $10 to $15 a month: a shared-core instance, 10 GB of SSD and backups; the exact
+figures are checked on the billing page, not assumed). It has no public address, so there is
+no IPv4 charge. Everything else is free or within a free tier: Cloud Run scales to zero, the
+network and peering are free, and Artifact Registry gives 0.5 GB. Between work sessions the
+instance can be stopped to pause its compute charge (storage keeps billing). Tear it all down
+with `terraform destroy`; the enabled APIs are deliberately left on.
+
+## Why the database is private
+
+The instance has `ipv4_enabled = false`, so there is no address on the public internet to
+attack or to misconfigure, and no allow-list to keep tidy. Cloud Run reaches it by joining the
+private network (Direct VPC egress) and connecting over TCP to its private IP, with TLS
+required. A real customer's production setup would look the same; this demo's weaker points
+are elsewhere (one shared instance, shared-core with no SLA, no standby).
+
+**Checked directly with `gcloud` after the apply:** `POSTGRES_17`, `db-f1-micro`, Enterprise,
+zonal, 10 GB SSD, backups on, a single address of type `PRIVATE`, `sslMode: ENCRYPTED_ONLY`.
+The first creation took about ten minutes.
 
 ## Not done yet
 

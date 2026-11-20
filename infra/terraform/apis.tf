@@ -7,6 +7,11 @@ locals {
     "iamcredentials.googleapis.com",       # minting tokens for a service account
     "sts.googleapis.com",                  # exchanging Vercel's token for a Google one
     "cloudresourcemanager.googleapis.com", # project lookups used by the above
+    "compute.googleapis.com",              # the private network
+    "servicenetworking.googleapis.com",    # private IP for Cloud SQL (private services access)
+    "sqladmin.googleapis.com",             # Cloud SQL
+    "artifactregistry.googleapis.com",     # container images
+    "secretmanager.googleapis.com",        # database passwords
   ]
 }
 
