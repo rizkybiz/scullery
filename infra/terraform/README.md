@@ -141,7 +141,13 @@ next step for a real customer.
   service's own health endpoint cannot be called from outside. Paths ending in `z` can be
   reserved ([known issues](https://docs.cloud.google.com/run/docs/known-issues)). The startup
   probe still works, because it runs inside the platform. The first negative tests used this
-  path and proved nothing; they were redone on `/units`. The fix is renaming the endpoint.
+  path and proved nothing; they were redone on `/units`. **Fixed** by renaming the endpoint to
+  `/health` (API, web client and the probe changed together). Verified through the real chain:
+  no credentials now gets 403, a made-up token 401, a valid identity 200 with the version of
+  the commit that was built, and the old `/healthz` still gets Google's 404.
+- **A rollout is safe by construction.** Changing the image makes Cloud Run create a new
+  revision and send traffic to it only once it passes the startup probe; the previous revision
+  stays available, so a bad image does not take the service down.
 - **IAM is eventually consistent.** Allow a minute or two after granting a role.
 
 ## Costs

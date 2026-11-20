@@ -113,9 +113,11 @@ resource "google_cloud_run_v2_service" "api" {
 
       # The API connects to the database on startup and exits if it cannot, so a revision
       # with a broken database setting never becomes ready and the deploy fails loudly.
+      # The path is /health, not /healthz: Cloud Run reserves /healthz (paths ending in "z"),
+      # and the API serves it at /health for that reason.
       startup_probe {
         http_get {
-          path = "/healthz"
+          path = "/health"
         }
         period_seconds    = 3
         timeout_seconds   = 3
