@@ -272,3 +272,23 @@ body {
   gap: 1rem;
   margin-top: 1rem;
 }
+
+/* Who is signed in, in the header. */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.user-menu button {
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+}
+
+/* The sign-in page: a narrow column with no app frame around it. */
+.login {
+  max-width: 22rem;
+  margin: 3rem auto;
+  padding: 0 1rem;
+}

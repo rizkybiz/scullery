@@ -49,6 +49,20 @@ requests only from this app.
   after it runs, and it must stay outside the `try/catch`.
 - _Checked:_ none of `SCULLERY_API_URL`, the API address or any server-only code appears
   in the browser bundle (`.next/static`).
+- _Worked example (sign-in):_ two fixed users, `admin` and `reviewer`, each configured by one
+  environment variable holding a password HASH (scrypt, from Node's standard library; the
+  cost is stored in the hash). Both have the same permissions; two exist so one can be
+  revoked, and so the log says who did what. Sign-in sets a signed token (HS256, `jose`)
+  in an `httpOnly`, `sameSite=lax` cookie that lasts 8 hours, `Secure` and `__Host-` on
+  Vercel. The token is stateless, so there is no session table; revoking everyone means
+  changing `AUTH_SECRET`. A failed sign-in always says "Invalid name or password.", an
+  unknown name takes as long as a wrong password (about 56 ms against 57 ms measured), and
+  `?next=` is followed only if it is a path on this site. Pages live in two route groups:
+  `(app)` has the frame (header, tabs, API status, sign-out) and the login page has none,
+  so signed-out visitors never trigger an API call (measured: 0 calls, against 1 signed in).
+  The plain logic is in `src/lib/auth` with no framework imports. It was attack-tested
+  outside the repo: tampered and forged tokens, `alg: none`, another algorithm, expiry, and
+  a list of open-redirect tricks.
 
 **D3. A server-only data access layer**
 

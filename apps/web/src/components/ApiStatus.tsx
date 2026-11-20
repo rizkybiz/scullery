@@ -1,4 +1,5 @@
 import { getHealth } from '../lib/api/health.ts'
+import { getSession } from '../lib/auth/dal.ts'
 
 // Splitting out try/catch business logic from rendering JSX
 async function readHealth() {
@@ -15,6 +16,9 @@ async function readHealth() {
 // back finished HTML. There are no hooks and no loading state to manage here,
 // because the component simply awaits its data.
 export default async function ApiStatus() {
+  // This calls the API, so it only runs for someone signed in.
+  if (!(await getSession())) return null
+
   const version = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'dev'
   const { state, text } = await readHealth()
   return (
