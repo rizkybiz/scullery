@@ -69,3 +69,9 @@ Built and deployed: the web app (list, search, favorites, recipe page, create, d
 sign-in), staging and production environments of the API, the sign-in rate limit and Web
 Analytics. Still to come: the AI import agent and its evals, editing recipes, a visual
 refresh, CI, and the full write-up (rollout plan, success measures, risks).
+
+## Credits
+
+The app icon is the kitchen knife emoji (U+1F52A) from [Twemoji](https://github.com/twitter/twemoji),
+Copyright 2020 Twitter, Inc and other contributors, licensed under
+[CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
