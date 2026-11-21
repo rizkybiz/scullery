@@ -9,22 +9,20 @@
 - **Queries are SQL, and the Go code for them is generated.** Write SQL in `internal/dbgen/queries/*.sql`, then run `make sqlc` to regenerate `internal/dbgen` and commit both. sqlc checks the queries against the migrations, so a query that disagrees with the schema fails at generate time. It is pinned in `tools/go.mod`; the first `make sqlc` compiles it (about a minute, needs gcc).
 - **Tests use a real Postgres**, one fresh migrated database per test (`internal/db/dbtest`). `make verify` starts a throwaway Postgres 17 container for you. To run `go test` directly, set `TEST_DATABASE_URL` to any server you may create databases on, for example `postgres://scullery:scullery@127.0.0.1:5432/postgres?sslmode=disable`. Without it, database tests skip locally and **fail under `CI=true`**.
 
-## CI
+## Checks
 
-GitHub Actions (`.github/workflows/ci.yml`) runs on the self-hosted `docker-build`
-runner. The logic lives in `scripts/ci/` so it runs the same locally:
+There is no CI yet; the checks are scripts in `scripts/ci/`, written so a CI job can run them
+unchanged:
 
-| Check | Local command |
+| Check | Command |
 |---|---|
-| gofmt, `go mod tidy -diff`, `go vet`, generated sqlc code is current, tests (database tests run against a throwaway Postgres) | `make verify` |
+| gofmt, `go mod tidy -diff`, `go vet`, generated sqlc code is current, tests (database tests run against a throwaway Postgres when Docker is running) | `make verify` (works from any directory) |
 | Built image: migrations up/down/up on Postgres 17, then `/health` | `scripts/ci/image-checks.sh <image>` |
 
-- **Pull requests** build and test but never publish.
-- **Pushes to `main`** also push the image to `registry.example.com/scullery/api`
-  as an immutable `sha-<short>` tag and a moving `main` tag. The run summary shows
-  the digest; **deploy by pinning the `sha-` tag**, never `main`.
-- `ZOT_CI_PASSWORD` (repository secret) is the registry password for the `ci` user.
-- Dependabot opens weekly update PRs for Go modules, base images and Actions.
+The image is built and pushed to Artifact Registry by hand and deployed by pinning its digest
+in `infra/terraform/api_image.auto.tfvars` (see [the infra README](../../infra/terraform/README.md)).
+Planned: build, scan, sign and attest in CI on merge, then open a pull request that bumps
+that digest.
 
 ## Image supply chain
 
@@ -85,8 +83,8 @@ update is then a reviewable change in git, not something that happens by acciden
 
 ### Not done yet
 
-- **Chainguard comparison, deferred.** An experimental `Dockerfile.chainguard` (Chainguard's Go
-  builder, Go 1.27.4) also produces a binary with no findings. A proper comparison of it against
+- **Chainguard comparison, deferred.** An experimental build with Chainguard's Go builder
+  (Go 1.27.4; not kept in the repository) also produced a binary with no findings. A proper comparison of it against
   the current setup (vulnerability count, size, SBOM, signature and provenance verification) is
   planned but not done. Note that its `:latest` tag floats too, so it would need the same pinning.
 - No SBOM is generated or published, the image is not signed by us, and scanning is manual.
