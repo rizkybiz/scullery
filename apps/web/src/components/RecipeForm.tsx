@@ -3,43 +3,36 @@
 import Link from 'next/link'
 import { useActionState, useState } from 'react'
 import { createRecipeAction } from '../app/(app)/recipes/actions.ts'
-import { newIngredientRow, type IngredientRow } from '../forms/ingredientRow.ts'
+import { emptyFormState, type RecipeFormFields, type RecipeFormState } from '../forms/fromRecipe.ts'
+import type { IngredientRow } from '../forms/ingredientRow.ts'
 import type { RecipeFormInput } from '../forms/recipeForm.ts'
-import { newStepRow, type StepRow } from '../forms/stepRow.ts'
+import type { StepRow } from '../forms/stepRow.ts'
 import type { Unit } from '../lib/api/units.ts'
 import FormField from './FormField.tsx'
 import IngredientRows from './IngredientRows.tsx'
 import StepRows from './StepRows.tsx'
 
-type Fields = {
-  title: string
-  description: string
-  servings: string
-  prepMinutes: string
-  cookMinutes: string
-  yieldText: string
-  sourceUrl: string
-  notes: string
-}
+type Fields = RecipeFormFields
 
-// RecipeForm is the "new recipe" form.
+// RecipeForm is the recipe form.
 //
 // It is a Client Component because the form is live state: ingredient and step rows are
 // added, edited and removed in the browser before anything is saved. Saving, checking
 // and everything that touches the API happen on the server, in createRecipeAction.
-export default function RecipeForm({ units }: { units: Unit[] }) {
-  const [fields, setFields] = useState<Fields>({
-    title: '',
-    description: '',
-    servings: '',
-    prepMinutes: '',
-    cookMinutes: '',
-    yieldText: '',
-    sourceUrl: '',
-    notes: '',
-  })
-  const [ingredients, setIngredients] = useState<IngredientRow[]>([newIngredientRow()])
-  const [steps, setSteps] = useState<StepRow[]>([newStepRow()])
+//
+// `initial` fills it in (an import's draft, from fromRecipe). It is read once, when the form
+// mounts: to load a different draft, the parent gives the form a new `key`.
+export default function RecipeForm({
+  units,
+  initial,
+}: {
+  units: Unit[]
+  initial?: RecipeFormState
+}) {
+  const [start] = useState(() => initial ?? emptyFormState())
+  const [fields, setFields] = useState<Fields>(start.fields)
+  const [ingredients, setIngredients] = useState<IngredientRow[]>(start.ingredients)
+  const [steps, setSteps] = useState<StepRow[]>(start.steps)
 
   // `state` is what the action last returned (the messages for the form, or null);
   // `isPending` is true from submit until the action finishes. Because every input
