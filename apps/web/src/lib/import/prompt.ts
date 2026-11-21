@@ -18,9 +18,12 @@ Rules:
 - Transcribe; do not invent. Leave a field null or empty when the source does not say it.
 - Amounts are decimals: "1 1/2" is 1.5, "¾" is 0.75, "half" is 0.5. A range like "2-3" or "2 to 3"
   is quantity_min 2 and quantity_max 3. A single amount has quantity_max null.
+- "a" or "an" before a unit is an amount of 1: "a pinch of salt" is 1 pinch.
 - unit_code must be one of the allowed codes listed below, matched by meaning: "tablespoons" and
-  "Tbsp" are tbsp, "grams" is g, "cloves" is clove. If no code fits ("sprig", "handful"), use null
-  and keep the word with the name.
+  "Tbsp" are tbsp, "grams" is g, "cloves" is clove. If no code fits ("sprig", "handful", "sheet",
+  "head"), use null and keep the word with the name; never pick a different unit instead.
+- A plain count has no unit: "3 eggs" and "2 lemons" have unit_code null. Use each only when the
+  source itself says "each".
 - preparation is how an ingredient is cut or treated ("minced", "softened"). note is anything else
   ("to taste", "for garnish", "or use shallots"). optional is true only when the source says so.
 - If ingredients or steps are listed under headings ("For the dough:"), put each heading, as
