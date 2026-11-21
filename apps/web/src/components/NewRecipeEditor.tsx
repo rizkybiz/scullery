@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react'
 import { fromRecipe, type RecipeFormState } from '../forms/fromRecipe.ts'
+import { IMPORT_DISABLED_MESSAGE } from '../lib/flags.ts'
 import type { Unit } from '../lib/api/units.ts'
 import type { ImportOutcome } from '../workflows/importRecipe.ts'
 import ImportPanel from './ImportPanel.tsx'
@@ -12,7 +13,16 @@ type Done = Extract<ImportOutcome, { ok: true }>
 // The "new recipe" page's client part: the import panel above the recipe form. An imported
 // draft re-mounts the form (a new `key`) filled in with it, so the person reviews and saves it
 // with the same form, the same checks and the same Server Action as a recipe typed by hand.
-export default function NewRecipeEditor({ units }: { units: Unit[] }) {
+//
+// With importing switched off (READ_ONLY or IMPORT_DISABLED), the panel says so instead of
+// offering the form. That is for people; the Server Action refuses on its own either way.
+export default function NewRecipeEditor({
+  units,
+  importEnabled,
+}: {
+  units: Unit[]
+  importEnabled: boolean
+}) {
   const [draft, setDraft] = useState<{ key: number; state: RecipeFormState; from: Done } | null>(
     null,
   )
@@ -28,7 +38,11 @@ export default function NewRecipeEditor({ units }: { units: Unit[] }) {
 
   return (
     <>
-      <ImportPanel onDraft={onDraft} />
+      {importEnabled ? (
+        <ImportPanel onDraft={onDraft} />
+      ) : (
+        <p role="status">{IMPORT_DISABLED_MESSAGE}</p>
+      )}
       {draft && (
         <div role="status" className="import-result">
           <p>
