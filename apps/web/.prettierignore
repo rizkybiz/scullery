@@ -10,3 +10,4 @@ src/lib/api/schema.d.ts
 next-env.d.ts
 .vercel
 src/app/.well-known/workflow
+evals/import/results

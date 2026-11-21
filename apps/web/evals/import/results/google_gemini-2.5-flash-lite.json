@@ -1,14 +1,14 @@
 {
   "model": "google/gemini-2.5-flash-lite",
-  "ranAt": "2026-11-21T18:05:47.014Z",
+  "ranAt": "2026-11-21T18:14:50.724Z",
   "results": [
     {
       "id": "01-jsonld-basic",
       "passed": 28,
       "total": 28,
-      "ms": 1769,
-      "inputTokens": 1347,
-      "outputTokens": 575,
+      "ms": 2150,
+      "inputTokens": 1427,
+      "outputTokens": 577,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
       "failures": [],
@@ -191,7 +191,7 @@
               "quantity_min": 30,
               "quantity_max": null,
               "unit_code": "g",
-              "preparation": null,
+              "preparation": "melted",
               "note": null,
               "section": null,
               "optional": false
@@ -239,16 +239,15 @@
     },
     {
       "id": "02-jsonld-graph",
-      "passed": 17,
+      "passed": 18,
       "total": 19,
-      "ms": 1818,
-      "inputTokens": 1389,
+      "ms": 2538,
+      "inputTokens": 1469,
       "outputTokens": 701,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
       "failures": [
-        "units: eggs: unit_code = null (got \"each\")",
-        "units: lemons: unit_code = null (got \"each\")"
+        "units: eggs: unit_code = null (got \"each\")"
       ],
       "checks": [
         {
@@ -328,8 +327,8 @@
         },
         {
           "kind": "units",
-          "ok": false,
-          "what": "lemons: unit_code = null (got \"each\")"
+          "ok": true,
+          "what": "lemons: unit_code = null (got null)"
         },
         {
           "kind": "preparation",
@@ -385,7 +384,7 @@
               "quantity_max": null,
               "unit_code": "each",
               "preparation": null,
-              "note": null,
+              "note": "large",
               "section": null,
               "optional": false
             },
@@ -403,7 +402,7 @@
               "name": "lemons",
               "quantity_min": 2,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": "zested",
               "note": null,
               "section": null,
@@ -449,9 +448,9 @@
       "id": "03-jsonld-sections",
       "passed": 29,
       "total": 31,
-      "ms": 1946,
-      "inputTokens": 1385,
-      "outputTokens": 725,
+      "ms": 2256,
+      "inputTokens": 1465,
+      "outputTokens": 711,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
       "failures": [
@@ -641,14 +640,14 @@
               "name": "onion",
               "quantity_min": 1,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": "diced",
               "note": null,
               "section": "For the filling:",
               "optional": false
             },
             {
-              "name": "cooked chicken",
+              "name": "chicken, cooked",
               "quantity_min": 1,
               "quantity_max": null,
               "unit_code": "cup",
@@ -658,11 +657,11 @@
               "optional": false
             },
             {
-              "name": "peas",
+              "name": "peas, frozen",
               "quantity_min": 1,
               "quantity_max": null,
               "unit_code": "cup",
-              "preparation": "frozen",
+              "preparation": null,
               "note": null,
               "section": "For the filling:",
               "optional": false
@@ -681,7 +680,7 @@
               "name": "egg",
               "quantity_min": 1,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": "beaten",
               "note": null,
               "section": "For the crust:",
@@ -717,9 +716,9 @@
       "id": "04-jsonld-fractions",
       "passed": 20,
       "total": 21,
-      "ms": 1981,
-      "inputTokens": 1290,
-      "outputTokens": 635,
+      "ms": 2237,
+      "inputTokens": 1370,
+      "outputTokens": 629,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
       "failures": [
@@ -927,14 +926,16 @@
     },
     {
       "id": "05-jsonld-ranges",
-      "passed": 20,
+      "passed": 19,
       "total": 20,
-      "ms": 1309,
-      "inputTokens": 666,
-      "outputTokens": 491,
+      "ms": 1821,
+      "inputTokens": 1368,
+      "outputTokens": 495,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
-      "failures": [],
+      "failures": [
+        "quantities: kale: quantity_min = 1 (got 0.25)"
+      ],
       "checks": [
         {
           "kind": "refusal",
@@ -998,8 +999,8 @@
         },
         {
           "kind": "quantities",
-          "ok": true,
-          "what": "kale: quantity_min = 1 (got 1)"
+          "ok": false,
+          "what": "kale: quantity_min = 1 (got 0.25)"
         },
         {
           "kind": "quantities",
@@ -1043,8 +1044,8 @@
         "recipe": {
           "title": "Garlicky Greens",
           "description": "",
-          "servings": 2.5,
-          "yield_text": null,
+          "servings": null,
+          "yield_text": "2-3 servings",
           "prep_minutes": null,
           "cook_minutes": null,
           "source_url": null,
@@ -1071,7 +1072,7 @@
             },
             {
               "name": "kale",
-              "quantity_min": 1,
+              "quantity_min": 0.25,
               "quantity_max": null,
               "unit_code": "bunch",
               "preparation": null,
@@ -1114,9 +1115,9 @@
       "id": "06-jsonld-notes-optional",
       "passed": 20,
       "total": 20,
-      "ms": 1472,
-      "inputTokens": 673,
-      "outputTokens": 636,
+      "ms": 1926,
+      "inputTokens": 1375,
+      "outputTokens": 626,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
       "failures": [],
@@ -1319,9 +1320,9 @@
       "id": "07-jsonld-timers",
       "passed": 19,
       "total": 19,
-      "ms": 1488,
-      "inputTokens": 682,
-      "outputTokens": 544,
+      "ms": 1784,
+      "inputTokens": 1384,
+      "outputTokens": 533,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
       "failures": [],
@@ -1448,7 +1449,7 @@
               "name": "onions",
               "quantity_min": 2,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": "chopped",
               "note": null,
               "section": null,
@@ -1502,16 +1503,14 @@
     },
     {
       "id": "08-html-no-jsonld",
-      "passed": 18,
+      "passed": 19,
       "total": 19,
-      "ms": 1641,
-      "inputTokens": 715,
-      "outputTokens": 681,
+      "ms": 1902,
+      "inputTokens": 1417,
+      "outputTokens": 680,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
-      "failures": [
-        "units: egg: unit_code = null (got \"each\")"
-      ],
+      "failures": [],
       "checks": [
         {
           "kind": "refusal",
@@ -1570,8 +1569,8 @@
         },
         {
           "kind": "units",
-          "ok": false,
-          "what": "egg: unit_code = null (got \"each\")"
+          "ok": true,
+          "what": "egg: unit_code = null (got null)"
         },
         {
           "kind": "names",
@@ -1645,7 +1644,7 @@
               "name": "egg",
               "quantity_min": 1,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": null,
               "note": null,
               "section": null,
@@ -1711,9 +1710,9 @@
       "id": "09-html-noisy",
       "passed": 24,
       "total": 24,
-      "ms": 1721,
-      "inputTokens": 794,
-      "outputTokens": 675,
+      "ms": 2350,
+      "inputTokens": 1496,
+      "outputTokens": 674,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
       "failures": [],
@@ -1875,7 +1874,7 @@
               "name": "lemon",
               "quantity_min": 1,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": "juiced",
               "note": null,
               "section": null,
@@ -1934,16 +1933,14 @@
     },
     {
       "id": "10-text-numbered",
-      "passed": 15,
+      "passed": 16,
       "total": 16,
-      "ms": 27983,
-      "inputTokens": 1268,
-      "outputTokens": 479,
+      "ms": 1613,
+      "inputTokens": 1348,
+      "outputTokens": 477,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
-      "failures": [
-        "units: avocados: unit_code = null (got \"each\")"
-      ],
+      "failures": [],
       "checks": [
         {
           "kind": "refusal",
@@ -1982,8 +1979,8 @@
         },
         {
           "kind": "units",
-          "ok": false,
-          "what": "avocados: unit_code = null (got \"each\")"
+          "ok": true,
+          "what": "avocados: unit_code = null (got null)"
         },
         {
           "kind": "names",
@@ -2042,7 +2039,7 @@
               "name": "avocados",
               "quantity_min": 2,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": "ripe",
               "note": null,
               "section": null,
@@ -2052,7 +2049,7 @@
               "name": "red onion",
               "quantity_min": 0.5,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": "finely chopped",
               "note": null,
               "section": null,
@@ -2062,7 +2059,7 @@
               "name": "lime",
               "quantity_min": 1,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": "juiced",
               "note": null,
               "section": null,
@@ -2101,25 +2098,175 @@
     },
     {
       "id": "11-text-paragraph",
-      "passed": 0,
-      "total": 1,
-      "ms": null,
-      "inputTokens": null,
-      "outputTokens": null,
-      "answeredBy": null,
-      "error": "AI_RetryError: Failed after 3 attempts. Last error: GatewayRateLimitError: Rate limit exceeded for google/gemini-2.5-flash-lite for provider google: this team's limit of 5 requests per minute (across all regions) was reached. Retry after 60s.",
-      "failures": [
-        "AI_RetryError: Failed after 3 attempts. Last error: GatewayRateLimitError: Rate limit exceeded for google/gemini-2.5-flash-lite for provider google: this team's limit of 5 requests per minute (across "
+      "passed": 15,
+      "total": 15,
+      "ms": 3175,
+      "inputTokens": 1367,
+      "outputTokens": 545,
+      "answeredBy": "google/gemini-2.5-flash-lite",
+      "error": null,
+      "failures": [],
+      "checks": [
+        {
+          "kind": "refusal",
+          "ok": true,
+          "what": "accepted as a recipe"
+        },
+        {
+          "kind": "counts",
+          "ok": true,
+          "what": "step count = 4 (got 4)"
+        },
+        {
+          "kind": "names",
+          "ok": true,
+          "what": "ingredient \"rice\" found"
+        },
+        {
+          "kind": "quantities",
+          "ok": true,
+          "what": "rice: quantity_min = 1 (got 1)"
+        },
+        {
+          "kind": "units",
+          "ok": true,
+          "what": "rice: unit_code = \"cup\" (got \"cup\")"
+        },
+        {
+          "kind": "names",
+          "ok": true,
+          "what": "ingredient \"stock\" found"
+        },
+        {
+          "kind": "quantities",
+          "ok": true,
+          "what": "stock: quantity_min = 2 (got 2)"
+        },
+        {
+          "kind": "units",
+          "ok": true,
+          "what": "stock: unit_code = \"cup\" (got \"cup\")"
+        },
+        {
+          "kind": "names",
+          "ok": true,
+          "what": "ingredient \"onion\" found"
+        },
+        {
+          "kind": "quantities",
+          "ok": true,
+          "what": "onion: quantity_min = 1 (got 1)"
+        },
+        {
+          "kind": "preparation",
+          "ok": true,
+          "what": "onion: preparation has \"diced\" (got \"diced\")"
+        },
+        {
+          "kind": "counts",
+          "ok": true,
+          "what": "step with \"simmer\" found"
+        },
+        {
+          "kind": "timers",
+          "ok": true,
+          "what": "step \"simmer\": timer = 1080 (got 1080)"
+        },
+        {
+          "kind": "counts",
+          "ok": true,
+          "what": "step with \"stand\" found"
+        },
+        {
+          "kind": "timers",
+          "ok": true,
+          "what": "step \"stand\": timer = 300 (got 300)"
+        }
       ],
-      "checks": [],
-      "draft": null
+      "draft": {
+        "isRecipe": true,
+        "warnings": [],
+        "recipe": {
+          "title": "Simple Rice Pilaf",
+          "description": "",
+          "servings": null,
+          "yield_text": null,
+          "prep_minutes": null,
+          "cook_minutes": 18,
+          "source_url": null,
+          "ingredients": [
+            {
+              "name": "long-grain rice",
+              "quantity_min": 1,
+              "quantity_max": null,
+              "unit_code": "cup",
+              "preparation": null,
+              "note": null,
+              "section": null,
+              "optional": false
+            },
+            {
+              "name": "chicken stock",
+              "quantity_min": 2,
+              "quantity_max": null,
+              "unit_code": "cup",
+              "preparation": null,
+              "note": null,
+              "section": null,
+              "optional": false
+            },
+            {
+              "name": "butter",
+              "quantity_min": 1,
+              "quantity_max": null,
+              "unit_code": "tbsp",
+              "preparation": null,
+              "note": null,
+              "section": null,
+              "optional": false
+            },
+            {
+              "name": "onion",
+              "quantity_min": 1,
+              "quantity_max": null,
+              "unit_code": "each",
+              "preparation": "diced",
+              "note": null,
+              "section": null,
+              "optional": false
+            }
+          ],
+          "steps": [
+            {
+              "instruction": "Melt the butter in a pan and soften the onion.",
+              "timer_seconds": null,
+              "section": null
+            },
+            {
+              "instruction": "Add the rice and stir until it is coated, about 2 minutes.",
+              "timer_seconds": 120,
+              "section": null
+            },
+            {
+              "instruction": "Pour in the stock, cover, and simmer for 18 minutes.",
+              "timer_seconds": 1080,
+              "section": null
+            },
+            {
+              "instruction": "Let it stand for 5 minutes, then fluff with a fork.",
+              "timer_seconds": 300,
+              "section": null
+            }
+          ]
+        }
+      }
     },
     {
       "id": "12-text-sections",
       "passed": 31,
       "total": 32,
-      "ms": 8675,
-      "inputTokens": 1316,
+      "ms": 2410,
+      "inputTokens": 1396,
       "outputTokens": 774,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
@@ -2398,16 +2545,15 @@
     },
     {
       "id": "13-text-units",
-      "passed": 21,
+      "passed": 22,
       "total": 23,
-      "ms": 8394,
-      "inputTokens": 1278,
-      "outputTokens": 682,
+      "ms": 1977,
+      "inputTokens": 1358,
+      "outputTokens": 685,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
       "failures": [
-        "quantities: chili flakes: quantity_min = 1 (got null)",
-        "timers: step \"Stir-fry\": timer = null (got 360)"
+        "timers: step \"Stir-fry\": timer = null (got 420)"
       ],
       "checks": [
         {
@@ -2487,8 +2633,8 @@
         },
         {
           "kind": "quantities",
-          "ok": false,
-          "what": "chili flakes: quantity_min = 1 (got null)"
+          "ok": true,
+          "what": "chili flakes: quantity_min = 1 (got 1)"
         },
         {
           "kind": "units",
@@ -2523,7 +2669,7 @@
         {
           "kind": "timers",
           "ok": false,
-          "what": "step \"Stir-fry\": timer = null (got 360)"
+          "what": "step \"Stir-fry\": timer = null (got 420)"
         }
       ],
       "draft": {
@@ -2590,7 +2736,7 @@
             },
             {
               "name": "chili flakes",
-              "quantity_min": null,
+              "quantity_min": 1,
               "quantity_max": null,
               "unit_code": "pinch",
               "preparation": null,
@@ -2617,7 +2763,7 @@
             },
             {
               "instruction": "Stir-fry the chicken for 6 minutes, add the sauce and bubble for 1 minute.",
-              "timer_seconds": 360,
+              "timer_seconds": 420,
               "section": null
             }
           ]
@@ -2626,25 +2772,32 @@
     },
     {
       "id": "14-not-a-recipe",
-      "passed": 0,
+      "passed": 1,
       "total": 1,
-      "ms": null,
-      "inputTokens": null,
-      "outputTokens": null,
-      "answeredBy": null,
-      "error": "AI_RetryError: Failed after 3 attempts. Last error: GatewayRateLimitError: Rate limit exceeded for google/gemini-2.5-flash-lite for provider google: this team's limit of 5 requests per minute (across all regions) was reached. Retry after 60s.",
-      "failures": [
-        "AI_RetryError: Failed after 3 attempts. Last error: GatewayRateLimitError: Rate limit exceeded for google/gemini-2.5-flash-lite for provider google: this team's limit of 5 requests per minute (across "
+      "ms": 1020,
+      "inputTokens": 1335,
+      "outputTokens": 99,
+      "answeredBy": "google/gemini-2.5-flash-lite",
+      "error": null,
+      "failures": [],
+      "checks": [
+        {
+          "kind": "refusal",
+          "ok": true,
+          "what": "refused as not a recipe"
+        }
       ],
-      "checks": [],
-      "draft": null
+      "draft": {
+        "isRecipe": false,
+        "title": "City council approves new bike lanes"
+      }
     },
     {
       "id": "15-prompt-injection",
       "passed": 22,
       "total": 22,
-      "ms": 8127,
-      "inputTokens": 1344,
+      "ms": 1583,
+      "inputTokens": 1424,
       "outputTokens": 431,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
@@ -2826,18 +2979,193 @@
     },
     {
       "id": "16-text-unknown-units",
-      "passed": 0,
-      "total": 1,
-      "ms": null,
-      "inputTokens": null,
-      "outputTokens": null,
-      "answeredBy": null,
-      "error": "AI_RetryError: Failed after 3 attempts. Last error: GatewayRateLimitError: Rate limit exceeded for google/gemini-2.5-flash-lite for provider google: this team's limit of 5 requests per minute (across all regions) was reached. Retry after 60s.",
+      "passed": 15,
+      "total": 19,
+      "ms": 1767,
+      "inputTokens": 1345,
+      "outputTokens": 537,
+      "answeredBy": "google/gemini-2.5-flash-lite",
+      "error": null,
       "failures": [
-        "AI_RetryError: Failed after 3 attempts. Last error: GatewayRateLimitError: Rate limit exceeded for google/gemini-2.5-flash-lite for provider google: this team's limit of 5 requests per minute (across "
+        "units: chicken: unit_code = null (got \"each\")",
+        "units: rosemary: unit_code = null (got \"bunch\")",
+        "units: spinach: unit_code = null (got \"cup\")",
+        "units: garlic: unit_code = null (got \"each\")"
       ],
-      "checks": [],
-      "draft": null
+      "checks": [
+        {
+          "kind": "refusal",
+          "ok": true,
+          "what": "accepted as a recipe"
+        },
+        {
+          "kind": "counts",
+          "ok": true,
+          "what": "step count = 2 (got 2)"
+        },
+        {
+          "kind": "names",
+          "ok": true,
+          "what": "ingredient \"chicken\" found"
+        },
+        {
+          "kind": "quantities",
+          "ok": true,
+          "what": "chicken: quantity_min = 1 (got 1)"
+        },
+        {
+          "kind": "units",
+          "ok": false,
+          "what": "chicken: unit_code = null (got \"each\")"
+        },
+        {
+          "kind": "names",
+          "ok": true,
+          "what": "ingredient \"rosemary\" found"
+        },
+        {
+          "kind": "quantities",
+          "ok": true,
+          "what": "rosemary: quantity_min = 3 (got 3)"
+        },
+        {
+          "kind": "units",
+          "ok": false,
+          "what": "rosemary: unit_code = null (got \"bunch\")"
+        },
+        {
+          "kind": "names",
+          "ok": true,
+          "what": "ingredient \"spinach\" found"
+        },
+        {
+          "kind": "quantities",
+          "ok": true,
+          "what": "spinach: quantity_min = 2 (got 2)"
+        },
+        {
+          "kind": "units",
+          "ok": false,
+          "what": "spinach: unit_code = null (got \"cup\")"
+        },
+        {
+          "kind": "names",
+          "ok": true,
+          "what": "ingredient \"garlic\" found"
+        },
+        {
+          "kind": "quantities",
+          "ok": true,
+          "what": "garlic: quantity_min = 1 (got 1)"
+        },
+        {
+          "kind": "units",
+          "ok": false,
+          "what": "garlic: unit_code = null (got \"each\")"
+        },
+        {
+          "kind": "names",
+          "ok": true,
+          "what": "ingredient \"butter\" found"
+        },
+        {
+          "kind": "quantities",
+          "ok": true,
+          "what": "butter: quantity_min = 1 (got 1)"
+        },
+        {
+          "kind": "units",
+          "ok": true,
+          "what": "butter: unit_code = \"tbsp\" (got \"tbsp\")"
+        },
+        {
+          "kind": "counts",
+          "ok": true,
+          "what": "step with \"roast\" found"
+        },
+        {
+          "kind": "timers",
+          "ok": true,
+          "what": "step \"roast\": timer = 4800 (got 4800)"
+        }
+      ],
+      "draft": {
+        "isRecipe": true,
+        "warnings": [],
+        "recipe": {
+          "title": "Herby Roast Chicken",
+          "description": "",
+          "servings": null,
+          "yield_text": null,
+          "prep_minutes": null,
+          "cook_minutes": 80,
+          "source_url": null,
+          "ingredients": [
+            {
+              "name": "chicken",
+              "quantity_min": 1,
+              "quantity_max": null,
+              "unit_code": "each",
+              "preparation": "whole",
+              "note": null,
+              "section": null,
+              "optional": false
+            },
+            {
+              "name": "rosemary",
+              "quantity_min": 3,
+              "quantity_max": null,
+              "unit_code": "bunch",
+              "preparation": null,
+              "note": null,
+              "section": null,
+              "optional": false
+            },
+            {
+              "name": "spinach",
+              "quantity_min": 2,
+              "quantity_max": null,
+              "unit_code": "cup",
+              "preparation": "handfuls",
+              "note": null,
+              "section": null,
+              "optional": false
+            },
+            {
+              "name": "garlic",
+              "quantity_min": 1,
+              "quantity_max": null,
+              "unit_code": "each",
+              "preparation": "halved",
+              "note": null,
+              "section": null,
+              "optional": false
+            },
+            {
+              "name": "butter",
+              "quantity_min": 1,
+              "quantity_max": null,
+              "unit_code": "tbsp",
+              "preparation": null,
+              "note": null,
+              "section": null,
+              "optional": false
+            }
+          ],
+          "steps": [
+            {
+              "instruction": "Stuff the chicken with the garlic and rosemary, rub with butter, and roast for 1 hour 20 minutes.",
+              "timer_seconds": 4800,
+              "section": null
+            },
+            {
+              "instruction": "Wilt the spinach in the pan juices.",
+              "timer_seconds": null,
+              "section": null
+            }
+          ]
+        }
+      }
     }
   ]
 }
