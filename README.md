@@ -39,10 +39,21 @@ flowchart LR
 | Firewall | A rate limit on `POST /login`: 10 attempts per minute per IP, then 429 |
 | Web Analytics | Page views, with no cookies |
 | Instant rollback | The rollback plan for the web app |
+| **Workflow** | The recipe import runs as a durable run: fetch, AI, normalize, each step retried on its own |
+| **AI SDK + AI Gateway** | One structured-output call per import, Flash-Lite falling back to Nano, authenticated by OIDC with no key |
 
-**In progress:** a recipe import agent built on the **AI SDK**, **AI Gateway** and **Workflow**.
-You paste a link or some text, and the agent fills in the create form for a person to check
-before saving. It comes with an evaluation set that measures how accurate the output is.
+### The recipe import
+
+On **New recipe**, paste a link or the recipe text. A Workflow run reads it (the page's
+schema.org recipe data if it has some, else its text), asks a model through AI Gateway to fill
+the recipe form, and checks the answer against the API's rules and the source itself. The draft
+fills the form; **a person always reviews it and saves with the normal Save**. The model has no
+tools and the page's text is treated as data, so a page cannot make it do anything but fill the
+form. Links are fetched through an SSRF guard (public addresses only).
+
+How good the drafts are is measured, not assumed: an [eval set](apps/web/evals/import/README.md)
+of 16 fixed cases, 329 checks, run by hand against each model. Latest: Flash-Lite 325/329 in a
+median 1.9 s, Nano 327/329 in 14.4 s. The runs also drove three fixes (see its run log).
 
 ## Repository layout
 
@@ -65,10 +76,11 @@ make -C services/api verify             # Go checks and tests
 
 ## Status
 
-Built and deployed: the web app (list, search, favorites, recipe page, create, delete,
-sign-in), staging and production environments of the API, the sign-in rate limit and Web
-Analytics. Still to come: the AI import agent and its evals, editing recipes, a visual
-refresh, CI, and the full write-up (rollout plan, success measures, risks).
+Built and deployed: the web app (list, search, favorites, recipe page, create with every field
+the API stores, delete, sign-in), the recipe import (Workflow, AI SDK, AI Gateway) and its eval
+set, staging and production environments of the API, the sign-in rate limit and Web Analytics.
+Still to come: editing recipes, a visual refresh, CI, and the full write-up (rollout plan,
+success measures, risks).
 
 ## Credits
 

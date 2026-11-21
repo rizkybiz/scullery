@@ -203,6 +203,10 @@ requests only from this app.
   form, and the person saves with the form's normal Save. Expected outcomes (not a recipe, a page
   that cannot be fetched) come back as values; timeouts and 5xx are retried; permanent Gateway
   refusals fail at once (the spike saw one retried three times).
+- _Kill switches:_ `READ_ONLY` stops the import as well as every write (it is the switch for a
+  demo that is being abused or spending money); `IMPORT_DISABLED` stops only the import. The
+  action checks on every call and logs `import.refused`; the page shows a note instead of the
+  panel. Checked on a local build under each setting.
 - _Checked end to end_ on a local production build (local Workflow world, real AI Gateway): pasted
   text gave a correct draft in 1.9 s; a link to a local address and `https://example.com/` were
   refused with plain messages; bad input, no session, and bad or unknown run ids were refused.
