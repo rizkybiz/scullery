@@ -9,14 +9,14 @@ database stay where they are.
 
 ```mermaid
 flowchart LR
-  B[Browser] -->|HTML, Server Actions| V
-  subgraph Vercel
+  B[Browser] -->|HTML, Server Actions| F
+  subgraph VC [Vercel]
     F[Firewall<br/>rate limit on sign-in] --> V[Next.js app<br/>Server Components + Actions]
   end
   V -->|1. OIDC token| STS[Google STS]
   STS -->|2. act as a service account| SA[Service account<br/>run.invoker only]
   V -->|3. Bearer ID token| CR
-  subgraph Google Cloud
+  subgraph GCP [Google Cloud]
     CR[Cloud Run<br/>Go API, one per environment] -->|private network| SQL[(Cloud SQL Postgres<br/>private IP only)]
   end
 ```
