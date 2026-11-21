@@ -2,10 +2,8 @@
 
 ## JS/TS architecture
 
-> **Status:** this app is being ported from a Vite single-page app to Next.js
-> (App Router). Until the port finishes, the sections below this one describe the
-> Vite app and are still accurate for it. Each decision here is recorded before
-> the code that implements it.
+The app was ported from a Vite single-page app to Next.js (App Router). Each decision below
+was recorded before the code that implements it.
 
 ### Principle: server-first
 
@@ -71,6 +69,15 @@ requests only from this app.
   closed: a signed cookie with no `AUTH_SECRET` on the server gets a 500, never access.
   `READ_ONLY` is a kill switch for every write; any value but an explicit off turns it on, so
   a hurried `1` or a typo cannot quietly do nothing.
+- _Checking expiry reads the clock:_ `getSession()` calls `connection()` after reading the
+  cookie and before verifying it. Next can prerender with cookies available, but it refuses
+  the current time there, and without this every signed-in page logged an "unstable value
+  `new Date()`" error.
+- _The proxy skips `/_vercel/`:_ those paths are served by the platform (Web Analytics), not
+  the app. Gating them sent the analytics script to `/login` for visitors not signed in.
+- _Sign-in is rate limited_ by a Vercel Firewall rule: `POST /login`, 10 per minute per IP,
+  then 429. The limit is enforced before the request reaches a function, so blocked attempts
+  cost nothing.
 
 **D3. A server-only data access layer**
 
@@ -111,7 +118,7 @@ requests only from this app.
   the API while running `next build`. Verified by building with the API address pointed at
   a dead port.
 
-**D5. Cache Components for caching (planned)**
+**D5. Cache Components for caching**
 
 - _Decision:_ `cacheComponents` is enabled. Cached reads use `"use cache"` with an
   explicit `cacheLife` and a `cacheTag`: `recipes` for the list, `recipe:<id>` for
@@ -119,7 +126,6 @@ requests only from this app.
   user sees their own change immediately.
 - _Why:_ a static shell around cached data, with dynamic parts streamed in, gives
   fast pages without losing freshness.
-- _Status:_ to be finalized with measurements in the last commit of the port.
 - _Worked example (API status in the header):_ `ApiStatus` is an async Server
   Component that calls the API on every request, so it cannot be part of the
   prerendered shell. The layout wraps it in `<Suspense>`: the header and tab bar
@@ -160,20 +166,25 @@ requests only from this app.
   them for Server Components would cost more than the port itself.
 - _What still guards changes:_ strict TypeScript, lint, formatting checks, and an
   API contract generated from the Go service's OpenAPI spec (schema drift fails
-  the type check). AI import behavior is covered separately by a small evaluation
-  set (see the project write-up).
+  the type check). The AI import, once built, will be checked by its own evaluation
+  set rather than by unit tests.
 - _Trade-off:_ no automated check of behavior. Regressions in things like form
   error handling are caught by hand, not by a test. A real product would restore
   tests, starting with the data layer and the form.
 
-### Planned layout
+### Layout
 
 ```
 apps/web/src/
-  app/                 routes (layout, page, not-found, recipes/...)
-  lib/api/             server-only API client and data access layer
+  app/(app)/           signed-in pages with the app frame (recipes list, page, new)
+  app/login/           sign-in page and its Server Action (no frame, no API calls)
+  lib/api/             server-only API client, data access layer, Cloud Run sign-in
+  lib/auth/            sessions, password hashes, users, requireSession()
+  lib/audit.ts         one-line JSON audit log entries
+  lib/flags.ts         the READ_ONLY kill switch
   components/          shared components (client components marked 'use client')
   forms/               form logic (pure functions)
+  proxy.ts             first gate: redirects to /login without a valid cookie
 ```
 
 ### Security rules for this app
@@ -185,9 +196,12 @@ apps/web/src/
 
 ### Known limitations
 
-- **Sign-in is deliberately minimal.** Two fixed users, no sign-up, no password reset. There
-  is no rate limit on the login page yet (one Vercel firewall rule is allowed on Hobby,
-  counted by IP, if wanted). There are no per-user quotas, since serverless instances do not
+- **Sign-in is deliberately minimal.** Two fixed users, no sign-up, no password reset. The
+  only brake on guessing is the Firewall rate limit (10 attempts per minute per IP). Its
+  counters are per region, so an attacker spread across regions gets roughly 10 per minute
+  in each, and there is no account lockout. That is acceptable for 12+ character passwords
+  stored as scrypt hashes. It also uses the one custom rule Hobby allows. There are no
+  per-user quotas, since serverless instances do not
   share memory and that needs a shared store. The API cannot tell which user made a request:
   the app calls it as itself, so the user exists only in this app and its log. A token cannot
   be revoked individually (it is stateless); changing `AUTH_SECRET` signs everyone out. And
@@ -228,7 +242,8 @@ apps/web/src/
 
 ## Development
 
-Needs Node 22+ (`.nvmrc` pins 24: `nvm install` then `nvm use`).
+Needs Node 24 (`engines` in `package.json`, `.nvmrc`, and `mise.toml` at the repository
+root). With mise, run `mise install` once from the repository root.
 
 ```sh
 npm ci            # install exactly what package-lock.json says
@@ -273,8 +288,10 @@ variable and deploy. Use a different `AUTH_SECRET` for each environment.
 
 ## Deployment and CI
 
-The app is built and served by Vercel, so there is no container image to build.
-CI on GitHub-hosted runners is not set up yet.
+The app is built and served by Vercel, so there is no container image to build. Every pull
+request gets a preview deployment wired to the staging API, and merging to `main` deploys
+production. Vercel Web Analytics is on (`<Analytics />` in the root layout); it uses no
+cookies. CI on GitHub-hosted runners is not set up yet.
 
 The Vercel project's Root Directory is `apps/web`, so `vercel deploy` must run from the
 repository root (link it there with `vercel link`; `.vercel/` is git-ignored). Running it
