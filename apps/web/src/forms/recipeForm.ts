@@ -12,8 +12,20 @@ export type RecipeFormInput = {
   servings: string
   prepMinutes: string
   cookMinutes: string
-  ingredients: { quantity: string; unitCode: string; name: string; preparation: string }[]
-  steps: { instruction: string }[]
+  yieldText: string // what it makes when servings does not fit: "24 cookies"
+  sourceUrl: string // the page it came from
+  notes: string
+  ingredients: {
+    quantity: string
+    quantityMax: string
+    unitCode: string
+    name: string
+    preparation: string
+    note: string
+    section: string
+    optional: boolean
+  }[]
+  steps: { instruction: string; timerMinutes: string; section: string }[]
 }
 
 // Messages for the form, keyed so the form can find the one that belongs to a field.
@@ -23,10 +35,11 @@ export type FormErrors = {
   message?: string
   fields?: Record<string, string>
   ingredients?: Record<number, Record<string, string>>
-  steps?: Record<number, string>
+  steps?: Record<number, Record<string, string>>
 }
 
 const MAX_ROWS = 200 // the API's own limit
+const MAX_TIMER_MINUTES = 24 * 60 // the API allows 1 second to 24 hours
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -40,7 +53,17 @@ function hasStrings(value: Record<string, unknown>, keys: string[]): boolean {
 // Check the shape before trusting it. The API still validates the content.
 export function isRecipeFormInput(value: unknown): value is RecipeFormInput {
   if (!isRecord(value)) return false
-  if (!hasStrings(value, ['title', 'description', 'servings', 'prepMinutes', 'cookMinutes'])) {
+  const top = [
+    'title',
+    'description',
+    'servings',
+    'prepMinutes',
+    'cookMinutes',
+    'yieldText',
+    'sourceUrl',
+    'notes',
+  ]
+  if (!hasStrings(value, top)) {
     return false
   }
   const { ingredients, steps } = value
@@ -48,12 +71,42 @@ export function isRecipeFormInput(value: unknown): value is RecipeFormInput {
     Array.isArray(ingredients) &&
     ingredients.length <= MAX_ROWS &&
     ingredients.every(
-      (row) => isRecord(row) && hasStrings(row, ['quantity', 'unitCode', 'name', 'preparation']),
+      (row) =>
+        isRecord(row) &&
+        hasStrings(row, [
+          'quantity',
+          'quantityMax',
+          'unitCode',
+          'name',
+          'preparation',
+          'note',
+          'section',
+        ]) &&
+        typeof row['optional'] === 'boolean',
     ) &&
     Array.isArray(steps) &&
     steps.length <= MAX_ROWS &&
-    steps.every((step) => isRecord(step) && typeof step['instruction'] === 'string')
+    steps.every(
+      (step) => isRecord(step) && hasStrings(step, ['instruction', 'timerMinutes', 'section']),
+    )
   )
+}
+
+// '' or only spaces is "not given" (null).
+function optionalText(text: string): string | null {
+  const trimmed = text.trim()
+  return trimmed === '' ? null : trimmed
+}
+
+// The source is shown as a link, so only web addresses are accepted: a javascript: or
+// data: "URL" must never end up in an href.
+function isWebAddress(text: string): boolean {
+  try {
+    const url = new URL(text)
+    return url.protocol === 'https:' || url.protocol === 'http:'
+  } catch {
+    return false
+  }
 }
 
 // '' is "not given" (null), a number is a number, anything else is undefined.
@@ -65,6 +118,7 @@ function parseNumber(text: string): number | null | undefined {
 }
 
 type Ingredient = NonNullable<NewRecipe['ingredients']>[number]
+type Step = NonNullable<NewRecipe['steps']>[number]
 
 export type Built =
   | {
@@ -92,6 +146,10 @@ export function buildRecipe(input: RecipeFormInput): Built {
   if (prepMinutes === undefined) fields['prep_minutes'] = 'Prep minutes must be a number'
   const cookMinutes = parseNumber(input.cookMinutes)
   if (cookMinutes === undefined) fields['cook_minutes'] = 'Cook minutes must be a number'
+  const sourceUrl = optionalText(input.sourceUrl)
+  if (sourceUrl !== null && !isWebAddress(sourceUrl)) {
+    fields['source_url'] = 'Source must be a web address starting with http:// or https://'
+  }
 
   const ingredients: Ingredient[] = []
   const ingredientRows: number[] = []
@@ -100,30 +158,63 @@ export function buildRecipe(input: RecipeFormInput): Built {
     const problems: Record<string, string> = {}
     const quantity = parseNumber(row.quantity)
     if (quantity === undefined) problems['quantity_min'] = 'Quantity must be a number'
+    let quantityMax = parseNumber(row.quantityMax)
+    if (quantityMax === undefined) {
+      problems['quantity_max'] = 'The top of the range must be a number'
+    } else if (quantityMax !== null && quantity === null) {
+      problems['quantity_max'] = 'A range needs a first quantity as well'
+    } else if (quantityMax !== null && typeof quantity === 'number') {
+      if (quantityMax < quantity) problems['quantity_max'] = 'Must not be less than the quantity'
+      // "200 to 200 g" is just 200 g. The API would store it as the range "200-200".
+      if (quantityMax === quantity) quantityMax = null
+    }
     if (row.name.trim() === '') problems['name'] = 'Ingredient name is required'
     if (Object.keys(problems).length > 0) ingredientErrors[formIndex] = problems
 
     ingredients.push({
       name: row.name.trim(),
       quantity_min: quantity ?? null,
+      quantity_max: quantityMax ?? null,
       unit_code: row.unitCode === '' ? null : row.unitCode,
-      preparation: row.preparation.trim() === '' ? null : row.preparation.trim(),
+      preparation: optionalText(row.preparation),
+      note: optionalText(row.note),
+      section: optionalText(row.section),
+      optional: row.optional,
     })
     ingredientRows.push(formIndex)
   })
 
-  const steps: { instruction: string }[] = []
+  const steps: Step[] = []
   const stepRows: number[] = []
+  const stepErrors: Record<number, Record<string, string>> = {}
   input.steps.forEach((step, formIndex) => {
+    // A step with no instruction is blank and dropped, even if a timer or section was typed.
     if (step.instruction.trim() === '') return
-    steps.push({ instruction: step.instruction.trim() })
+    const problems: Record<string, string> = {}
+    const minutes = parseNumber(step.timerMinutes)
+    let timerSeconds: number | null = null
+    if (minutes === undefined) {
+      problems['timer_seconds'] = 'Timer must be a number of minutes'
+    } else if (minutes !== null) {
+      timerSeconds = Math.round(minutes * 60)
+      if (timerSeconds < 1 || minutes > MAX_TIMER_MINUTES) {
+        problems['timer_seconds'] = 'Timer must be more than 0 and at most 1440 minutes'
+      }
+    }
+    if (Object.keys(problems).length > 0) stepErrors[formIndex] = problems
+    steps.push({
+      instruction: step.instruction.trim(),
+      timer_seconds: timerSeconds,
+      section: optionalText(step.section),
+    })
     stepRows.push(formIndex)
   })
 
   const errors: FormErrors = {}
   if (Object.keys(fields).length > 0) errors.fields = fields
   if (Object.keys(ingredientErrors).length > 0) errors.ingredients = ingredientErrors
-  if (errors.fields || errors.ingredients) return { ok: false, errors }
+  if (Object.keys(stepErrors).length > 0) errors.steps = stepErrors
+  if (errors.fields || errors.ingredients || errors.steps) return { ok: false, errors }
 
   return {
     ok: true,
@@ -133,6 +224,9 @@ export function buildRecipe(input: RecipeFormInput): Built {
       servings: servings ?? null,
       prep_minutes: prepMinutes ?? null,
       cook_minutes: cookMinutes ?? null,
+      yield_text: optionalText(input.yieldText),
+      source_url: sourceUrl,
+      notes: input.notes.trim(),
       ingredients,
       steps,
     },
@@ -141,7 +235,16 @@ export function buildRecipe(input: RecipeFormInput): Built {
   }
 }
 
-const KNOWN_FIELDS = new Set(['title', 'description', 'servings', 'prep_minutes', 'cook_minutes'])
+const KNOWN_FIELDS = new Set([
+  'title',
+  'description',
+  'servings',
+  'prep_minutes',
+  'cook_minutes',
+  'yield_text',
+  'source_url',
+  'notes',
+])
 const INGREDIENT = /^body\.ingredients\[(\d+)\]\.(\w+)$/
 const STEP = /^body\.steps\[(\d+)\]\.(\w+)$/
 const TOP_LEVEL = /^body\.(\w+)$/
@@ -172,7 +275,7 @@ export function mapApiErrors(
     if (ingredient && ingredientRow !== undefined) {
       ;((errors.ingredients ??= {})[ingredientRow] ??= {})[ingredient[2]!] = message
     } else if (step && stepRow !== undefined) {
-      ;(errors.steps ??= {})[stepRow] = message
+      ;((errors.steps ??= {})[stepRow] ??= {})[step[2]!] = message
     } else if (top && KNOWN_FIELDS.has(top[1]!)) {
       ;(errors.fields ??= {})[top[1]!] = message
     } else {
