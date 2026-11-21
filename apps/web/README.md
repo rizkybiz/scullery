@@ -172,6 +172,31 @@ requests only from this app.
   error handling are caught by hand, not by a test. A real product would restore
   tests, starting with the data layer and the form.
 
+**D7. Durable AI work runs on Vercel Workflow, models through AI Gateway**
+
+- _Decision:_ the recipe import agent (in progress) runs as a Workflow run whose steps call
+  models through AI Gateway with the AI SDK. `withWorkflow()` wraps `next.config.ts`.
+- _Why:_ an import is several slow, failure-prone steps (fetch a page, extract, call a model,
+  validate). Workflow makes each step durable, retried and visible in the dashboard. AI Gateway
+  gives one model ID format, fallbacks and spend in one place.
+- _No stored AI secret:_ a plain `provider/model` string goes to AI Gateway, which authenticates
+  with the deployment's OIDC token. There is no AI Gateway or provider API key anywhere.
+- _Proved by a spike first_ (preview only, since removed; see the `spike(web)` commit):
+  - one run with one AI step completed on the Hobby plan;
+  - the free tier refused `anthropic/claude-haiku-5.5` and allowed `google/gemini-2.5-flash-lite`
+    (1.8 s, about 450 tokens) and `openai/gpt-5-nano` (13 s);
+  - run inputs and outputs are encrypted at rest.
+- _`proxy.ts` skips `/.well-known/workflow/`:_ Workflow's guide requires it (a proxy that reads
+  those requests breaks delivery). That does not expose the flow route: on Vercel it is a queue
+  consumer with no public URL. Checked from outside through the preview's protection bypass: `GET`
+  and `POST` (with queue-style headers) both got 404, while runs completed internally.
+- _Dependencies:_ `workflow` 5.4.0, `ai` 7.0.164, `zod` 4.6.7, each the newest release at least two
+  weeks old. `overrides` in `package.json` force patched `zod` and `undici` under Workflow's
+  packages (the pinned ones had high-severity advisories, and `@workflow/core` uses `zod` at
+  runtime). They also give `openapi-typescript` the project's TypeScript 6: it declares `^5`, which
+  npm had tolerated until Workflow's plugin added another TypeScript peer and Vercel's install
+  stopped with `ERESOLVE`.
+
 ### Layout
 
 ```
@@ -234,6 +259,19 @@ apps/web/src/
 - **Shared cache:** `"use cache"` is shared across users. That is correct for one
   household's recipes. A multi-tenant product would key the cache per tenant or use
   a private cache scope.
+- **Accepted audit findings:** `npm audit` reports 20 moderate findings, all one `minimatch`
+  advisory (pattern-amplification denial of service) in Workflow's build and CLI tooling and in
+  `@vercel/queue`. The patterns it matches come from this app's own route configuration, never from
+  a visitor. The fix is a major version that could break those tools. No high or critical findings
+  remain.
+- **`.next/types/validator.ts` is not type-checked (temporary):** Next generates it with imports of
+  route-handler types it uses only for TypeScript route handlers. The only route handlers today are
+  Workflow's generated JavaScript ones, so under `noUnusedLocals` the build failed on Next's own
+  file. `tsconfig.json` excludes that one file; pages are still checked through `PageProps`. It
+  comes back when the import's run-status route (TypeScript) lands.
+- **Workflow's webhook route is public by design:** `/.well-known/workflow/v1/webhook/[token]` is
+  reachable and authorized only by the token in its URL. This app never creates webhooks, so every
+  token is unknown and the route answers 404.
 - **Missing recipe returns HTTP 200:** the recipe page streams (the shell is sent before
   the recipe is fetched), so by the time `notFound()` runs the status line is already
   sent. Next adds a `noindex` tag, which is fine for a private app. A public site

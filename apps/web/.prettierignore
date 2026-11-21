@@ -9,3 +9,4 @@ src/lib/api/schema.d.ts
 .next
 next-env.d.ts
 .vercel
+src/app/.well-known/workflow

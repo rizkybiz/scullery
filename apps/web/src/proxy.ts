@@ -25,10 +25,13 @@ export async function proxy(request: NextRequest) {
   return NextResponse.redirect(login)
 }
 
-// Everything except Next's own static files, the favicon, and /_vercel/: those paths are
-// served by the Vercel platform (Web Analytics' script and event endpoint), not by this app.
-// Gating them redirected the analytics script to /login for anyone not yet signed in, so
-// /login itself was never counted.
+// Everything except Next's own static files, the favicon, and two platform prefixes:
+// - /_vercel/ is served by the Vercel platform (Web Analytics' script and event endpoint).
+//   Gating it redirected the analytics script to /login for anyone not yet signed in.
+// - /.well-known/workflow/ is Workflow's internal queue delivery. A proxy that reads those
+//   requests breaks execution (Workflow's Next.js guide). It is not exposed by skipping the
+//   gate: on Vercel the route is a queue consumer, which Vercel documents as having no public
+//   URL and being invocable only by its queue infrastructure.
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|_vercel/|favicon.svg).*)'],
+  matcher: ['/((?!_next/static|_next/image|_vercel/|\\.well-known/workflow/|favicon.svg).*)'],
 }
