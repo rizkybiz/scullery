@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Suspense } from 'react'
+import { Fragment, Suspense } from 'react'
 import RecipeActions from '../../../../components/RecipeActions.tsx'
 import { getRecipe, type Recipe } from '../../../../lib/api/recipes.ts'
 import { requireSession } from '../../../../lib/auth/dal.ts'
+import { formatTimer, groupBySection, webAddress } from '../../../../lib/recipeDisplay.ts'
 
 type RecipeResult =
   { state: 'success'; recipe: Recipe | null } | { state: 'error'; message: string }
@@ -65,7 +66,9 @@ async function RecipeView({ params }: { params: PageProps<'/recipes/[id]'>['para
     recipe.servings !== null ? `Serves ${recipe.servings}` : null,
     recipe.prep_minutes !== null ? `Prep ${recipe.prep_minutes} min` : null,
     recipe.cook_minutes !== null ? `Cook ${recipe.cook_minutes} min` : null,
+    recipe.yield_text !== null ? `Makes ${recipe.yield_text}` : null,
   ].filter((fact) => fact !== null)
+  const source = webAddress(recipe.source_url)
 
   return (
     <>
@@ -84,27 +87,60 @@ async function RecipeView({ params }: { params: PageProps<'/recipes/[id]'>['para
 
       {recipe.description && <p>{recipe.description}</p>}
       {facts.length > 0 && <p>{facts.join(' · ')}</p>}
+      {source && (
+        <p>
+          Source:{' '}
+          <a href={source} rel="noopener noreferrer">
+            {new URL(source).hostname}
+          </a>
+        </p>
+      )}
 
       {recipe.ingredients.length > 0 && (
         <>
           <h2>Ingredients</h2>
-          <ul>
-            {/* `key` tells React which row is which across renders. Use the id. */}
-            {recipe.ingredients.map((ingredient) => (
-              <li key={ingredient.id}>{ingredient.raw_text}</li>
-            ))}
-          </ul>
+          {/* Consecutive lines under the same heading form one list. `key` tells React
+              which row is which across renders: use the id, never the index. */}
+          {groupBySection(recipe.ingredients).map((group) => (
+            <Fragment key={group.items[0]!.id}>
+              {group.section && <h3>{group.section}</h3>}
+              <ul>
+                {group.items.map((ingredient) => (
+                  <li key={ingredient.id}>
+                    {ingredient.raw_text}
+                    {ingredient.note && ` (${ingredient.note})`}
+                  </li>
+                ))}
+              </ul>
+            </Fragment>
+          ))}
         </>
       )}
 
       {recipe.steps.length > 0 && (
         <>
           <h2>Steps</h2>
-          <ol>
-            {recipe.steps.map((step) => (
-              <li key={step.id}>{step.instruction}</li>
-            ))}
-          </ol>
+          {/* One numbered list per section; `start` keeps the numbering running across them. */}
+          {groupBySection(recipe.steps).map((group) => (
+            <Fragment key={group.items[0]!.id}>
+              {group.section && <h3>{group.section}</h3>}
+              <ol start={group.start}>
+                {group.items.map((step) => (
+                  <li key={step.id}>
+                    {step.instruction}
+                    {step.timer_seconds !== null && ` (timer: ${formatTimer(step.timer_seconds)})`}
+                  </li>
+                ))}
+              </ol>
+            </Fragment>
+          ))}
+        </>
+      )}
+
+      {recipe.notes && (
+        <>
+          <h2>Notes</h2>
+          <p className="recipe-notes">{recipe.notes}</p>
         </>
       )}
     </>

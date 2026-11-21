@@ -292,3 +292,8 @@ body {
   margin: 3rem auto;
   padding: 0 1rem;
 }
+
+/* Notes keep the line breaks they were written with. */
+.recipe-notes {
+  white-space: pre-line;
+}
