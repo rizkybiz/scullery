@@ -188,13 +188,24 @@ requests only from this app.
 
 **D7. Durable AI work runs on Vercel Workflow, models through AI Gateway**
 
-- _Decision:_ the recipe import agent (in progress) runs as a Workflow run whose steps call
-  models through AI Gateway with the AI SDK. `withWorkflow()` wraps `next.config.ts`.
+- _Decision:_ the recipe import agent runs as a Workflow run whose steps call models through AI
+  Gateway with the AI SDK. `withWorkflow()` wraps `next.config.ts`.
 - _Why:_ an import is several slow, failure-prone steps (fetch a page, extract, call a model,
   validate). Workflow makes each step durable, retried and visible in the dashboard. AI Gateway
   gives one model ID format, fallbacks and spend in one place.
 - _No stored AI secret:_ a plain `provider/model` string goes to AI Gateway, which authenticates
   with the deployment's OIDC token. There is no AI Gateway or provider API key anywhere.
+- _How an import runs_ (`src/workflows/importRecipe.ts`): the new recipe page's import panel calls
+  `startImportAction` (session and input checked, cached units passed in), which starts the run
+  and returns its id at once; the panel polls `GET /api/import/<runId>` every 1.5 s. The run's
+  steps: read the source (fetch the link through `fetchPage`'s SSRF guard, or take the text), one
+  model call (`lib/import/structure.ts`), normalize. It never saves: the draft re-mounts the recipe
+  form, and the person saves with the form's normal Save. Expected outcomes (not a recipe, a page
+  that cannot be fetched) come back as values; timeouts and 5xx are retried; permanent Gateway
+  refusals fail at once (the spike saw one retried three times).
+- _Checked end to end_ on a local production build (local Workflow world, real AI Gateway): pasted
+  text gave a correct draft in 1.9 s; a link to a local address and `https://example.com/` were
+  refused with plain messages; bad input, no session, and bad or unknown run ids were refused.
 - _Proved by a spike first_ (preview only, since removed; see the `spike(web)` commit):
   - one run with one AI step completed on the Hobby plan;
   - the free tier refused `anthropic/claude-haiku-5.5` and allowed `google/gemini-2.5-flash-lite`
@@ -278,11 +289,19 @@ apps/web/src/
   `@vercel/queue`. The patterns it matches come from this app's own route configuration, never from
   a visitor. The fix is a major version that could break those tools. No high or critical findings
   remain.
-- **`.next/types/validator.ts` is not type-checked (temporary):** Next generates it with imports of
-  route-handler types it uses only for TypeScript route handlers. The only route handlers today are
-  Workflow's generated JavaScript ones, so under `noUnusedLocals` the build failed on Next's own
-  file. `tsconfig.json` excludes that one file; pages are still checked through `PageProps`. It
-  comes back when the import's run-status route (TypeScript) lands.
+- **Import: the free tier's rate limit.** AI Gateway's free tier allows each model 5 requests a
+  minute for the whole team. A sixth import in a minute falls back to `gpt-5-nano` (slower, about
+  15 s); if both are limited, the step is retried after 20 s. Fine for a demo; a real product would
+  buy credits or bring its own provider key.
+- **Import: DNS can change between the check and the fetch.** `fetchPage` checks every address a
+  host resolves to, then `fetch` resolves it again, so a hostile DNS server could answer
+  differently the second time (DNS rebinding). Closing it needs a fetch that connects to the
+  checked address. Accepted: these functions run on Vercel, outside the Google Cloud network, and
+  the Scullery API is reached by a signed request, not by network position.
+- **Import: any signed-in user can read any import run** by id. There are two users with the same
+  permissions, ids are random and never listed, and a run holds only a draft of what was pasted.
+- **Import: some sites refuse automatic visits** (bot protection, sign-in walls) and answer 403 or
+  a challenge page; the import says so, and pasting the text works instead.
 - **Workflow's webhook route is public by design:** `/.well-known/workflow/v1/webhook/[token]` is
   reachable and authorized only by the token in its URL. This app never creates webhooks, so every
   token is unknown and the route answers 404.
