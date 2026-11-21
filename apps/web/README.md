@@ -113,6 +113,19 @@ requests only from this app.
   unit exists"). Its error locations (`body.ingredients[1].unit_code`) are translated back
   to the form's row numbers, because blank rows were dropped before sending. Checked
   against the API's real 422 responses for both stages.
+- _Every field the API stores:_ ingredient ranges ("2 to 3"), note, section and optional; step
+  timer (entered in minutes, sent as `timer_seconds`) and section; the recipe's yield, source URL
+  and notes. Note, section, optional and timer sit under a per-row "More" that starts open when
+  any of them has a value or an error, so nothing filled in is hidden. `buildRecipe` mirrors the
+  API's rules (a range needs a first quantity and must not shrink) and turns an equal top into no
+  range, since the API would store "200 to 200 g" as `200-200`. The source must be http(s): it is
+  shown as a link.
+- _Starting filled in:_ `fromRecipe` turns an API-shaped recipe into the form's state (the
+  reverse of `buildRecipe`; a round trip gives back the same request), so the import's draft,
+  and later editing, use the same form.
+- _Checked end to end_ against the local API: a draft through `fromRecipe` and `buildRecipe` was
+  accepted (201), and the recipe page showed the range, section heading, note, optional marker,
+  timer, yield, source link and notes, with step numbers running on across sections.
 - _Units and the build:_ the unit dropdown's data is cached for days (tag `units`), and the
   form page calls `connection()` so it renders per request. Without that, Next would call
   the API while running `next build`. Verified by building with the API address pointed at
