@@ -8,9 +8,12 @@
 // Free tier only (a project rule): both models are on AI Gateway's free tier. The spike showed
 // the free tier refusing anthropic/claude-haiku-5.5, so it is not used.
 //
-// Chosen by the eval set (evals/import, results in evals/import/RESULTS.md), not by guess:
-// - google/gemini-2.5-flash-lite: about 1.5 s per draft in the spike; structured output.
-// - openai/gpt-5-nano: the fallback. A reasoning model: about 13 s, so second, not first.
+// Chosen by the eval set (evals/import; latest numbers in evals/import/RESULTS.md), 16 cases,
+// 329 checks, third run:
+// - google/gemini-2.5-flash-lite: 325/329 checks, median 1.9 s. Primary: as good as it needs to
+//   be for a draft a person reviews, and 7.5 times faster.
+// - openai/gpt-5-nano: 327/329 checks, median 14.4 s. A reasoning model: more careful, much
+//   slower, and it rejects temperature, so its misses vary run to run. The fallback.
 export const IMPORT_MODEL = 'google/gemini-2.5-flash-lite'
 export const IMPORT_FALLBACK_MODELS: readonly string[] = ['openai/gpt-5-nano']
 

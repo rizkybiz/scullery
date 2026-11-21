@@ -1,12 +1,12 @@
 {
   "model": "google/gemini-2.5-flash-lite",
-  "ranAt": "2026-11-21T18:14:50.724Z",
+  "ranAt": "2026-11-21T18:26:23.276Z",
   "results": [
     {
       "id": "01-jsonld-basic",
       "passed": 28,
       "total": 28,
-      "ms": 2150,
+      "ms": 2163,
       "inputTokens": 1427,
       "outputTokens": 577,
       "answeredBy": "google/gemini-2.5-flash-lite",
@@ -239,16 +239,14 @@
     },
     {
       "id": "02-jsonld-graph",
-      "passed": 18,
+      "passed": 19,
       "total": 19,
-      "ms": 2538,
+      "ms": 2157,
       "inputTokens": 1469,
       "outputTokens": 701,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
-      "failures": [
-        "units: eggs: unit_code = null (got \"each\")"
-      ],
+      "failures": [],
       "checks": [
         {
           "kind": "refusal",
@@ -312,8 +310,8 @@
         },
         {
           "kind": "units",
-          "ok": false,
-          "what": "eggs: unit_code = null (got \"each\")"
+          "ok": true,
+          "what": "eggs: unit_code = null (got null)"
         },
         {
           "kind": "names",
@@ -382,7 +380,7 @@
               "name": "eggs",
               "quantity_min": 3,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": null,
               "note": "large",
               "section": null,
@@ -446,16 +444,15 @@
     },
     {
       "id": "03-jsonld-sections",
-      "passed": 29,
+      "passed": 30,
       "total": 31,
-      "ms": 2256,
+      "ms": 2045,
       "inputTokens": 1465,
       "outputTokens": 711,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
       "failures": [
-        "quantities: chicken: quantity_min = 2 (got 1)",
-        "units: puff pastry: unit_code = null (got \"slice\")"
+        "quantities: chicken: quantity_min = 2 (got 1)"
       ],
       "checks": [
         {
@@ -545,8 +542,8 @@
         },
         {
           "kind": "units",
-          "ok": false,
-          "what": "puff pastry: unit_code = null (got \"slice\")"
+          "ok": true,
+          "what": "puff pastry: unit_code = null (got null)"
         },
         {
           "kind": "sections",
@@ -670,7 +667,7 @@
               "name": "puff pastry",
               "quantity_min": 1,
               "quantity_max": null,
-              "unit_code": "slice",
+              "unit_code": null,
               "preparation": null,
               "note": null,
               "section": "For the crust:",
@@ -714,16 +711,14 @@
     },
     {
       "id": "04-jsonld-fractions",
-      "passed": 20,
+      "passed": 21,
       "total": 21,
-      "ms": 2237,
+      "ms": 2013,
       "inputTokens": 1370,
       "outputTokens": 629,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
-      "failures": [
-        "units: egg: unit_code = null (got \"each\")"
-      ],
+      "failures": [],
       "checks": [
         {
           "kind": "refusal",
@@ -827,8 +822,8 @@
         },
         {
           "kind": "units",
-          "ok": false,
-          "what": "egg: unit_code = null (got \"each\")"
+          "ok": true,
+          "what": "egg: unit_code = null (got null)"
         }
       ],
       "draft": {
@@ -897,7 +892,7 @@
               "name": "egg",
               "quantity_min": 1,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": null,
               "note": null,
               "section": null,
@@ -928,7 +923,7 @@
       "id": "05-jsonld-ranges",
       "passed": 19,
       "total": 20,
-      "ms": 1821,
+      "ms": 1901,
       "inputTokens": 1368,
       "outputTokens": 495,
       "answeredBy": "google/gemini-2.5-flash-lite",
@@ -1115,7 +1110,7 @@
       "id": "06-jsonld-notes-optional",
       "passed": 20,
       "total": 20,
-      "ms": 1926,
+      "ms": 1743,
       "inputTokens": 1375,
       "outputTokens": 626,
       "answeredBy": "google/gemini-2.5-flash-lite",
@@ -1320,7 +1315,7 @@
       "id": "07-jsonld-timers",
       "passed": 19,
       "total": 19,
-      "ms": 1784,
+      "ms": 1661,
       "inputTokens": 1384,
       "outputTokens": 533,
       "answeredBy": "google/gemini-2.5-flash-lite",
@@ -1505,7 +1500,7 @@
       "id": "08-html-no-jsonld",
       "passed": 19,
       "total": 19,
-      "ms": 1902,
+      "ms": 1946,
       "inputTokens": 1417,
       "outputTokens": 680,
       "answeredBy": "google/gemini-2.5-flash-lite",
@@ -1710,7 +1705,7 @@
       "id": "09-html-noisy",
       "passed": 24,
       "total": 24,
-      "ms": 2350,
+      "ms": 1953,
       "inputTokens": 1496,
       "outputTokens": 674,
       "answeredBy": "google/gemini-2.5-flash-lite",
@@ -1935,7 +1930,7 @@
       "id": "10-text-numbered",
       "passed": 16,
       "total": 16,
-      "ms": 1613,
+      "ms": 1951,
       "inputTokens": 1348,
       "outputTokens": 477,
       "answeredBy": "google/gemini-2.5-flash-lite",
@@ -2100,7 +2095,7 @@
       "id": "11-text-paragraph",
       "passed": 15,
       "total": 15,
-      "ms": 3175,
+      "ms": 2140,
       "inputTokens": 1367,
       "outputTokens": 545,
       "answeredBy": "google/gemini-2.5-flash-lite",
@@ -2229,7 +2224,7 @@
               "name": "onion",
               "quantity_min": 1,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": "diced",
               "note": null,
               "section": null,
@@ -2265,7 +2260,7 @@
       "id": "12-text-sections",
       "passed": 31,
       "total": 32,
-      "ms": 2410,
+      "ms": 2153,
       "inputTokens": 1396,
       "outputTokens": 774,
       "answeredBy": "google/gemini-2.5-flash-lite",
@@ -2547,7 +2542,7 @@
       "id": "13-text-units",
       "passed": 22,
       "total": 23,
-      "ms": 1977,
+      "ms": 1883,
       "inputTokens": 1358,
       "outputTokens": 685,
       "answeredBy": "google/gemini-2.5-flash-lite",
@@ -2774,7 +2769,7 @@
       "id": "14-not-a-recipe",
       "passed": 1,
       "total": 1,
-      "ms": 1020,
+      "ms": 1120,
       "inputTokens": 1335,
       "outputTokens": 99,
       "answeredBy": "google/gemini-2.5-flash-lite",
@@ -2796,7 +2791,7 @@
       "id": "15-prompt-injection",
       "passed": 22,
       "total": 22,
-      "ms": 1583,
+      "ms": 1780,
       "inputTokens": 1424,
       "outputTokens": 431,
       "answeredBy": "google/gemini-2.5-flash-lite",
@@ -2979,19 +2974,14 @@
     },
     {
       "id": "16-text-unknown-units",
-      "passed": 15,
+      "passed": 19,
       "total": 19,
-      "ms": 1767,
+      "ms": 1858,
       "inputTokens": 1345,
       "outputTokens": 537,
       "answeredBy": "google/gemini-2.5-flash-lite",
       "error": null,
-      "failures": [
-        "units: chicken: unit_code = null (got \"each\")",
-        "units: rosemary: unit_code = null (got \"bunch\")",
-        "units: spinach: unit_code = null (got \"cup\")",
-        "units: garlic: unit_code = null (got \"each\")"
-      ],
+      "failures": [],
       "checks": [
         {
           "kind": "refusal",
@@ -3015,8 +3005,8 @@
         },
         {
           "kind": "units",
-          "ok": false,
-          "what": "chicken: unit_code = null (got \"each\")"
+          "ok": true,
+          "what": "chicken: unit_code = null (got null)"
         },
         {
           "kind": "names",
@@ -3030,8 +3020,8 @@
         },
         {
           "kind": "units",
-          "ok": false,
-          "what": "rosemary: unit_code = null (got \"bunch\")"
+          "ok": true,
+          "what": "rosemary: unit_code = null (got null)"
         },
         {
           "kind": "names",
@@ -3045,8 +3035,8 @@
         },
         {
           "kind": "units",
-          "ok": false,
-          "what": "spinach: unit_code = null (got \"cup\")"
+          "ok": true,
+          "what": "spinach: unit_code = null (got null)"
         },
         {
           "kind": "names",
@@ -3060,8 +3050,8 @@
         },
         {
           "kind": "units",
-          "ok": false,
-          "what": "garlic: unit_code = null (got \"each\")"
+          "ok": true,
+          "what": "garlic: unit_code = null (got null)"
         },
         {
           "kind": "names",
@@ -3105,7 +3095,7 @@
               "name": "chicken",
               "quantity_min": 1,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": "whole",
               "note": null,
               "section": null,
@@ -3115,7 +3105,7 @@
               "name": "rosemary",
               "quantity_min": 3,
               "quantity_max": null,
-              "unit_code": "bunch",
+              "unit_code": null,
               "preparation": null,
               "note": null,
               "section": null,
@@ -3125,7 +3115,7 @@
               "name": "spinach",
               "quantity_min": 2,
               "quantity_max": null,
-              "unit_code": "cup",
+              "unit_code": null,
               "preparation": "handfuls",
               "note": null,
               "section": null,
@@ -3135,7 +3125,7 @@
               "name": "garlic",
               "quantity_min": 1,
               "quantity_max": null,
-              "unit_code": "each",
+              "unit_code": null,
               "preparation": "halved",
               "note": null,
               "section": null,

@@ -1,14 +1,14 @@
 {
   "model": "openai/gpt-5-nano",
-  "ranAt": "2026-11-21T18:22:01.059Z",
+  "ranAt": "2026-11-21T18:33:45.320Z",
   "results": [
     {
       "id": "01-jsonld-basic",
       "passed": 28,
       "total": 28,
-      "ms": 15631,
+      "ms": 14117,
       "inputTokens": 1504,
-      "outputTokens": 5010,
+      "outputTokens": 3218,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -241,9 +241,9 @@
       "id": "02-jsonld-graph",
       "passed": 19,
       "total": 19,
-      "ms": 16691,
+      "ms": 14495,
       "inputTokens": 1542,
-      "outputTokens": 5115,
+      "outputTokens": 4104,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -351,7 +351,7 @@
           "title": "Lemon Drizzle Loaf",
           "description": "",
           "servings": 8,
-          "yield_text": null,
+          "yield_text": "1 loaf",
           "prep_minutes": 15,
           "cook_minutes": 45,
           "source_url": null,
@@ -446,9 +446,9 @@
       "id": "03-jsonld-sections",
       "passed": 31,
       "total": 31,
-      "ms": 16319,
+      "ms": 20185,
       "inputTokens": 1550,
-      "outputTokens": 4821,
+      "outputTokens": 5764,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -486,7 +486,7 @@
         {
           "kind": "sections",
           "ok": true,
-          "what": "butter: section has \"filling\" (got \"For the filling\")"
+          "what": "butter: section has \"filling\" (got \"For the filling:\")"
         },
         {
           "kind": "names",
@@ -506,7 +506,7 @@
         {
           "kind": "sections",
           "ok": true,
-          "what": "onion: section has \"filling\" (got \"For the filling\")"
+          "what": "onion: section has \"filling\" (got \"For the filling:\")"
         },
         {
           "kind": "names",
@@ -526,7 +526,7 @@
         {
           "kind": "sections",
           "ok": true,
-          "what": "chicken: section has \"filling\" (got \"For the filling\")"
+          "what": "chicken: section has \"filling\" (got \"For the filling:\")"
         },
         {
           "kind": "names",
@@ -546,7 +546,7 @@
         {
           "kind": "sections",
           "ok": true,
-          "what": "puff pastry: section has \"crust\" (got \"For the crust\")"
+          "what": "puff pastry: section has \"crust\" (got \"For the crust:\")"
         },
         {
           "kind": "names",
@@ -566,7 +566,7 @@
         {
           "kind": "sections",
           "ok": true,
-          "what": "egg: section has \"crust\" (got \"For the crust\")"
+          "what": "egg: section has \"crust\" (got \"For the crust:\")"
         },
         {
           "kind": "counts",
@@ -628,8 +628,8 @@
               "unit_code": "tbsp",
               "preparation": null,
               "note": null,
-              "section": "For the filling",
-              "optional": false
+              "section": "For the filling:",
+              "optional": true
             },
             {
               "name": "onion",
@@ -638,18 +638,18 @@
               "unit_code": null,
               "preparation": "diced",
               "note": null,
-              "section": "For the filling",
-              "optional": false
+              "section": "For the filling:",
+              "optional": true
             },
             {
-              "name": "cooked chicken",
+              "name": "cooked chicken, shredded",
               "quantity_min": 2,
               "quantity_max": null,
               "unit_code": "cup",
-              "preparation": "shredded",
+              "preparation": null,
               "note": null,
-              "section": "For the filling",
-              "optional": false
+              "section": "For the filling:",
+              "optional": true
             },
             {
               "name": "frozen peas",
@@ -658,8 +658,8 @@
               "unit_code": "cup",
               "preparation": null,
               "note": null,
-              "section": "For the filling",
-              "optional": false
+              "section": "For the filling:",
+              "optional": true
             },
             {
               "name": "sheet puff pastry",
@@ -668,8 +668,8 @@
               "unit_code": null,
               "preparation": null,
               "note": null,
-              "section": "For the crust",
-              "optional": false
+              "section": "For the crust:",
+              "optional": true
             },
             {
               "name": "egg",
@@ -678,8 +678,8 @@
               "unit_code": null,
               "preparation": "beaten",
               "note": null,
-              "section": "For the crust",
-              "optional": false
+              "section": "For the crust:",
+              "optional": true
             }
           ],
           "steps": [
@@ -711,9 +711,9 @@
       "id": "04-jsonld-fractions",
       "passed": 21,
       "total": 21,
-      "ms": 12432,
+      "ms": 11956,
       "inputTokens": 1455,
-      "outputTokens": 3869,
+      "outputTokens": 2896,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -844,7 +844,7 @@
               "preparation": null,
               "note": null,
               "section": null,
-              "optional": false
+              "optional": true
             },
             {
               "name": "salt",
@@ -854,7 +854,7 @@
               "preparation": null,
               "note": null,
               "section": null,
-              "optional": false
+              "optional": true
             },
             {
               "name": "milk",
@@ -864,7 +864,7 @@
               "preparation": null,
               "note": null,
               "section": null,
-              "optional": false
+              "optional": true
             },
             {
               "name": "buttermilk",
@@ -874,7 +874,7 @@
               "preparation": null,
               "note": null,
               "section": null,
-              "optional": false
+              "optional": true
             },
             {
               "name": "sugar",
@@ -884,7 +884,7 @@
               "preparation": null,
               "note": null,
               "section": null,
-              "optional": false
+              "optional": true
             },
             {
               "name": "egg",
@@ -894,7 +894,7 @@
               "preparation": null,
               "note": null,
               "section": null,
-              "optional": false
+              "optional": true
             }
           ],
           "steps": [
@@ -921,9 +921,9 @@
       "id": "05-jsonld-ranges",
       "passed": 20,
       "total": 20,
-      "ms": 11517,
+      "ms": 13329,
       "inputTokens": 1448,
-      "outputTokens": 3391,
+      "outputTokens": 3773,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -1106,9 +1106,9 @@
       "id": "06-jsonld-notes-optional",
       "passed": 20,
       "total": 20,
-      "ms": 12473,
+      "ms": 13014,
       "inputTokens": 1459,
-      "outputTokens": 3430,
+      "outputTokens": 3269,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -1311,9 +1311,9 @@
       "id": "07-jsonld-timers",
       "passed": 19,
       "total": 19,
-      "ms": 14804,
+      "ms": 14411,
       "inputTokens": 1460,
-      "outputTokens": 4120,
+      "outputTokens": 4027,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -1496,9 +1496,9 @@
       "id": "08-html-no-jsonld",
       "passed": 19,
       "total": 19,
-      "ms": 16029,
+      "ms": 13224,
       "inputTokens": 1480,
-      "outputTokens": 4501,
+      "outputTokens": 3256,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -1604,7 +1604,7 @@
         "warnings": [],
         "recipe": {
           "title": "Grandma's Oat Cookies",
-          "description": "",
+          "description": "Makes about 24 cookies.",
           "servings": null,
           "yield_text": "about 24 cookies",
           "prep_minutes": null,
@@ -1701,9 +1701,9 @@
       "id": "09-html-noisy",
       "passed": 24,
       "total": 24,
-      "ms": 14519,
+      "ms": 20966,
       "inputTokens": 1573,
-      "outputTokens": 4249,
+      "outputTokens": 4796,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -1834,7 +1834,7 @@
         "warnings": [],
         "recipe": {
           "title": "Silky Hummus",
-          "description": "A silky hummus made with chickpeas, tahini, lemon and garlic.",
+          "description": "",
           "servings": 4,
           "yield_text": null,
           "prep_minutes": null,
@@ -1848,7 +1848,7 @@
               "unit_code": "can",
               "preparation": "drained",
               "note": null,
-              "section": null,
+              "section": "Ingredients",
               "optional": false
             },
             {
@@ -1858,7 +1858,7 @@
               "unit_code": "ml",
               "preparation": null,
               "note": null,
-              "section": null,
+              "section": "Ingredients",
               "optional": false
             },
             {
@@ -1868,7 +1868,7 @@
               "unit_code": null,
               "preparation": "juiced",
               "note": null,
-              "section": null,
+              "section": "Ingredients",
               "optional": false
             },
             {
@@ -1878,7 +1878,7 @@
               "unit_code": "clove",
               "preparation": null,
               "note": null,
-              "section": null,
+              "section": "Ingredients",
               "optional": false
             },
             {
@@ -1888,7 +1888,7 @@
               "unit_code": "tbsp",
               "preparation": null,
               "note": null,
-              "section": null,
+              "section": "Ingredients",
               "optional": false
             },
             {
@@ -1898,7 +1898,7 @@
               "unit_code": "pinch",
               "preparation": null,
               "note": null,
-              "section": null,
+              "section": "Ingredients",
               "optional": false
             }
           ],
@@ -1926,9 +1926,9 @@
       "id": "10-text-numbered",
       "passed": 16,
       "total": 16,
-      "ms": 12210,
+      "ms": 12211,
       "inputTokens": 1429,
-      "outputTokens": 3401,
+      "outputTokens": 2753,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -2069,17 +2069,17 @@
           ],
           "steps": [
             {
-              "instruction": "1. Mash the avocados in a bowl.",
+              "instruction": "Mash the avocados in a bowl.",
               "timer_seconds": null,
               "section": null
             },
             {
-              "instruction": "2. Stir in the onion and lime juice.",
+              "instruction": "Stir in the onion and lime juice.",
               "timer_seconds": null,
               "section": null
             },
             {
-              "instruction": "3. Season with the salt and serve straight away.",
+              "instruction": "Season with the salt and serve straight away.",
               "timer_seconds": null,
               "section": null
             }
@@ -2091,9 +2091,9 @@
       "id": "11-text-paragraph",
       "passed": 15,
       "total": 15,
-      "ms": 15735,
+      "ms": 18741,
       "inputTokens": 1447,
-      "outputTokens": 4571,
+      "outputTokens": 4528,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -2217,7 +2217,7 @@
               "optional": false
             },
             {
-              "name": "small onion",
+              "name": "onion",
               "quantity_min": 1,
               "quantity_max": null,
               "unit_code": null,
@@ -2254,16 +2254,15 @@
     },
     {
       "id": "12-text-sections",
-      "passed": 30,
+      "passed": 31,
       "total": 32,
-      "ms": 18820,
+      "ms": 20080,
       "inputTokens": 1459,
-      "outputTokens": 5020,
+      "outputTokens": 4287,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [
-        "recipe: yield has \"12\" (got null)",
-        "preparation: butter: preparation has \"softened\" (got null)"
+        "recipe: yield has \"12\" (got null)"
       ],
       "checks": [
         {
@@ -2363,8 +2362,8 @@
         },
         {
           "kind": "preparation",
-          "ok": false,
-          "what": "butter: preparation has \"softened\" (got null)"
+          "ok": true,
+          "what": "butter: preparation has \"softened\" (got \"softened\")"
         },
         {
           "kind": "sections",
@@ -2480,11 +2479,11 @@
               "optional": false
             },
             {
-              "name": "butter, softened",
+              "name": "butter",
               "quantity_min": 75,
               "quantity_max": null,
               "unit_code": "g",
-              "preparation": null,
+              "preparation": "softened",
               "note": null,
               "section": "For the filling:",
               "optional": false
@@ -2514,22 +2513,22 @@
             {
               "instruction": "Mix the dough ingredients and knead for 10 minutes.",
               "timer_seconds": 600,
-              "section": null
+              "section": "For the dough:"
             },
             {
               "instruction": "Leave to rise for 1 hour.",
               "timer_seconds": 3600,
-              "section": null
+              "section": "For the dough:"
             },
             {
               "instruction": "Roll out, spread with the filling, roll up and cut into 12.",
               "timer_seconds": null,
-              "section": null
+              "section": "For the dough:"
             },
             {
               "instruction": "Bake for 25 minutes.",
               "timer_seconds": 1500,
-              "section": null
+              "section": "For the dough:"
             }
           ]
         }
@@ -2539,9 +2538,9 @@
       "id": "13-text-units",
       "passed": 23,
       "total": 23,
-      "ms": 20810,
+      "ms": 15247,
       "inputTokens": 1439,
-      "outputTokens": 5034,
+      "outputTokens": 3809,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -2764,9 +2763,9 @@
       "id": "14-not-a-recipe",
       "passed": 1,
       "total": 1,
-      "ms": 4871,
+      "ms": 3656,
       "inputTokens": 1414,
-      "outputTokens": 1099,
+      "outputTokens": 803,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -2784,14 +2783,16 @@
     },
     {
       "id": "15-prompt-injection",
-      "passed": 22,
+      "passed": 21,
       "total": 22,
-      "ms": 14524,
+      "ms": 20855,
       "inputTokens": 1500,
-      "outputTokens": 4006,
+      "outputTokens": 4528,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
-      "failures": [],
+      "failures": [
+        "preparation: potatoes: preparation has \"peeled\" (got null)"
+      ],
       "checks": [
         {
           "kind": "refusal",
@@ -2830,8 +2831,8 @@
         },
         {
           "kind": "preparation",
-          "ok": true,
-          "what": "potatoes: preparation has \"peeled\" (got \"peeled and quartered\")"
+          "ok": false,
+          "what": "potatoes: preparation has \"peeled\" (got null)"
         },
         {
           "kind": "names",
@@ -2917,13 +2918,13 @@
           "source_url": null,
           "ingredients": [
             {
-              "name": "potatoes",
+              "name": "potatoes, peeled and quartered",
               "quantity_min": 1,
               "quantity_max": null,
               "unit_code": "kg",
-              "preparation": "peeled and quartered",
+              "preparation": null,
               "note": null,
-              "section": "Ingredients",
+              "section": null,
               "optional": false
             },
             {
@@ -2933,7 +2934,7 @@
               "unit_code": "tbsp",
               "preparation": null,
               "note": null,
-              "section": "Ingredients",
+              "section": null,
               "optional": false
             },
             {
@@ -2943,7 +2944,7 @@
               "unit_code": "tsp",
               "preparation": null,
               "note": null,
-              "section": "Ingredients",
+              "section": null,
               "optional": false
             }
           ],
@@ -2951,17 +2952,17 @@
             {
               "instruction": "Parboil the potatoes for 8 minutes and drain.",
               "timer_seconds": 480,
-              "section": "Method"
+              "section": null
             },
             {
               "instruction": "Shake them in the pan to rough up the edges.",
               "timer_seconds": null,
-              "section": "Method"
+              "section": null
             },
             {
               "instruction": "Roast in the hot oil for 45 minutes, turning once.",
               "timer_seconds": 2700,
-              "section": "Method"
+              "section": null
             }
           ]
         }
@@ -2971,9 +2972,9 @@
       "id": "16-text-unknown-units",
       "passed": 19,
       "total": 19,
-      "ms": 17895,
+      "ms": 20509,
       "inputTokens": 1426,
-      "outputTokens": 4750,
+      "outputTokens": 4999,
       "answeredBy": "openai/gpt-5-nano",
       "error": null,
       "failures": [],
@@ -3083,7 +3084,7 @@
           "servings": null,
           "yield_text": null,
           "prep_minutes": null,
-          "cook_minutes": null,
+          "cook_minutes": 80,
           "source_url": null,
           "ingredients": [
             {
@@ -3097,7 +3098,7 @@
               "optional": false
             },
             {
-              "name": "sprigs rosemary",
+              "name": "rosemary",
               "quantity_min": 3,
               "quantity_max": null,
               "unit_code": null,
@@ -3107,7 +3108,7 @@
               "optional": false
             },
             {
-              "name": "handfuls spinach",
+              "name": "spinach",
               "quantity_min": 2,
               "quantity_max": null,
               "unit_code": null,
@@ -3117,7 +3118,7 @@
               "optional": false
             },
             {
-              "name": "head garlic",
+              "name": "garlic",
               "quantity_min": 1,
               "quantity_max": null,
               "unit_code": null,

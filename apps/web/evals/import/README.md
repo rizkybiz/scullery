@@ -75,3 +75,10 @@ Each run's numbers, and what changed before it. Raw results of the latest run ar
    Flash-Lite 318/329 checks, 9/16 cases, median 1.9 s, no rate-limit errors. Nano 327/329, 15/16,
    median 14.8 s. Nano now gets every unit right; Flash-Lite still replaces units the API lacks
    with near ones ("3 sprigs" a bunch, "2 handfuls" a cup, "3 eggs" 3 each) despite the new rule.
+3. **Unit check in normalize.** Change: a unit is kept only if the ingredient's own source line
+   writes it (prompt rules alone had not stopped the substitutions).
+   Flash-Lite 325/329 checks, 12/16 cases, median 1.9 s: every unit failure gone, nothing correct
+   dropped. Left: two quantities read wrong, two timer judgements. Nano 327/329, 14/16, median
+   14.4 s: a missed yield and a missed preparation, the second one passed in run 2.
+   **Decision:** Flash-Lite stays primary (2 checks behind, 7.5 times faster, and a person reviews
+   every draft); Nano is the Gateway fallback.
