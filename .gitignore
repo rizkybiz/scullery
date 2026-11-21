@@ -1,9 +1,11 @@
 # Local AI-assistant configuration and skills; not part of the product.
 *.claude/
 
-# Vercel CLI link and any env file it pulls (these can hold a short-lived OIDC token).
+# Vercel CLI link and any env file (pulled ones can hold a short-lived OIDC token). Every
+# .env* is ignored, not only .env*.local; the committed examples are the exception.
 .vercel/
-.env*.local
+.env*
+!.env.example
 
 # Terraform: provider downloads, local state (can contain secrets) and variable files.
 .terraform/
@@ -11,3 +13,6 @@
 *.tfstate.*
 *.tfvars
 crash.log
+
+# macOS Finder metadata.
+.DS_Store
