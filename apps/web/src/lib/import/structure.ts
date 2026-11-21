@@ -32,6 +32,12 @@ function providerFrom(metadata: unknown): string | null {
   return null
 }
 
+// Reasoning models (the gpt-5 family) reject `temperature`: the SDK drops it with a warning on
+// every call. Only send it where it means something.
+function acceptsTemperature(model: string): boolean {
+  return !model.startsWith('openai/gpt-5')
+}
+
 export async function structureRecipe(
   source: ImportSource,
   units: readonly Unit[],
@@ -46,7 +52,7 @@ export async function structureRecipe(
     prompt: importPrompt(source, units),
     output: Output.object({ schema: draftSchema(units.map((unit) => unit.code)) }),
     // Transcription, not creativity.
-    temperature: 0,
+    ...(acceptsTemperature(model) ? { temperature: 0 } : {}),
     providerOptions: { gateway: { models: [...fallbacks] } },
   })
   return {
