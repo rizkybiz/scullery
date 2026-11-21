@@ -5,7 +5,7 @@ import { deploymentTag } from '../lib/deployment.ts'
 import '../index.css'
 
 // Every tab reads "Scullery", or "<page> · Scullery" once a page sets its own title. Outside
-// production a tag follows, for example "Scullery [preview · PR #8]" (see lib/deployment.ts).
+// production a tag follows, for example "Scullery [preview · a1b2c3d]" (see lib/deployment.ts).
 const tag = deploymentTag()
 
 export const metadata: Metadata = {
