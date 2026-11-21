@@ -6,6 +6,10 @@
 //
 // Each case is one AI Gateway request per model (free tier). Models run without fallbacks, so a
 // result belongs to the model named. Results go to evals/import/results/ and RESULTS.md.
+//
+// The free tier allows each model 5 requests a minute for the whole team (the baseline run lost
+// three cases to it), so requests are spaced --pace seconds apart, 13 by default. Do not run this
+// while someone is importing on a deployment: they share the limit.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
@@ -18,7 +22,15 @@ import { CASES } from '../evals/import/cases.ts'
 import { score, type Check, type Kind } from '../evals/import/score.ts'
 
 const dir = join(import.meta.dirname, '..', 'evals', 'import')
-const { values } = parseArgs({ options: { model: { type: 'string' }, case: { type: 'string' } } })
+const { values } = parseArgs({
+  options: {
+    model: { type: 'string' },
+    case: { type: 'string' },
+    pace: { type: 'string', default: '13' },
+  },
+})
+const paceMs = Math.max(0, Number(values.pace) * 1000)
+const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 if (!process.env['VERCEL_OIDC_TOKEN'] && !process.env['AI_GATEWAY_API_KEY']) {
   console.error('Set VERCEL_OIDC_TOKEN (vercel env pull) so AI Gateway can authenticate.')
@@ -60,7 +72,8 @@ mkdirSync(join(dir, 'results'), { recursive: true })
 for (const model of models) {
   console.log(`\n== ${model}`)
   const results: CaseResult[] = []
-  for (const c of cases) {
+  for (const [n, c] of cases.entries()) {
+    if (n > 0) await pause(paceMs)
     const raw = readFileSync(join(dir, 'fixtures', c.file), 'utf8')
     const source = c.file.endsWith('.html')
       ? sourceFromHtml(raw, c.url ?? null)
