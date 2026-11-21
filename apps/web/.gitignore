@@ -7,3 +7,6 @@ next-env.d.ts
 .env.local
 *.log
 /.swc
+# Workflow's local world (next dev / next start without Vercel): run state, including
+# imported page text.
+.workflow-data

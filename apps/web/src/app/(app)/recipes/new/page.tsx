@@ -1,12 +1,12 @@
 import Link from 'next/link'
 import { connection } from 'next/server'
 import { Suspense } from 'react'
-import RecipeForm from '../../../../components/RecipeForm.tsx'
+import NewRecipeEditor from '../../../../components/NewRecipeEditor.tsx'
 import { listUnits, type Unit } from '../../../../lib/api/units.ts'
 import { requireSession } from '../../../../lib/auth/dal.ts'
 
-// The page itself is a static shell: a link, a heading and a fallback. The form needs
-// the list of units from the API, so it streams in behind <Suspense>.
+// The page itself is a static shell: a link, a heading and a fallback. The form (with the
+// import panel above it) needs the list of units from the API, so it streams in behind <Suspense>.
 export default function NewRecipePage() {
   return (
     <>
@@ -37,5 +37,5 @@ async function NewRecipeForm() {
   await connection()
   await requireSession() // before any data: the proxy is a first gate, not the boundary
   const units = await readUnits()
-  return <RecipeForm units={units} />
+  return <NewRecipeEditor units={units} />
 }
