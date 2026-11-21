@@ -41,6 +41,9 @@
   },
   "overrides": {
     "undici": "7.30.2",
-    "zod": "$zod"
+    "zod": "$zod",
+    "openapi-typescript": {
+      "typescript": "$typescript"
+    }
   }
 }
