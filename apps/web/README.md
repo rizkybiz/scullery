@@ -179,8 +179,9 @@ requests only from this app.
   them for Server Components would cost more than the port itself.
 - _What still guards changes:_ strict TypeScript, lint, formatting checks, and an
   API contract generated from the Go service's OpenAPI spec (schema drift fails
-  the type check). The AI import, once built, will be checked by its own evaluation
-  set rather than by unit tests.
+  the type check). The AI import is checked by its own evaluation set
+  ([`evals/import`](evals/import/README.md)): 16 fixed inputs, scored field by field, run by hand
+  against each model through AI Gateway.
 - _Trade-off:_ no automated check of behavior. Regressions in things like form
   error handling are caught by hand, not by a test. A real product would restore
   tests, starting with the data layer and the form.
