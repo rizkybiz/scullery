@@ -17,6 +17,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@ai-sdk/gateway": "4.0.137",
     "@vercel/analytics": "2.0.1",
     "@vercel/oidc": "4.0.9",
     "ai": "7.0.164",
