@@ -1,0 +1,134 @@
+[
+  {
+    "code": "bunch",
+    "name": "bunch",
+    "dimension": "count",
+    "base_factor": null
+  },
+  {
+    "code": "can",
+    "name": "can",
+    "dimension": "count",
+    "base_factor": null
+  },
+  {
+    "code": "clove",
+    "name": "clove",
+    "dimension": "count",
+    "base_factor": null
+  },
+  {
+    "code": "dash",
+    "name": "dash",
+    "dimension": "count",
+    "base_factor": null
+  },
+  {
+    "code": "each",
+    "name": "each",
+    "dimension": "count",
+    "base_factor": null
+  },
+  {
+    "code": "package",
+    "name": "package",
+    "dimension": "count",
+    "base_factor": null
+  },
+  {
+    "code": "pinch",
+    "name": "pinch",
+    "dimension": "count",
+    "base_factor": null
+  },
+  {
+    "code": "slice",
+    "name": "slice",
+    "dimension": "count",
+    "base_factor": null
+  },
+  {
+    "code": "stick",
+    "name": "stick",
+    "dimension": "count",
+    "base_factor": null
+  },
+  {
+    "code": "g",
+    "name": "gram",
+    "dimension": "mass",
+    "base_factor": 1
+  },
+  {
+    "code": "oz",
+    "name": "ounce",
+    "dimension": "mass",
+    "base_factor": 28.349523
+  },
+  {
+    "code": "lb",
+    "name": "pound",
+    "dimension": "mass",
+    "base_factor": 453.59237
+  },
+  {
+    "code": "kg",
+    "name": "kilogram",
+    "dimension": "mass",
+    "base_factor": 1000
+  },
+  {
+    "code": "ml",
+    "name": "millilitre",
+    "dimension": "volume",
+    "base_factor": 1
+  },
+  {
+    "code": "tsp",
+    "name": "teaspoon",
+    "dimension": "volume",
+    "base_factor": 4.928922
+  },
+  {
+    "code": "tbsp",
+    "name": "tablespoon",
+    "dimension": "volume",
+    "base_factor": 14.786765
+  },
+  {
+    "code": "fl_oz",
+    "name": "fluid ounce",
+    "dimension": "volume",
+    "base_factor": 29.57353
+  },
+  {
+    "code": "cup",
+    "name": "cup",
+    "dimension": "volume",
+    "base_factor": 236.588236
+  },
+  {
+    "code": "pint",
+    "name": "pint",
+    "dimension": "volume",
+    "base_factor": 473.176473
+  },
+  {
+    "code": "quart",
+    "name": "quart",
+    "dimension": "volume",
+    "base_factor": 946.352946
+  },
+  {
+    "code": "l",
+    "name": "litre",
+    "dimension": "volume",
+    "base_factor": 1000
+  },
+  {
+    "code": "gallon",
+    "name": "gallon",
+    "dimension": "volume",
+    "base_factor": 3785.411784
+  }
+]
