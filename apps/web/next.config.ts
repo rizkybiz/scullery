@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { withWorkflow } from 'workflow/next'
 
 const config: NextConfig = {
   // Cache Components: caching is opt-in, per function or component, with
@@ -15,4 +16,6 @@ const config: NextConfig = {
   partialPrefetching: true,
 }
 
-export default config
+// withWorkflow compiles "use workflow" and "use step" functions and adds Workflow's
+// internal routes under /.well-known/workflow/ (kept out of proxy.ts, see there).
+export default withWorkflow(config)
