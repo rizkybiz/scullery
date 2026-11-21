@@ -22,7 +22,7 @@ export type RecipeFormInput = {
     section: string
     optional: boolean
   }[]
-  steps: { instruction: string }[]
+  steps: { instruction: string; timerMinutes: string; section: string }[]
 }
 
 // Messages for the form, keyed so the form can find the one that belongs to a field.
@@ -32,10 +32,11 @@ export type FormErrors = {
   message?: string
   fields?: Record<string, string>
   ingredients?: Record<number, Record<string, string>>
-  steps?: Record<number, string>
+  steps?: Record<number, Record<string, string>>
 }
 
 const MAX_ROWS = 200 // the API's own limit
+const MAX_TIMER_MINUTES = 24 * 60 // the API allows 1 second to 24 hours
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -72,7 +73,9 @@ export function isRecipeFormInput(value: unknown): value is RecipeFormInput {
     ) &&
     Array.isArray(steps) &&
     steps.length <= MAX_ROWS &&
-    steps.every((step) => isRecord(step) && typeof step['instruction'] === 'string')
+    steps.every(
+      (step) => isRecord(step) && hasStrings(step, ['instruction', 'timerMinutes', 'section']),
+    )
   )
 }
 
@@ -91,6 +94,7 @@ function parseNumber(text: string): number | null | undefined {
 }
 
 type Ingredient = NonNullable<NewRecipe['ingredients']>[number]
+type Step = NonNullable<NewRecipe['steps']>[number]
 
 export type Built =
   | {
@@ -152,18 +156,37 @@ export function buildRecipe(input: RecipeFormInput): Built {
     ingredientRows.push(formIndex)
   })
 
-  const steps: { instruction: string }[] = []
+  const steps: Step[] = []
   const stepRows: number[] = []
+  const stepErrors: Record<number, Record<string, string>> = {}
   input.steps.forEach((step, formIndex) => {
+    // A step with no instruction is blank and dropped, even if a timer or section was typed.
     if (step.instruction.trim() === '') return
-    steps.push({ instruction: step.instruction.trim() })
+    const problems: Record<string, string> = {}
+    const minutes = parseNumber(step.timerMinutes)
+    let timerSeconds: number | null = null
+    if (minutes === undefined) {
+      problems['timer_seconds'] = 'Timer must be a number of minutes'
+    } else if (minutes !== null) {
+      timerSeconds = Math.round(minutes * 60)
+      if (timerSeconds < 1 || minutes > MAX_TIMER_MINUTES) {
+        problems['timer_seconds'] = 'Timer must be more than 0 and at most 1440 minutes'
+      }
+    }
+    if (Object.keys(problems).length > 0) stepErrors[formIndex] = problems
+    steps.push({
+      instruction: step.instruction.trim(),
+      timer_seconds: timerSeconds,
+      section: optionalText(step.section),
+    })
     stepRows.push(formIndex)
   })
 
   const errors: FormErrors = {}
   if (Object.keys(fields).length > 0) errors.fields = fields
   if (Object.keys(ingredientErrors).length > 0) errors.ingredients = ingredientErrors
-  if (errors.fields || errors.ingredients) return { ok: false, errors }
+  if (Object.keys(stepErrors).length > 0) errors.steps = stepErrors
+  if (errors.fields || errors.ingredients || errors.steps) return { ok: false, errors }
 
   return {
     ok: true,
@@ -212,7 +235,7 @@ export function mapApiErrors(
     if (ingredient && ingredientRow !== undefined) {
       ;((errors.ingredients ??= {})[ingredientRow] ??= {})[ingredient[2]!] = message
     } else if (step && stepRow !== undefined) {
-      ;(errors.steps ??= {})[stepRow] = message
+      ;((errors.steps ??= {})[stepRow] ??= {})[step[2]!] = message
     } else if (top && KNOWN_FIELDS.has(top[1]!)) {
       ;(errors.fields ??= {})[top[1]!] = message
     } else {

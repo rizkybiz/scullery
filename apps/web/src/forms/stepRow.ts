@@ -3,8 +3,10 @@
 export type StepRow = {
   key: string
   instruction: string
+  timerMinutes: string // '' for no timer; minutes, as people think of them (the API wants seconds)
+  section: string // the heading it is grouped under: "For the sauce"
 }
 
 export function newStepRow(): StepRow {
-  return { key: crypto.randomUUID(), instruction: '' }
+  return { key: crypto.randomUUID(), instruction: '', timerMinutes: '', section: '' }
 }

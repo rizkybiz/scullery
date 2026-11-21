@@ -50,7 +50,7 @@ export default function RecipeForm({ units }: { units: Unit[] }) {
     const input: RecipeFormInput = {
       ...fields,
       ingredients: ingredients.map(({ key: _key, ...row }) => row),
-      steps: steps.map(({ instruction }) => ({ instruction })),
+      steps: steps.map(({ key: _key, ...row }) => row),
     }
     formAction(input)
   }
@@ -98,7 +98,11 @@ export default function RecipeForm({ units }: { units: Unit[] }) {
         units={units}
         errorFor={(index, field) => state?.ingredients?.[index]?.[field]}
       />
-      <StepRows rows={steps} onChange={setSteps} errorFor={(index) => state?.steps?.[index]} />
+      <StepRows
+        rows={steps}
+        onChange={setSteps}
+        errorFor={(index, field) => state?.steps?.[index]?.[field]}
+      />
 
       {state?.message && <p role="alert">{state.message}</p>}
 
