@@ -4,6 +4,7 @@ import { start } from 'workflow/api'
 import { audit } from '../../../../lib/audit.ts'
 import { listUnits, type Unit } from '../../../../lib/api/units.ts'
 import { requireSession } from '../../../../lib/auth/dal.ts'
+import { IMPORT_DISABLED_MESSAGE, isImportDisabled } from '../../../../lib/flags.ts'
 import { MAX_SOURCE_CHARS } from '../../../../lib/import/source.ts'
 import { importRecipeWorkflow, type ImportInput } from '../../../../workflows/importRecipe.ts'
 
@@ -39,6 +40,12 @@ export async function startImportAction(
   value: unknown,
 ): Promise<StartImportState> {
   const session = await requireSession()
+  // Checked on every call, whatever the page showed: a deployment can be switched off after the
+  // page was loaded, and a Server Action can be called without the page at all.
+  if (isImportDisabled()) {
+    audit('import.refused', { user: session.name, reason: 'disabled' })
+    return { error: IMPORT_DISABLED_MESSAGE }
+  }
   const input = readInput(value)
   if (typeof input === 'string') return { error: input }
 
