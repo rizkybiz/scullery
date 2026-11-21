@@ -14,21 +14,8 @@ type IngredientRowsProps = {
   ) => string | undefined
 }
 
-// IngredientRows is the "Ingredients" part of the new recipe form.
-//
-// TODO(you), roughly in this order:
-//  1. An <h2>Ingredients</h2> and a <ul aria-label="Ingredients"> with one <li> per
-//     row. Use row.key as the React key (never the index).
-//  2. In each row, labelled fields: Quantity (type number), Unit (a native <select>),
-//     Ingredient (the name), Preparation. FormField can do the three text ones; the
-//     select you write by hand, with a label and an empty first option "No unit"
-//     followed by one <option value={unit.code}> per unit, showing unit.name.
-//  3. Changing a field replaces that one row: props.onChange(props.rows.map(...)),
-//     copying the row with the spread and overriding one property. Never edit
-//     a row in place.
-//  4. A "Remove" button in each row (props.rows.filter) and an "Add ingredient"
-//     button below the list (spread the rows and append newIngredientRow()).
-//  5. Show errorFor(index, field) on each field, through FormField's `error`.
+// IngredientRows is the "Ingredients" part of the recipe form: one row per ingredient line,
+// added, edited and removed in the browser. The order of the rows is the order shown.
 export default function IngredientRows({ rows, onChange, units, errorFor }: IngredientRowsProps) {
   function update(index: number, patch: Partial<IngredientRow>) {
     onChange(rows.map((row, i) => (i === index ? { ...row, ...patch } : row)))
