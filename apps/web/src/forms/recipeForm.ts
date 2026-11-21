@@ -12,7 +12,16 @@ export type RecipeFormInput = {
   servings: string
   prepMinutes: string
   cookMinutes: string
-  ingredients: { quantity: string; unitCode: string; name: string; preparation: string }[]
+  ingredients: {
+    quantity: string
+    quantityMax: string
+    unitCode: string
+    name: string
+    preparation: string
+    note: string
+    section: string
+    optional: boolean
+  }[]
   steps: { instruction: string }[]
 }
 
@@ -48,12 +57,29 @@ export function isRecipeFormInput(value: unknown): value is RecipeFormInput {
     Array.isArray(ingredients) &&
     ingredients.length <= MAX_ROWS &&
     ingredients.every(
-      (row) => isRecord(row) && hasStrings(row, ['quantity', 'unitCode', 'name', 'preparation']),
+      (row) =>
+        isRecord(row) &&
+        hasStrings(row, [
+          'quantity',
+          'quantityMax',
+          'unitCode',
+          'name',
+          'preparation',
+          'note',
+          'section',
+        ]) &&
+        typeof row['optional'] === 'boolean',
     ) &&
     Array.isArray(steps) &&
     steps.length <= MAX_ROWS &&
     steps.every((step) => isRecord(step) && typeof step['instruction'] === 'string')
   )
+}
+
+// '' or only spaces is "not given" (null).
+function optionalText(text: string): string | null {
+  const trimmed = text.trim()
+  return trimmed === '' ? null : trimmed
 }
 
 // '' is "not given" (null), a number is a number, anything else is undefined.
@@ -100,14 +126,28 @@ export function buildRecipe(input: RecipeFormInput): Built {
     const problems: Record<string, string> = {}
     const quantity = parseNumber(row.quantity)
     if (quantity === undefined) problems['quantity_min'] = 'Quantity must be a number'
+    let quantityMax = parseNumber(row.quantityMax)
+    if (quantityMax === undefined) {
+      problems['quantity_max'] = 'The top of the range must be a number'
+    } else if (quantityMax !== null && quantity === null) {
+      problems['quantity_max'] = 'A range needs a first quantity as well'
+    } else if (quantityMax !== null && typeof quantity === 'number') {
+      if (quantityMax < quantity) problems['quantity_max'] = 'Must not be less than the quantity'
+      // "200 to 200 g" is just 200 g. The API would store it as the range "200-200".
+      if (quantityMax === quantity) quantityMax = null
+    }
     if (row.name.trim() === '') problems['name'] = 'Ingredient name is required'
     if (Object.keys(problems).length > 0) ingredientErrors[formIndex] = problems
 
     ingredients.push({
       name: row.name.trim(),
       quantity_min: quantity ?? null,
+      quantity_max: quantityMax ?? null,
       unit_code: row.unitCode === '' ? null : row.unitCode,
-      preparation: row.preparation.trim() === '' ? null : row.preparation.trim(),
+      preparation: optionalText(row.preparation),
+      note: optionalText(row.note),
+      section: optionalText(row.section),
+      optional: row.optional,
     })
     ingredientRows.push(formIndex)
   })

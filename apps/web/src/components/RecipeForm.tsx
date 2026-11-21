@@ -49,12 +49,7 @@ export default function RecipeForm({ units }: { units: Unit[] }) {
   function submit() {
     const input: RecipeFormInput = {
       ...fields,
-      ingredients: ingredients.map(({ quantity, unitCode, name, preparation }) => ({
-        quantity,
-        unitCode,
-        name,
-        preparation,
-      })),
+      ingredients: ingredients.map(({ key: _key, ...row }) => row),
       steps: steps.map(({ instruction }) => ({ instruction })),
     }
     formAction(input)
