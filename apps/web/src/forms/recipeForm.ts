@@ -12,6 +12,9 @@ export type RecipeFormInput = {
   servings: string
   prepMinutes: string
   cookMinutes: string
+  yieldText: string // what it makes when servings does not fit: "24 cookies"
+  sourceUrl: string // the page it came from
+  notes: string
   ingredients: {
     quantity: string
     quantityMax: string
@@ -50,7 +53,17 @@ function hasStrings(value: Record<string, unknown>, keys: string[]): boolean {
 // Check the shape before trusting it. The API still validates the content.
 export function isRecipeFormInput(value: unknown): value is RecipeFormInput {
   if (!isRecord(value)) return false
-  if (!hasStrings(value, ['title', 'description', 'servings', 'prepMinutes', 'cookMinutes'])) {
+  const top = [
+    'title',
+    'description',
+    'servings',
+    'prepMinutes',
+    'cookMinutes',
+    'yieldText',
+    'sourceUrl',
+    'notes',
+  ]
+  if (!hasStrings(value, top)) {
     return false
   }
   const { ingredients, steps } = value
@@ -83,6 +96,17 @@ export function isRecipeFormInput(value: unknown): value is RecipeFormInput {
 function optionalText(text: string): string | null {
   const trimmed = text.trim()
   return trimmed === '' ? null : trimmed
+}
+
+// The source is shown as a link, so only web addresses are accepted: a javascript: or
+// data: "URL" must never end up in an href.
+function isWebAddress(text: string): boolean {
+  try {
+    const url = new URL(text)
+    return url.protocol === 'https:' || url.protocol === 'http:'
+  } catch {
+    return false
+  }
 }
 
 // '' is "not given" (null), a number is a number, anything else is undefined.
@@ -122,6 +146,10 @@ export function buildRecipe(input: RecipeFormInput): Built {
   if (prepMinutes === undefined) fields['prep_minutes'] = 'Prep minutes must be a number'
   const cookMinutes = parseNumber(input.cookMinutes)
   if (cookMinutes === undefined) fields['cook_minutes'] = 'Cook minutes must be a number'
+  const sourceUrl = optionalText(input.sourceUrl)
+  if (sourceUrl !== null && !isWebAddress(sourceUrl)) {
+    fields['source_url'] = 'Source must be a web address starting with http:// or https://'
+  }
 
   const ingredients: Ingredient[] = []
   const ingredientRows: number[] = []
@@ -196,6 +224,9 @@ export function buildRecipe(input: RecipeFormInput): Built {
       servings: servings ?? null,
       prep_minutes: prepMinutes ?? null,
       cook_minutes: cookMinutes ?? null,
+      yield_text: optionalText(input.yieldText),
+      source_url: sourceUrl,
+      notes: input.notes.trim(),
       ingredients,
       steps,
     },
@@ -204,7 +235,16 @@ export function buildRecipe(input: RecipeFormInput): Built {
   }
 }
 
-const KNOWN_FIELDS = new Set(['title', 'description', 'servings', 'prep_minutes', 'cook_minutes'])
+const KNOWN_FIELDS = new Set([
+  'title',
+  'description',
+  'servings',
+  'prep_minutes',
+  'cook_minutes',
+  'yield_text',
+  'source_url',
+  'notes',
+])
 const INGREDIENT = /^body\.ingredients\[(\d+)\]\.(\w+)$/
 const STEP = /^body\.steps\[(\d+)\]\.(\w+)$/
 const TOP_LEVEL = /^body\.(\w+)$/

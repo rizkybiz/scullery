@@ -17,6 +17,9 @@ type Fields = {
   servings: string
   prepMinutes: string
   cookMinutes: string
+  yieldText: string
+  sourceUrl: string
+  notes: string
 }
 
 // RecipeForm is the "new recipe" form.
@@ -31,6 +34,9 @@ export default function RecipeForm({ units }: { units: Unit[] }) {
     servings: '',
     prepMinutes: '',
     cookMinutes: '',
+    yieldText: '',
+    sourceUrl: '',
+    notes: '',
   })
   const [ingredients, setIngredients] = useState<IngredientRow[]>([newIngredientRow()])
   const [steps, setSteps] = useState<StepRow[]>([newStepRow()])
@@ -91,6 +97,18 @@ export default function RecipeForm({ units }: { units: Unit[] }) {
         error={state?.fields?.['cook_minutes']}
         onChange={set('cookMinutes')}
       />
+      <FormField
+        label="Makes (when servings does not fit)"
+        value={fields.yieldText}
+        error={state?.fields?.['yield_text']}
+        onChange={set('yieldText')}
+      />
+      <FormField
+        label="Source URL"
+        value={fields.sourceUrl}
+        error={state?.fields?.['source_url']}
+        onChange={set('sourceUrl')}
+      />
 
       <IngredientRows
         rows={ingredients}
@@ -102,6 +120,14 @@ export default function RecipeForm({ units }: { units: Unit[] }) {
         rows={steps}
         onChange={setSteps}
         errorFor={(index, field) => state?.steps?.[index]?.[field]}
+      />
+
+      <FormField
+        label="Notes"
+        multiline={true}
+        value={fields.notes}
+        error={state?.fields?.['notes']}
+        onChange={set('notes')}
       />
 
       {state?.message && <p role="alert">{state.message}</p>}
