@@ -10,7 +10,15 @@ const tag = deploymentTag()
 
 export const metadata: Metadata = {
   title: { default: `Scullery${tag}`, template: `%s · Scullery${tag}` },
-  icons: { icon: '/favicon.svg' },
+  // Files in public/. favicon.ico needs no tag: browsers ask for /favicon.ico on their own.
+  icons: {
+    icon: [
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+  },
+  manifest: '/site.webmanifest',
 }
 
 export const viewport: Viewport = {
