@@ -1,10 +1,15 @@
 import type { Metadata, Viewport } from 'next'
 import { Analytics } from '@vercel/analytics/next'
 import type { ReactNode } from 'react'
+import { deploymentTag } from '../lib/deployment.ts'
 import '../index.css'
 
+// Every tab reads "Scullery", or "<page> · Scullery" once a page sets its own title. Outside
+// production a tag follows, for example "Scullery [preview · PR #8]" (see lib/deployment.ts).
+const tag = deploymentTag()
+
 export const metadata: Metadata = {
-  title: 'Scullery',
+  title: { default: `Scullery${tag}`, template: `%s · Scullery${tag}` },
   icons: { icon: '/favicon.svg' },
 }
 
