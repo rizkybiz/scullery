@@ -14,9 +14,11 @@ import {
 import {
   createRecipe,
   deleteRecipe,
+  readRecipe,
   RecipeInUseError,
   RecipeInvalidError,
   RecipeNotFoundError,
+  updateRecipe,
   type Recipe,
 } from '../../../lib/api/recipes.ts'
 
@@ -105,4 +107,55 @@ export async function createRecipeAction(_previous: SaveState, input: unknown): 
   audit('recipe.created', { user: session.name, id: created.id })
   updateTag('recipes')
   redirect(`/recipes/${created.id}`)
+}
+
+// updateRecipeAction saves an edited recipe and opens it.
+//
+// The same checks as createRecipeAction, in the same order, plus the id. `id` is bound by the
+// edit page (updateRecipeAction.bind(null, id)); a bound argument still arrives from the
+// browser, so it is checked like any other input.
+//
+// The API's PUT replaces the whole recipe, and the form does not edit two of its fields: the
+// favorite flag and the source name. They are read from the recipe as it is now (not from the
+// cache) and sent back unchanged, so saving an edit never quietly clears them. Two people
+// saving the same recipe at once: the last save wins (there is no version check).
+export async function updateRecipeAction(
+  id: string,
+  _previous: SaveState,
+  input: unknown,
+): Promise<SaveState> {
+  const session = await requireSession()
+  if (isReadOnly()) return { message: READ_ONLY_MESSAGE }
+
+  if (!UUID.test(id)) return { message: 'That is not a valid recipe.' }
+  if (!isRecipeFormInput(input)) {
+    return { message: 'That form could not be read. Reload the page and try again.' }
+  }
+
+  const built = buildRecipe(input)
+  if (!built.ok) return built.errors
+
+  const gone = { message: 'This recipe no longer exists. It may have been deleted.' }
+  try {
+    const current = await readRecipe(id)
+    if (current === null) return gone
+    await updateRecipe(id, {
+      ...built.recipe,
+      is_favorite: current.is_favorite,
+      source_name: current.source_name,
+    })
+  } catch (error) {
+    if (error instanceof RecipeInvalidError) {
+      return mapApiErrors(error.errors, built.ingredientRows, built.stepRows)
+    }
+    if (error instanceof RecipeNotFoundError) return gone
+    console.error('Could not update recipe', error)
+    return { message: 'Could not save the recipe.' }
+  }
+
+  // As in the other actions: expire the list and this recipe's page, redirect last.
+  audit('recipe.updated', { user: session.name, id })
+  updateTag('recipes')
+  updateTag(`recipe:${id}`)
+  redirect(`/recipes/${id}`)
 }
