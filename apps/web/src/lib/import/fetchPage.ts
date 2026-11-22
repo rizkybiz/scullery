@@ -31,6 +31,14 @@ const MAX_BYTES = 2 * 1024 * 1024
 const TIMEOUT_MS = 10_000
 const MAX_REDIRECTS = 3
 
+// The fetch says what it is, in the form well-behaved crawlers use ("compatible; name"). It does
+// not pretend to be a browser: a site that blocks automated visits has said so, and the answer is
+// the paste box, not a disguise.
+const USER_AGENT = 'Mozilla/5.0 (compatible; SculleryRecipeImport/1.0)'
+
+const PASTE_INSTEAD = 'Open the page, copy the recipe, and paste it as text instead.'
+const BLOCKED_MESSAGE = 'That site blocks automatic visits. ' + PASTE_INSTEAD
+
 function ipv4Blocked(address: string): boolean {
   const [a, b] = address.split('.').map(Number) as [number, number, number, number]
   return (
@@ -118,6 +126,25 @@ async function readCapped(response: Response): Promise<string> {
   return new TextDecoder().decode(Buffer.concat(chunks))
 }
 
+// failure turns a refusal into a message that says what to do next. Many recipe sites put bot
+// protection in front of their pages (Cloudflare, Akamai and others), which refuses this fetch
+// with a 403, a 429, or a challenge page marked by a cf-mitigated header (sometimes on a 503).
+// None of those changes on a retry, so they are not retryable: the person hears at once, and is
+// told to paste the text instead. Only an ordinary 5xx is worth retrying.
+function failure(response: Response): PageFetchError {
+  const status = response.status
+  if (response.headers.has('cf-mitigated') || status === 403 || status === 429) {
+    return new PageFetchError(BLOCKED_MESSAGE)
+  }
+  if (status === 401) {
+    return new PageFetchError('That page needs a sign-in. ' + PASTE_INSTEAD)
+  }
+  if (status === 404 || status === 410) {
+    return new PageFetchError('The site has no page at that link.')
+  }
+  return new PageFetchError(`The site answered ${status}.`, status >= 500)
+}
+
 // fetchPage returns the page's HTML (or text) and the URL it finally came from.
 export async function fetchPage(text: string): Promise<{ html: string; url: string }> {
   let url = await checkUrl(text)
@@ -127,7 +154,11 @@ export async function fetchPage(text: string): Promise<{ html: string; url: stri
       response = await fetch(url, {
         redirect: 'manual',
         signal: AbortSignal.timeout(TIMEOUT_MS),
-        headers: { accept: 'text/html,text/plain;q=0.9', 'user-agent': 'SculleryRecipeImport/1.0' },
+        headers: {
+          accept: 'text/html,text/plain;q=0.9',
+          'accept-language': 'en',
+          'user-agent': USER_AGENT,
+        },
       })
     } catch (error) {
       const timedOut = error instanceof Error && error.name === 'TimeoutError'
@@ -145,10 +176,7 @@ export async function fetchPage(text: string): Promise<{ html: string; url: stri
     }
     if (!response.ok) {
       await response.body?.cancel()
-      throw new PageFetchError(
-        `The site answered ${response.status}. It may need a sign-in, or block automatic visits.`,
-        response.status >= 500 || response.status === 429,
-      )
+      throw failure(response)
     }
     const type = response.headers.get('content-type') ?? ''
     if (!/^(text\/html|application\/xhtml\+xml|text\/plain)\b/i.test(type)) {
