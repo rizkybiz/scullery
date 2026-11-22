@@ -273,6 +273,20 @@ body {
   margin-top: 1rem;
 }
 
+/* The recipe form is long, so its Save stays in reach: the actions stick to the bottom of the
+   screen, just above the tab bar, and settle into place at the end of the form. The offset is
+   the tab bar's height (link padding, one line of text, its top border, the safe area). The
+   negative side margins reach the page gutters, so the bar spans the page. */
+.recipe-form .form-actions {
+  position: sticky;
+  bottom: calc(3.3rem + 1px + env(safe-area-inset-bottom));
+  z-index: 1;
+  margin-inline: -1rem;
+  padding: 0.75rem 1rem;
+  background: Canvas;
+  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+}
+
 /* Who is signed in, in the header. */
 .user-menu {
   display: flex;
