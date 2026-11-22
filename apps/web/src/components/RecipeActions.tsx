@@ -1,9 +1,11 @@
 'use client'
 
+import Link from 'next/link'
 import { useActionState, useState } from 'react'
 import { deleteRecipeAction } from '../app/(app)/recipes/actions.ts'
 
-// The recipe's actions menu: a kebab button, a menu with Delete, and a confirm step.
+// The recipe's actions menu: a kebab button, a menu with Edit and Delete, and a confirm step
+// for Delete. Edit is a plain link to the edit page.
 //
 // This is a Client Component because the menu is interactive state (open, closed,
 // confirming) that only exists in the browser. Everything that touches data stays on
@@ -37,6 +39,7 @@ export default function RecipeActions({ id }: { id: string }) {
 
       {step === 'menu' && (
         <div className="actions-menu">
+          <Link href={`/recipes/${id}/edit`}>Edit</Link>
           <button type="button" onClick={() => setStep('confirm')}>
             Delete
           </button>
