@@ -68,19 +68,16 @@ export async function deleteRecipeAction(id: string, _previous: DeleteState): Pr
   redirect('/recipes')
 }
 
-// What the create form gets back when the recipe was not saved. On success the action
-// redirects instead of returning, so `null` is only the initial state.
-export type CreateState = FormErrors | null
+// What the recipe form gets back from a save (create or update) that did not happen. On success
+// the action redirects instead of returning, so `null` is only the initial state.
+export type SaveState = FormErrors | null
 
 // createRecipeAction saves a new recipe from the form and opens it.
 //
 // Like every Server Action it is a public endpoint, so it trusts nothing it is sent: the
 // session is checked first, then the shape, then the content (buildRecipe, then the API).
 // Problems come back as messages for the form to show beside the right fields.
-export async function createRecipeAction(
-  _previous: CreateState,
-  input: unknown,
-): Promise<CreateState> {
+export async function createRecipeAction(_previous: SaveState, input: unknown): Promise<SaveState> {
   const session = await requireSession()
   if (isReadOnly()) return { message: READ_ONLY_MESSAGE }
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useActionState, useState } from 'react'
-import { createRecipeAction } from '../app/(app)/recipes/actions.ts'
+import type { SaveState } from '../app/(app)/recipes/actions.ts'
 import { emptyFormState, type RecipeFormFields, type RecipeFormState } from '../forms/fromRecipe.ts'
 import type { IngredientRow } from '../forms/ingredientRow.ts'
 import type { RecipeFormInput } from '../forms/recipeForm.ts'
@@ -18,16 +18,23 @@ type Fields = RecipeFormFields
 //
 // It is a Client Component because the form is live state: ingredient and step rows are
 // added, edited and removed in the browser before anything is saved. Saving, checking
-// and everything that touches the API happen on the server, in createRecipeAction.
+// and everything that touches the API happen on the server, in `action`: createRecipeAction
+// for a new recipe, updateRecipeAction (bound to the recipe's id) for an edit.
 //
-// `initial` fills it in (an import's draft, from fromRecipe). It is read once, when the form
-// mounts: to load a different draft, the parent gives the form a new `key`.
+// `initial` fills it in (an import's draft or the recipe being edited, from fromRecipe). It is
+// read once, when the form mounts: to load a different draft, the parent gives it a new `key`.
 export default function RecipeForm({
   units,
+  action,
   initial,
+  submitLabel = 'Save recipe',
+  cancelHref = '/recipes',
 }: {
   units: Unit[]
+  action: (previous: SaveState, input: RecipeFormInput) => Promise<SaveState>
   initial?: RecipeFormState
+  submitLabel?: string
+  cancelHref?: string
 }) {
   const [start] = useState(() => initial ?? emptyFormState())
   const [fields, setFields] = useState<Fields>(start.fields)
@@ -38,7 +45,7 @@ export default function RecipeForm({
   // `isPending` is true from submit until the action finishes. Because every input
   // above is controlled by state, nothing the person typed is lost when the server
   // sends back errors.
-  const [state, formAction, isPending] = useActionState(createRecipeAction, null)
+  const [state, formAction, isPending] = useActionState(action, null)
 
   const set = (name: keyof Fields) => (value: string) =>
     setFields((previous) => ({ ...previous, [name]: value }))
@@ -127,9 +134,9 @@ export default function RecipeForm({
 
       <div className="form-actions">
         <button type="submit" disabled={isPending}>
-          {isPending ? 'Saving…' : 'Save recipe'}
+          {isPending ? 'Saving…' : submitLabel}
         </button>
-        <Link href="/recipes">Cancel</Link>
+        <Link href={cancelHref}>Cancel</Link>
       </div>
     </form>
   )
