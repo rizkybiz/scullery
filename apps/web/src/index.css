@@ -194,6 +194,16 @@ body {
   text-align: left;
 }
 
+/* Edit is a link, Delete a button: the same size and look in the menu. */
+.actions-menu a {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding-inline: 0.4rem;
+  color: inherit;
+  text-decoration: none;
+}
+
 .actions-confirm {
   display: flex;
   flex-wrap: wrap;

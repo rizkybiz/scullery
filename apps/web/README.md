@@ -95,7 +95,7 @@ requests only from this app.
   added (local development); with only some set, it fails loudly. Checked against a real
   Cloud Run service: 200 with a valid identity, 401 for a token meant for another audience.
 
-**D4. The create-recipe form is a client component**
+**D4. The recipe form is a client component**
 
 - _Decision:_ the form is `'use client'` and submits to a Server Action through
   `useActionState`.
@@ -121,8 +121,17 @@ requests only from this app.
   range, since the API would store "200 to 200 g" as `200-200`. The source must be http(s): it is
   shown as a link.
 - _Starting filled in:_ `fromRecipe` turns an API-shaped recipe into the form's state (the
-  reverse of `buildRecipe`; a round trip gives back the same request), so the import's draft,
-  and later editing, use the same form.
+  reverse of `buildRecipe`; a round trip gives back the same request), so the import's draft
+  and editing use the same form.
+- _Editing:_ `/recipes/[id]/edit` (Edit in the recipe's ⋮ menu) is the same form, filled in from
+  the recipe as it is now (read past the cache) and saved by `updateRecipeAction`, which takes the
+  form's save action as a prop. The API's `PUT` replaces the whole recipe, and the form does not
+  edit the favorite flag or the source name, so the action reads them fresh and sends them back
+  unchanged; otherwise every edit would quietly clear them. Checked end to end against the local
+  API with the real action called over HTTP: the edit saved (title, servings, ingredients and
+  steps replaced), favorite and source name kept, the recipe page fresh straight after; a blank
+  title, a malformed id, an unknown id and a missing session were each refused, leaving the
+  recipe unchanged.
 - _Checked end to end_ against the local API: a draft through `fromRecipe` and `buildRecipe` was
   accepted (201), and the recipe page showed the range, section heading, note, optional marker,
   timer, yield, source link and notes, with step numbers running on across sections.
@@ -262,6 +271,9 @@ apps/web/src/
   `READ_ONLY` is an environment variable, so it takes effect with the next deployment (about
   a minute), not instantly. An instant stop is to remove the service account's `run.invoker`
   grant in `infra/terraform`.
+- **Two people editing the same recipe: the last save wins.** The API has no version check (it
+  locks the row, so two saves take turns, but the second overwrites the first). An `updated_at`
+  precondition on `PUT` would turn that into a "this recipe changed, reload" message.
 - **Deletes are permanent:** the API deletes for good. A soft delete with an undo window
   would need an API change (a deleted-at column, a restore endpoint, a purge job).
 - **Offline/PWA:** deferred. A server-first app makes offline viewing harder; it can

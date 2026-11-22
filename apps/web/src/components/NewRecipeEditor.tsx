@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import { createRecipeAction } from '../app/(app)/recipes/actions.ts'
 import { fromRecipe, type RecipeFormState } from '../forms/fromRecipe.ts'
 import { IMPORT_DISABLED_MESSAGE } from '../lib/flags.ts'
 import type { Unit } from '../lib/api/units.ts'
@@ -60,7 +61,12 @@ export default function NewRecipeEditor({
           )}
         </div>
       )}
-      <RecipeForm key={draft?.key ?? 0} units={units} initial={draft?.state} />
+      <RecipeForm
+        key={draft?.key ?? 0}
+        units={units}
+        action={createRecipeAction}
+        initial={draft?.state}
+      />
     </>
   )
 }

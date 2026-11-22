@@ -68,7 +68,12 @@ export async function getRecipe(id: string): Promise<Recipe | null> {
   'use cache'
   cacheTag(`recipe:${id}`)
   cacheLife('minutes')
+  return readRecipe(id)
+}
 
+// readRecipe is getRecipe without the cache, for an action about to write: it must start from
+// the recipe as it is now, not as it was up to a few minutes ago.
+export async function readRecipe(id: string): Promise<Recipe | null> {
   const { data, error, response } = await getApi().GET('/recipes/{id}', {
     params: {
       path: {
@@ -125,6 +130,25 @@ export async function createRecipe(recipe: NewRecipe): Promise<Recipe> {
   }
   if (error) {
     throw new Error(`Could not create the recipe (${response.status})`)
+  }
+  return data
+}
+
+// updateRecipe replaces a recipe: the API's PUT takes the whole recipe, ingredients and steps
+// included, so anything left out of `recipe` is cleared, not kept.
+export async function updateRecipe(id: string, recipe: NewRecipe): Promise<Recipe> {
+  const { data, error, response } = await getApi().PUT('/recipes/{id}', {
+    params: { path: { id } },
+    body: recipe,
+  })
+  if (response.status === 404) {
+    throw new RecipeNotFoundError(error?.detail ?? 'Recipe not found.')
+  }
+  if (response.status === 422) {
+    throw new RecipeInvalidError(error?.detail ?? 'The recipe has errors', error?.errors ?? [])
+  }
+  if (error) {
+    throw new Error(`Could not update the recipe (${response.status})`)
   }
   return data
 }
