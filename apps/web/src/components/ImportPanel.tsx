@@ -122,6 +122,13 @@ export default function ImportPanel({ onDraft }: { onDraft: (draft: Done) => voi
       </form>
       {busy && <p role="status">Reading the recipe… this can take up to half a minute.</p>}
       {(error ?? message) && <p role="alert">{error ?? message}</p>}
+      {/* A link that failed (often a site that blocks automated visits) has one way forward:
+          the person copies the recipe from the page in their own browser. */}
+      {mode === 'url' && message && (
+        <button type="button" onClick={() => setMode('text')}>
+          Paste the text instead
+        </button>
+      )}
     </section>
   )
 }
