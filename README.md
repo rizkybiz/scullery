@@ -12,10 +12,11 @@ and a home for agentic features, without moving their API or their data.
   [infrastructure](infra/terraform/README.md), [evals](apps/web/evals/import/README.md)).
 
 Contents: [Problem](#1-the-problem) · [Architecture](#2-architecture) ·
-[Vercel primitives](#3-vercel-primitives) · [Try it](#4-try-it) · [Rollout](#5-rollout-plan) ·
-[Success measures](#6-success-measures) · [Limitations and risks](#7-limitations-and-risks) ·
-[Tooling and AI validation](#8-dev-tooling-and-how-ai-output-was-validated) ·
-[Building on Vercel](#9-building-on-vercel-feedback)
+[Vercel primitives](#3-vercel-primitives) · [The agentic workflow](#4-the-agentic-workflow-recipe-import) ·
+[Try it](#5-try-it) · [Rollout](#6-rollout-plan) · [Success measures](#7-success-measures) ·
+[Limitations and risks](#8-limitations-and-risks) ·
+[Tooling and AI validation](#9-dev-tooling-and-how-ai-output-was-validated) ·
+[Building on Vercel](#10-building-on-vercel-feedback)
 
 ## 1. The problem
 
@@ -82,10 +83,84 @@ flowchart LR
 | **AI SDK + AI Gateway** | One structured-output call, Gemini 2.5 Flash-Lite falling back to GPT-5 nano, authenticated by OIDC | Provider choice and fallback are configuration, not code; no API key |
 | **Preview deployments** | One per pull request, wired to the staging API; a required check | Every change is tried for real before it merges |
 | **Firewall** | Rate limit on `POST /login`: 10 per minute per IP, then 429 | The one custom rule Hobby allows, spent on the one brute-forceable endpoint |
-| **Web Analytics, Speed Insights** | Page views (no cookies) and real-user Core Web Vitals | The success measures in section 6 |
+| **Web Analytics, Speed Insights** | Page views (no cookies) and real-user Core Web Vitals | The success measures in section 7 |
 | **Instant rollback** | The web app's rollback plan | Seconds, not a rebuild |
 
-## 4. Try it
+## 4. The agentic workflow: recipe import
+
+The AI feature is "add a recipe from a link or pasted text". It is deliberately a **constrained
+agent**: a durable pipeline with one model call, no tools, and a person approving the result.
+
+```mermaid
+sequenceDiagram
+  participant P as Browser (import panel)
+  participant A as Server Action
+  participant W as Workflow run
+  participant G as AI Gateway
+  P->>A: link or pasted text
+  A->>A: session, kill switch, input checks
+  A->>W: start(importRecipeWorkflow), returns runId
+  A-->>P: runId at once
+  W->>W: step 1: read source (SSRF-guarded fetch)
+  W->>G: step 2: structured output, Flash-Lite, nano as fallback
+  G-->>W: draft in the schema
+  W->>W: step 3: tidy against the API's rules and the source text
+  loop until done
+    P->>P: GET /api/import/runId
+  end
+  P->>P: fills the form; a person edits and saves
+```
+
+**The pieces, and where they live** (all under [`apps/web/src`](apps/web/src)):
+
+| Piece | Code | Job |
+|---|---|---|
+| Start | [`recipes/import/actions.ts`](apps/web/src/app/%28app%29/recipes/import/actions.ts) | A Server Action: checks the session and the kill switches, validates the input, loads the API's unit list, calls `start()` and returns the run id in milliseconds |
+| The run | [`workflows/importRecipe.ts`](apps/web/src/workflows/importRecipe.ts) | `'use workflow'` function calling three `'use step'` functions: read, structure, tidy |
+| Step 1: read | [`lib/import/fetchPage.ts`](apps/web/src/lib/import/fetchPage.ts), [`source.ts`](apps/web/src/lib/import/source.ts) | Fetches a link (public addresses only, 3 redirects, 10 s, 2 MB), then shrinks it: the page's schema.org JSON-LD recipe if it has one, else its visible text, capped at 20,000 characters |
+| Step 2: structure | [`lib/import/structure.ts`](apps/web/src/lib/import/structure.ts), [`prompt.ts`](apps/web/src/lib/import/prompt.ts), [`schema.ts`](apps/web/src/lib/import/schema.ts), [`models.ts`](apps/web/src/lib/import/models.ts) | One AI SDK `generateText` call with `Output.object`, sent to AI Gateway |
+| Step 3: tidy | [`lib/import/normalize.ts`](apps/web/src/lib/import/normalize.ts) | Treats the answer as untrusted input: applies the API's limits, keeps a unit only if the source spells it, fills times from the source's own durations |
+| Status | [`api/import/[runId]/route.ts`](apps/web/src/app/api/import/[runId]/route.ts) | Signed-in `GET` the panel polls: running, done with the draft, or failed in plain words |
+
+**How Workflow is used.** Each step's result is recorded, so a crash or a redeploy resumes from the
+last finished step, and a failing step is retried on its own without repeating the others. Errors
+are sorted on purpose: an expected outcome ("that does not look like a recipe", a site that blocks
+bots) is returned as a value for the page to show; a timeout or a 503 throws `RetryableError`; an
+authentication failure, a refused model or an exhausted budget throws `FatalError`, because retrying
+cannot help. That last rule came from the spike, where the free tier refusing a model was retried
+three times for nothing. The action starts the run and returns, and the panel polls, because an
+import takes from 2 to 30 seconds and an action should not hold a request open that long.
+
+**How AI Gateway is used.** The model is a plain string, `google/gemini-2.5-flash-lite`, handed to
+the AI SDK, which sends it to AI Gateway. Gateway authenticates with the deployment's OIDC token, so
+there is **no AI or provider key** anywhere in the app. The fallback, `openai/gpt-5-nano`, is a
+Gateway routing option (`providerOptions.gateway.models`), so Gateway retries the other model itself
+and the app only sees which one answered. That model's name goes in the audit log and in the note
+on the form. Swapping a provider or a model is a one-line change in [`models.ts`](apps/web/src/lib/import/models.ts),
+gated by the eval set below.
+
+**Guardrails.** The page is untrusted, and a recipe page can say anything, including "ignore your
+instructions". Four defences, strongest first:
+
+1. **The model has no tools.** It can only fill the schema: it cannot fetch, save or call anything,
+   and the schema limits units to the API's own list.
+2. **The app checks the answer** ([`normalize.ts`](apps/web/src/lib/import/normalize.ts)) before it
+   reaches the form.
+3. **A person approves every draft.** The run never saves; the form's normal Save does, through the
+   same validation as a recipe typed by hand.
+4. **The prompt** says the source is data to transcribe, never instructions.
+
+Cost and abuse are bounded by the input cap, a free-tier-only model list, and two kill switches:
+`IMPORT_DISABLED` stops the AI alone and `READ_ONLY` stops every write and AI call. Both are checked
+on every start, not only when the page loads.
+
+**Evals.** Prompt and model changes are gated by a [16-case, 329-check eval set](apps/web/evals/import/README.md),
+run by hand with `scripts/eval-import.ts`. It uses saved pages (no live fetching) and covers clean
+and messy recipes, fractions, ranges, a non-recipe that must be refused, and a prompt-injection
+page. The results chose the models: Flash-Lite 325/329 in 1.9 s as primary, nano 327/329 in
+14.4 s as fallback.
+
+## 5. Try it
 
 Open https://scullery-chi.vercel.app, read the overview, then **Open the app** and sign in.
 
@@ -101,7 +176,7 @@ Open https://scullery-chi.vercel.app, read the overview, then **Open the app** a
   `http://169.254.169.254/` (the cloud metadata address: refused before any request is made).
 - **Edit and delete:** ⋮ on a recipe. Favorites and source name survive an edit.
 
-## 5. Rollout plan
+## 6. Rollout plan
 
 How this would reach the customer's real users, in stages that can each be undone.
 
@@ -129,7 +204,7 @@ How this would reach the customer's real users, in stages that can each be undon
 - **Rollback:** Vercel instant rollback for the web app; revert the digest commit, or shift Cloud
   Run traffic back to the previous revision, for the API.
 
-## 6. Success measures
+## 7. Success measures
 
 | Goal | Measure | Source | Target | Today |
 |---|---|---|---|---|
@@ -142,7 +217,7 @@ How this would reach the customer's real users, in stages that can each be undon
 | Safe | Stored cloud keys; public database addresses | Terraform, by construction | 0 and 0 | 0 and 0 |
 | Cheap | Monthly cost | Billing pages | Within Hobby and free tiers, plus Cloud SQL | Cloud SQL estimated $10–15 (not yet checked on the bill) |
 
-## 7. Limitations and risks
+## 8. Limitations and risks
 
 The ones that matter most; each is explained in full, with what it would take to fix, in the
 [web app's known limitations](apps/web/README.md#known-limitations).
@@ -160,7 +235,7 @@ The ones that matter most; each is explained in full, with what it would take to
   and the database users are members of `cloudsqlsuperuser`, broader than they need to be.
 - **Deletes are permanent;** a soft delete with undo would need an API change.
 
-## 8. Dev tooling and how AI output was validated
+## 9. Dev tooling and how AI output was validated
 
 **Tooling.** Tool versions are pinned in [`mise.toml`](mise.toml). CI
 ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs on every pull request: typecheck,
@@ -188,7 +263,7 @@ guarded).
 3. **A person approves every draft.** The import fills the form and stops; saving goes through the
    same checks as a recipe typed by hand.
 
-## 9. Building on Vercel: feedback
+## 10. Building on Vercel: feedback
 
 What worked well, and what I'd change, from building this.
 
