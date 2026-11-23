@@ -4,7 +4,12 @@ import { Fragment, Suspense } from 'react'
 import RecipeActions from '../../../../components/RecipeActions.tsx'
 import { getRecipe, type Recipe } from '../../../../lib/api/recipes.ts'
 import { requireSession } from '../../../../lib/auth/dal.ts'
-import { formatTimer, groupBySection, webAddress } from '../../../../lib/recipeDisplay.ts'
+import {
+  formatTimer,
+  groupBySection,
+  ingredientLine,
+  webAddress,
+} from '../../../../lib/recipeDisplay.ts'
 
 type RecipeResult =
   { state: 'success'; recipe: Recipe | null } | { state: 'error'; message: string }
@@ -105,12 +110,16 @@ async function RecipeView({ params }: { params: PageProps<'/recipes/[id]'>['para
             <Fragment key={group.items[0]!.id}>
               {group.section && <h3>{group.section}</h3>}
               <ul>
-                {group.items.map((ingredient) => (
-                  <li key={ingredient.id}>
-                    {ingredient.raw_text}
-                    {ingredient.note && ` (${ingredient.note})`}
-                  </li>
-                ))}
+                {group.items.map((ingredient) => {
+                  const line = ingredientLine(ingredient)
+                  return (
+                    <li key={ingredient.id}>
+                      {line.amount && `${line.amount} `}
+                      {line.text}
+                      {line.extras.length > 0 && ` (${line.extras.join(', ')})`}
+                    </li>
+                  )
+                })}
               </ul>
             </Fragment>
           ))}
