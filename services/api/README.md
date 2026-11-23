@@ -11,8 +11,9 @@
 
 ## Checks
 
-There is no CI yet; the checks are scripts in `scripts/ci/`, written so a CI job can run them
-unchanged:
+The checks are scripts in `scripts/ci/`, and CI (`.github/workflows/ci.yml` at the repository
+root, job `api`) runs them unchanged on every pull request, plus a check that `openapi.json`
+regenerates from the code unchanged:
 
 | Check | Command |
 |---|---|

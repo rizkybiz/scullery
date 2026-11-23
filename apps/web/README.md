@@ -378,7 +378,14 @@ variable and deploy. Use a different `AUTH_SECRET` for each environment.
 The app is built and served by Vercel, so there is no container image to build. Every pull
 request gets a preview deployment wired to the staging API, and merging to `main` deploys
 production. Vercel Web Analytics is on (`<Analytics />` in the root layout); it uses no
-cookies. CI on GitHub-hosted runners is not set up yet.
+cookies.
+
+CI (`.github/workflows/ci.yml` at the repository root) runs on every pull request and every push
+to `main`: for this app `npm ci`, typecheck, oxlint, Prettier, and a check that the API types
+regenerate from `openapi.json` unchanged. Alongside it run the API's checks, gitleaks over the
+change's commits, and a Conventional Commits check. Those jobs and the Vercel build are required
+to merge. No `next build` in CI (Vercel's build is that check) and no evals (they spend
+free-tier AI Gateway requests).
 
 The Vercel project's Root Directory is `apps/web`, so `vercel deploy` must run from the
 repository root (link it there with `vercel link`; `.vercel/` is git-ignored). Running it
