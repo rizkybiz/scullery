@@ -114,10 +114,3 @@
     @apply outline-2 outline-offset-2 outline-ring;
   }
 }
-
-/* The sign-in page: a narrow column with no app frame around it. */
-.login {
-  max-width: 22rem;
-  margin: 3rem auto;
-  padding: 0 1rem;
-}
