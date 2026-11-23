@@ -92,7 +92,8 @@ change a little over a minute later. IAM changes are eventually consistent.
 
 ## Deploying an image
 
-The image is built and pushed by hand for now (CI comes later), then pinned by digest:
+The image is built and pushed by hand for now (CI checks the code but does not yet build or
+publish the image), then pinned by digest:
 
 ```sh
 IMAGE=us-east1-docker.pkg.dev/<project>/scullery/api ; TAG=$(git rev-parse --short HEAD)

@@ -35,7 +35,7 @@ flowchart LR
 | Next.js on Vercel with Cache Components | A static shell is served at once and the data streams in. Reads are cached and tagged, and a write refreshes exactly the pages it changed. |
 | Server Actions | Create, edit and delete, with the session checked again inside every action |
 | OIDC federation | Calls Cloud Run with no stored key ([how](infra/terraform/README.md#how-a-request-from-vercel-is-allowed-in)) |
-| Preview deployments | One per pull request, wired to the staging API |
+| Preview deployments | One per pull request, wired to the staging API; its build is a required check |
 | Firewall | A rate limit on `POST /login`: 10 attempts per minute per IP, then 429 |
 | Web Analytics | Page views, with no cookies |
 | Instant rollback | The rollback plan for the web app |
@@ -79,8 +79,8 @@ make -C services/api verify             # Go checks and tests
 Built and deployed: the web app (list, search, favorites, recipe page, create with every field
 the API stores, edit, delete, sign-in), the recipe import (Workflow, AI SDK, AI Gateway) and its
 eval set, staging and production environments of the API, the sign-in rate limit and Web
-Analytics. Still to come: a visual refresh, CI, and the full write-up (rollout plan, success
-measures, risks).
+Analytics, and CI on every pull request (web, API, secrets and commit-message checks). Still to
+come: a visual refresh and the full write-up (rollout plan, success measures, risks).
 
 ## Credits
 
