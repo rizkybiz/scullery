@@ -1,3 +1,6 @@
+/* Tailwind CSS v4: its preflight (a reset), the theme, and the utility classes. */
+@import 'tailwindcss';
+
 :root {
   color-scheme: light dark;
   font-family:
