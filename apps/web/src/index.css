@@ -189,18 +189,6 @@
   opacity: 0.4;
 }
 
-/* Recipe page header */
-.recipe-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.recipe-header h1 {
-  margin: 0.5rem 0;
-}
-
 /* "+" in the recipe list header: a link that looks like a button. */
 .button {
   display: inline-flex;
@@ -287,9 +275,4 @@
   max-width: 22rem;
   margin: 3rem auto;
   padding: 0 1rem;
-}
-
-/* Notes keep the line breaks they were written with. */
-.recipe-notes {
-  white-space: pre-line;
 }
