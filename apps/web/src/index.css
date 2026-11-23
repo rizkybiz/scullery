@@ -29,6 +29,9 @@
   --border: oklch(0.87 0.02 75);
   --input: oklch(0.82 0.022 72);
   --ring: oklch(0.6 0.13 40);
+  --success: oklch(0.55 0.12 150);
+  /* The tab bar's height, not counting the iPad's home-indicator inset. */
+  --tabbar-height: 3.5rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -47,6 +50,7 @@
     --border: oklch(0.34 0.015 60);
     --input: oklch(0.4 0.018 60);
     --ring: oklch(0.72 0.12 45);
+    --success: oklch(0.72 0.13 150);
   }
 }
 
@@ -71,6 +75,7 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success: var(--success);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -109,73 +114,6 @@
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-ring;
   }
-}
-
-/* 16px side gutters, centred and capped, so it reads well on an iPad. */
-.app {
-  max-width: 40rem;
-  margin: 0 auto;
-  padding: 1.5rem 1rem;
-}
-
-.status[data-state='success'] {
-  color: #2f6f4f;
-}
-
-.status[data-state='error'] {
-  color: #b3261e;
-}
-
-/* App shell: header on top, tab bar pinned to the bottom edge. */
-.shell {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-}
-
-.shell-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-}
-
-.shell-header .status {
-  margin: 0;
-  font-size: 0.85rem;
-}
-
-.shell .app {
-  flex: 1;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.tabbar {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  background: Canvas;
-  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-  /* Keep clear of the iPad's home indicator. */
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.tabbar a {
-  flex: 1;
-  padding: 0.9rem 0.5rem;
-  text-align: center;
-  text-decoration: none;
-  color: inherit;
-  /* 44px+ is Apple's minimum comfortable touch target. */
-  min-height: 1.5rem;
-}
-
-.tabbar a[aria-current='page'] {
-  font-weight: 700;
-  border-top: 3px solid currentColor;
-  padding-top: calc(0.9rem - 3px);
 }
 
 /* Recipe list */
@@ -383,30 +321,17 @@
 }
 
 /* The recipe form is long, so its Save stays in reach: the actions stick to the bottom of the
-   screen, just above the tab bar, and settle into place at the end of the form. The offset is
-   the tab bar's height (link padding, one line of text, its top border, the safe area). The
-   negative side margins reach the page gutters, so the bar spans the page. */
+   screen, just above the tab bar (the same --tabbar-height and safe area the tab bar uses), and
+   settle into place at the end of the form. The negative side margins reach the page gutters,
+   so the bar spans the page. */
 .recipe-form .form-actions {
   position: sticky;
-  bottom: calc(3.3rem + 1px + env(safe-area-inset-bottom));
+  bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
   z-index: 1;
   margin-inline: -1rem;
   padding: 0.75rem 1rem;
-  background: Canvas;
-  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-}
-
-/* Who is signed in, in the header. */
-.user-menu {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-}
-
-.user-menu button {
-  min-height: 2.75rem;
-  padding: 0 0.75rem;
+  background: var(--background);
+  border-top: 1px solid var(--border);
 }
 
 /* The sign-in page: a narrow column with no app frame around it. */
