@@ -12,8 +12,9 @@ import { verifySession } from './lib/auth/session.ts'
 export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl
 
-  // The sign-in page, and the sign-in action that posts to it, must be reachable.
-  if (pathname === '/login') return NextResponse.next()
+  // Public: the sign-in page (and the sign-in action that posts to it), and the overview at /
+  // (static, no data).
+  if (pathname === '/login' || pathname === '/') return NextResponse.next()
 
   const token = request.cookies.get(sessionCookie().name)?.value
   // authSecret() throws if AUTH_SECRET is missing, which fails the request with a 500:
