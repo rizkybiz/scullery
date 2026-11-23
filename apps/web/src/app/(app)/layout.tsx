@@ -16,10 +16,10 @@ import UserMenu from '../../components/UserMenu.tsx'
 export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="flex items-center gap-3 border-b bg-background px-4 py-2.5">
+      <header className="flex items-center gap-3 border-b bg-background px-4 py-1">
         <Link
           href="/recipes"
-          className="font-display text-xl font-semibold text-foreground no-underline hover:no-underline"
+          className="inline-flex min-h-11 items-center font-display text-xl font-semibold text-foreground no-underline hover:no-underline"
         >
           Scullery
         </Link>
