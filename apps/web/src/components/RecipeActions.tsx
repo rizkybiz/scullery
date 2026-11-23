@@ -1,65 +1,112 @@
 'use client'
 
+import { MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import Link from 'next/link'
-import { useActionState, useState } from 'react'
+import { useActionState, useRef, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { deleteRecipeAction } from '../app/(app)/recipes/actions.ts'
 
-// The recipe's actions menu: a kebab button, a menu with Edit and Delete, and a confirm step
-// for Delete. Edit is a plain link to the edit page.
+// The recipe's actions: a ⋮ button opening a menu (Edit, Delete), and a confirm step for Delete.
 //
-// This is a Client Component because the menu is interactive state (open, closed,
-// confirming) that only exists in the browser. Everything that touches data stays on
-// the server: submitting the confirm form runs deleteRecipeAction there.
+// The menu is shadcn/ui's DropdownMenu, built on Radix: arrow keys move through the items,
+// Escape or a click outside closes it, and focus goes back to the ⋮ button. Choosing Delete
+// opens the confirm row instead, with focus on its Cancel button (the safe choice); Cancel or
+// Escape closes it and returns focus to ⋮.
+//
+// It renders two siblings, the menu and (when confirming) the confirm row, so the row can take
+// the header's full width (basis-full) below the title.
+//
+// A Client Component because the menu is interactive state that only exists in the browser.
+// The delete itself runs on the server, in deleteRecipeAction.
 export default function RecipeActions({ id }: { id: string }) {
-  const [step, setStep] = useState<'closed' | 'menu' | 'confirm'>('closed')
+  const [confirming, setConfirming] = useState(false)
+  const trigger = useRef<HTMLButtonElement>(null)
+  const cancelButton = useRef<HTMLButtonElement>(null)
+  // Set when Delete is chosen. As the menu closes it would hand focus back to ⋮; instead focus
+  // goes to the confirm row's Cancel (by then the row is on the page). autoFocus is not enough:
+  // the menu's own focus handling runs after the row mounts.
+  const toConfirm = useRef(false)
 
-  // useActionState wraps the Server Action and gives back:
-  //  - state: what the action last returned (an error message, or null),
-  //  - formAction: what to put on <form action>,
-  //  - isPending: true from submit until the action finishes.
-  // bind(null, id) fixes the first argument, so the form only has to submit.
+  // state: the action's last error, if any; formAction: the form's action; isPending: true
+  // while it runs. bind(null, id) fixes the first argument, so the form only has to submit.
   const [state, formAction, isPending] = useActionState(deleteRecipeAction.bind(null, id), null)
 
+  function cancel() {
+    setConfirming(false)
+    trigger.current?.focus()
+  }
+
   return (
-    <div
-      className="actions"
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') setStep('closed')
-      }}
-    >
-      <button
-        type="button"
-        className="actions-toggle"
-        aria-label="Recipe actions"
-        aria-expanded={step === 'menu'}
-        onClick={() => setStep(step === 'menu' ? 'closed' : 'menu')}
-      >
-        ⋮
-      </button>
-
-      {step === 'menu' && (
-        <div className="actions-menu">
-          <Link href={`/recipes/${id}/edit`}>Edit</Link>
-          <button type="button" onClick={() => setStep('confirm')}>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button ref={trigger} variant="ghost" size="icon" aria-label="Recipe actions">
+            <MoreVertical aria-hidden="true" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="min-w-40"
+          onCloseAutoFocus={(event) => {
+            if (!toConfirm.current) return
+            toConfirm.current = false
+            event.preventDefault()
+            cancelButton.current?.focus()
+          }}
+        >
+          <DropdownMenuItem asChild>
+            <Link href={`/recipes/${id}/edit`} className="text-foreground no-underline">
+              <Pencil aria-hidden="true" />
+              Edit
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onSelect={() => {
+              toConfirm.current = true
+              setConfirming(true)
+            }}
+          >
+            <Trash2 aria-hidden="true" />
             Delete
-          </button>
-        </div>
-      )}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-      {step === 'confirm' && (
-        <>
-          <form action={formAction} className="actions-confirm">
-            <span>Delete this recipe?</span>
-            <button type="submit" disabled={isPending}>
-              {isPending ? 'Deleting…' : 'Yes'}
-            </button>
-            <button type="button" disabled={isPending} onClick={() => setStep('closed')}>
-              Cancel
-            </button>
-          </form>
-          {state?.error && <p role="alert">{state.error}</p>}
-        </>
+      {confirming && (
+        <form
+          action={formAction}
+          className="flex basis-full flex-wrap items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') cancel()
+          }}
+        >
+          <span className="mr-auto font-medium">Delete this recipe?</span>
+          <Button
+            ref={cancelButton}
+            type="button"
+            variant="outline"
+            disabled={isPending}
+            onClick={cancel}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" variant="destructive" disabled={isPending}>
+            {isPending ? 'Deleting…' : 'Delete'}
+          </Button>
+          {state?.error && (
+            <p role="alert" className="basis-full text-sm text-destructive">
+              {state.error}
+            </p>
+          )}
+        </form>
       )}
-    </div>
+    </>
   )
 }
