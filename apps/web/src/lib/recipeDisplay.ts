@@ -15,10 +15,13 @@ export function groupBySection<T extends { section: string | null }>(
   return groups
 }
 
-// formatTimer turns seconds into "45 s", "5 min" or "1 min 30 s".
+// formatTimer turns seconds into "45 s", "5 min", "1 min 30 s", "2 h" or "1 h 15 min". From an
+// hour up, seconds are dropped: nobody times a two-hour rise to the second.
 export function formatTimer(seconds: number): string {
-  const minutes = Math.floor(seconds / 60)
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
   const rest = seconds % 60
+  if (hours > 0) return minutes === 0 ? `${hours} h` : `${hours} h ${minutes} min`
   if (minutes === 0) return `${rest} s`
   return rest === 0 ? `${minutes} min` : `${minutes} min ${rest} s`
 }
