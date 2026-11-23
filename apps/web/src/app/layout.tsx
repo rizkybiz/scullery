@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Analytics } from '@vercel/analytics/next'
 import { Fraunces } from 'next/font/google'
+import { ThemeProvider } from 'next-themes'
 import type { ReactNode } from 'react'
 import { deploymentTag } from '../lib/deployment.ts'
 import '../index.css'
@@ -36,9 +37,21 @@ export const viewport: Viewport = {
 // the API for the status line either.
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={fraunces.variable}>
+    // suppressHydrationWarning: next-themes sets the theme class on <html> before React loads
+    // (so a dark page never flashes light), which React would otherwise report as a mismatch.
+    // It applies to this element's attributes only.
+    <html lang="en" className={fraunces.variable} suppressHydrationWarning>
       <body>
-        {children}
+        {/* attribute="class": "dark" or "light" on <html>. Until a person chooses, the device
+            setting decides; the choice is kept in localStorage. */}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>
