@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { getHealth } from '../lib/api/health.ts'
 import { getSession } from '../lib/auth/dal.ts'
@@ -24,18 +23,17 @@ export default async function ApiStatus() {
   const version = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'dev'
   const { state, text } = await readHealth()
   const ok = state === 'success'
-  // A dot and a short label; the versions join it from tablet width up. The dot's colour is not
-  // the only signal: the label says "ok" or "unreachable" too.
+  // A dot and a line of small print. The dot's colour is not the only signal: the text says
+  // "ok" or "unreachable" too.
   return (
-    <Badge variant="outline" className="min-w-0 gap-1.5 font-normal text-muted-foreground">
+    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
       <span
         aria-hidden="true"
         className={cn('size-2 shrink-0 rounded-full', ok ? 'bg-success' : 'bg-destructive')}
       />
-      <span className="truncate">
-        API {text}
-        <span className="hidden sm:inline"> · web {version}</span>
+      <span className="min-w-0 truncate">
+        API {text} · web {version}
       </span>
-    </Badge>
+    </p>
   )
 }

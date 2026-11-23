@@ -24,14 +24,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           Scullery
         </Link>
         <Suspense fallback={null}>
-          <ApiStatus />
-        </Suspense>
-        <Suspense fallback={null}>
           <UserMenu />
         </Suspense>
       </header>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6">{children}</main>
+
+      {/* Out of the way, at the end of every page: which API and which web build is running. */}
+      <footer className="mx-auto w-full max-w-2xl px-4 pb-4">
+        <Suspense fallback={null}>
+          <ApiStatus />
+        </Suspense>
+      </footer>
 
       {/* Sticky, not fixed: it sits at the end of the page and pins to the bottom edge while the
           page scrolls. --tabbar-height is also what the recipe form's Save bar sits above. */}
