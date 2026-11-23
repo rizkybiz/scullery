@@ -1,18 +1,114 @@
 /* Tailwind CSS v4: its preflight (a reset), the theme, and the utility classes. */
 @import 'tailwindcss';
 
+/* Dark mode follows the device setting (there is no toggle), so Tailwind's dark: variant and the
+   dark palette below both key off prefers-color-scheme. */
+@custom-variant dark (@media (prefers-color-scheme: dark));
+
+/* The palette: "kitchen notebook". Warm paper, dark ink, one terracotta accent. Each colour is a
+   variable so the dark palette only has to redefine them; shadcn/ui's components read the same
+   names (bg-card, text-muted-foreground, ring-ring...). oklch: lightness, chroma, hue. */
 :root {
-  color-scheme: light dark;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    sans-serif;
-  line-height: 1.5;
+  color-scheme: light;
+  --radius: 0.625rem;
+  --background: oklch(0.975 0.012 85); /* paper */
+  --foreground: oklch(0.25 0.02 50); /* ink */
+  --card: oklch(0.99 0.007 85);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.52 0.13 40); /* terracotta */
+  --primary-foreground: oklch(0.985 0.005 85);
+  --secondary: oklch(0.935 0.018 80);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.945 0.015 80);
+  --muted-foreground: oklch(0.47 0.025 55);
+  --accent: oklch(0.925 0.025 70);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.52 0.19 27);
+  --border: oklch(0.87 0.02 75);
+  --input: oklch(0.82 0.022 72);
+  --ring: oklch(0.6 0.13 40);
 }
 
-body {
-  margin: 0;
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --background: oklch(0.2 0.012 60); /* charcoal */
+    --foreground: oklch(0.93 0.015 80);
+    --card: oklch(0.24 0.014 60);
+    --primary: oklch(0.72 0.12 45);
+    --primary-foreground: oklch(0.2 0.02 50);
+    --secondary: oklch(0.29 0.015 60);
+    --muted: oklch(0.27 0.014 60);
+    --muted-foreground: oklch(0.74 0.02 70);
+    --accent: oklch(0.32 0.02 55);
+    --destructive: oklch(0.68 0.17 27);
+    --border: oklch(0.34 0.015 60);
+    --input: oklch(0.4 0.018 60);
+    --ring: oklch(0.72 0.12 45);
+  }
+}
+
+/* The names Tailwind's utilities use (bg-primary, rounded-lg, font-display...), pointing at the
+   variables above. `inline` puts the var() into each utility, so the dark palette still applies. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  /* Fraunces comes from next/font (root layout), which names the family at build time and
+     exposes it as --font-fraunces on <html>. */
+  --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* The page itself: paper and ink, serif headings, and one focus ring for everything. */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-semibold tracking-tight text-balance;
+  }
+  h1 {
+    @apply text-3xl sm:text-4xl;
+  }
+  h2 {
+    @apply text-xl sm:text-2xl;
+  }
+  h3 {
+    @apply text-lg;
+  }
+  a {
+    @apply text-primary underline-offset-4 hover:underline;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
 }
 
 /* 16px side gutters, centred and capped, so it reads well on an iPad. */
