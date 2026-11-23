@@ -1,0 +1,101 @@
+# Checks for every pull request and every push to main. Three jobs, run in parallel, each needed
+# to merge (branch protection). Every job runs on every change, even one that only touches the
+# other app: a job skipped by a path filter never reports, and a required check that never
+# reports blocks the merge. Each takes a minute or three.
+#
+# Not here, on purpose:
+# - `next build`: Vercel builds every pull request (and type-checks while it does), and that
+#   build is a required check of its own.
+# - The import evals: every case is a real model call against the AI Gateway free tier.
+#
+# Tool versions come from mise.toml, the same file used on a developer's machine. Actions are
+# pinned by commit, so a moved tag cannot change what runs here.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A newer push to the same pull request cancels the older run; runs on main always finish.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  web:
+    name: web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+        with:
+          install_args: node
+      - run: npm ci
+      # tsc needs Next's generated route types (PageProps<'/recipes/[id]'> and friends).
+      - name: typecheck
+        run: npx next typegen && npm run typecheck
+      - name: lint
+        run: npm run lint
+      - name: format
+        run: npm run format:check
+      # The API's types are generated from its OpenAPI document. Regenerating must change
+      # nothing: otherwise the app is typed against an API that no longer exists.
+      - name: API types match openapi.json
+        run: npm run gen:api && git diff --exit-code -- src/lib/api/schema.d.ts
+      # Informational: a new advisory should be visible, not block unrelated pull requests.
+      - name: npm audit
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+  api:
+    name: api
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/api
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+        with:
+          install_args: go
+      # gofmt, go mod tidy, go vet, generated SQL code, and the tests against a throwaway
+      # Postgres 17 (the runner has Docker). CI=true makes database tests fail, not skip,
+      # if that database is missing.
+      - name: verify
+        run: ./scripts/ci/verify.sh
+      # openapi.json is generated from the Go code; the web app's types come from it.
+      - name: openapi.json matches the code
+        run: make openapi && git diff --exit-code -- openapi.json
+      - name: govulncheck
+        continue-on-error: true
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  secrets:
+    name: secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # every commit, not only the last: a secret added then deleted still leaks
+      - uses: jdx/mise-action@b44d12e7d0d8ee7461bb893e1b1993500433185b # v5.2.7
+        with:
+          install_args: gitleaks
+      # The commits this change adds: base..head for a pull request, before..after for a push.
+      - name: gitleaks
+        env:
+          RANGE: >-
+            ${{ github.event_name == 'pull_request'
+            && format('{0}..{1}', github.event.pull_request.base.sha, github.event.pull_request.head.sha)
+            || format('{0}..{1}', github.event.before, github.sha) }}
+        # gitleaks passes ("no leaks found") when git cannot read the range, so check it first.
+        run: |
+          count="$(git rev-list --count "$RANGE")" # a plain assignment, so a bad range fails the step
+          echo "scanning $count commit(s): $RANGE"
+          gitleaks git --redact --no-banner --log-opts="$RANGE"
