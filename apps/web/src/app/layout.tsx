@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Analytics } from '@vercel/analytics/next'
+import { Fraunces } from 'next/font/google'
+import { ThemeProvider } from 'next-themes'
 import type { ReactNode } from 'react'
 import { deploymentTag } from '../lib/deployment.ts'
 import '../index.css'
@@ -7,6 +9,10 @@ import '../index.css'
 // Every tab reads "Scullery", or "<page> · Scullery" once a page sets its own title. Outside
 // production a tag follows, for example "Scullery [preview · a1b2c3d]" (see lib/deployment.ts).
 const tag = deploymentTag()
+
+// The headings' serif. next/font downloads it at build time and serves it from this app, so a
+// visitor's browser never contacts Google. It is exposed as --font-fraunces (see index.css).
+const fraunces = Fraunces({ subsets: ['latin'], variable: '--font-fraunces', display: 'swap' })
 
 export const metadata: Metadata = {
   title: { default: `Scullery${tag}`, template: `%s · Scullery${tag}` },
@@ -31,9 +37,21 @@ export const viewport: Viewport = {
 // the API for the status line either.
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: next-themes sets the theme class on <html> before React loads
+    // (so a dark page never flashes light), which React would otherwise report as a mismatch.
+    // It applies to this element's attributes only.
+    <html lang="en" className={fraunces.variable} suppressHydrationWarning>
       <body>
-        {children}
+        {/* attribute="class": "dark" or "light" on <html>. Until a person chooses, the device
+            setting decides; the choice is kept in localStorage. */}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

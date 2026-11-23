@@ -1,6 +1,12 @@
+import { ChevronLeft, ChevronRight, Clock, Plus, Search, Star, Users } from 'lucide-react'
 import Form from 'next/form'
 import Link from 'next/link'
-import { Suspense } from 'react'
+import { Suspense, type ReactNode } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   listRecipes,
   type ListQuery,
@@ -53,11 +59,17 @@ function hrefFor({ q, favoritesOnly, page }: View): string {
 export default function RecipesPage(props: PageProps<'/recipes'>) {
   return (
     <>
-      <div className="recipe-header">
+      <div className="mb-6 flex items-center justify-between gap-4">
         <h1>Recipes</h1>
-        <Link href="/recipes/new" className="button" aria-label="New recipe">
-          +
-        </Link>
+        <Button asChild>
+          <Link
+            href="/recipes/new"
+            className="text-primary-foreground no-underline hover:no-underline"
+          >
+            <Plus aria-hidden="true" />
+            New recipe
+          </Link>
+        </Button>
       </div>
       <Suspense fallback={<p>Loading…</p>}>
         <RecipeListSection searchParams={props.searchParams} />
@@ -87,19 +99,28 @@ async function RecipeListSection({
 
   return (
     <>
-      <Form action="/recipes" className="filters">
-        <input
-          type="search"
-          name="q"
-          defaultValue={q}
-          aria-label="Search recipes"
-          placeholder="Search titles and descriptions"
-        />
-        <label>
-          <input type="checkbox" name="favorite" value="true" defaultChecked={favoritesOnly} />{' '}
+      <Form action="/recipes" className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-3">
+        <div className="relative min-w-0 flex-[1_1_14rem]">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input
+            type="search"
+            name="q"
+            defaultValue={q}
+            aria-label="Search recipes"
+            placeholder="Search titles and descriptions"
+            className="pl-9"
+          />
+        </div>
+        <Label className="min-h-11 cursor-pointer font-normal">
+          <Checkbox name="favorite" value="true" defaultChecked={favoritesOnly} />
           Favorites only
-        </label>
-        <button type="submit">Search</button>
+        </Label>
+        <Button type="submit" variant="secondary">
+          Search
+        </Button>
       </Form>
 
       <Results result={result} view={{ q, favoritesOnly, page }} />
@@ -113,9 +134,11 @@ async function RecipeListSection({
 function Results({ result, view }: { result: RecipesResult; view: View }) {
   if (result.state === 'error') {
     return (
-      <p role="alert">
-        {result.message} <Link href={hrefFor(view)}>Try again</Link>
-      </p>
+      <Notice>
+        <p role="alert">
+          {result.message} <Link href={hrefFor(view)}>Try again</Link>
+        </p>
+      </Notice>
     )
   }
 
@@ -124,14 +147,30 @@ function Results({ result, view }: { result: RecipesResult; view: View }) {
   const filtering = view.q !== '' || view.favoritesOnly
 
   if (total === 0) {
-    return <p>{filtering ? 'No recipes match.' : 'No recipes yet.'}</p>
+    return (
+      <Notice>
+        {filtering ? (
+          <p>
+            No recipes match. <Link href="/recipes">Show all recipes</Link>
+          </p>
+        ) : (
+          <p>
+            No recipes yet. <Link href="/recipes/new">Add the first one</Link>, typed in or imported
+            from a link.
+          </p>
+        )}
+      </Notice>
+    )
   }
 
   if (rows.length === 0) {
     return (
-      <p>
-        That page is past the end. <Link href={hrefFor({ ...view, page: 1 })}>Back to page 1</Link>
-      </p>
+      <Notice>
+        <p>
+          That page is past the end.{' '}
+          <Link href={hrefFor({ ...view, page: 1 })}>Back to page 1</Link>
+        </p>
+      </Notice>
     )
   }
 
@@ -140,64 +179,97 @@ function Results({ result, view }: { result: RecipesResult; view: View }) {
 
   return (
     <>
-      <ul className="recipe-list">
-        {/* `key` tells React which row is which across renders. Use a stable id,
-            never the array index. */}
-        {rows.map((recipe) => (
-          <RecipeRow key={recipe.id} recipe={recipe} />
-        ))}
-      </ul>
+      <Card className="gap-0 overflow-hidden py-0">
+        <ul className="divide-y">
+          {/* `key` tells React which row is which across renders. Use a stable id,
+              never the array index. */}
+          {rows.map((recipe) => (
+            <RecipeRow key={recipe.id} recipe={recipe} />
+          ))}
+        </ul>
+      </Card>
 
       {total > PAGE_SIZE && (
-        <nav className="pager" aria-label="Pages">
-          {hasPrevious ? (
-            <Link className="pager-link" href={hrefFor({ ...view, page: view.page - 1 })}>
-              Previous
-            </Link>
-          ) : (
-            <span className="pager-link" aria-disabled="true">
-              Previous
-            </span>
-          )}
-          <span>
+        <nav className="mt-4 flex items-center justify-between gap-2" aria-label="Pages">
+          <PagerLink href={hasPrevious ? hrefFor({ ...view, page: view.page - 1 }) : null}>
+            <ChevronLeft aria-hidden="true" />
+            Previous
+          </PagerLink>
+          <span className="text-sm text-muted-foreground">
             {offset + 1}–{offset + rows.length} of {total}
           </span>
-          {hasNext ? (
-            <Link className="pager-link" href={hrefFor({ ...view, page: view.page + 1 })}>
-              Next
-            </Link>
-          ) : (
-            <span className="pager-link" aria-disabled="true">
-              Next
-            </span>
-          )}
+          <PagerLink href={hasNext ? hrefFor({ ...view, page: view.page + 1 }) : null}>
+            Next
+            <ChevronRight aria-hidden="true" />
+          </PagerLink>
         </nav>
       )}
     </>
   )
 }
 
+// Previous or Next: a link when there is somewhere to go, a dimmed stand-in when there is not.
+function PagerLink({ href, children }: { href: string | null; children: ReactNode }) {
+  if (href === null) {
+    return (
+      <Button variant="ghost" disabled aria-disabled="true">
+        {children}
+      </Button>
+    )
+  }
+  return (
+    <Button variant="ghost" asChild>
+      <Link href={href} className="text-foreground no-underline hover:no-underline">
+        {children}
+      </Link>
+    </Button>
+  )
+}
+
+// A message in place of the list: an error, nothing found, or past the end.
+function Notice({ children }: { children: ReactNode }) {
+  return (
+    <Card className="items-center px-6 py-10 text-center text-muted-foreground">{children}</Card>
+  )
+}
+
 function RecipeRow({ recipe }: { recipe: RecipeSummary }) {
   const minutes = (recipe.prep_minutes ?? 0) + (recipe.cook_minutes ?? 0)
-  const facts = [
-    recipe.servings != null ? `Serves ${recipe.servings}` : null,
-    minutes > 0 ? `${minutes} min` : null,
-  ].filter((fact) => fact !== null)
-
   return (
     <li>
-      <Link href={`/recipes/${recipe.id}`}>
-        <span className="recipe-title">
-          {recipe.title}
+      <Link
+        href={`/recipes/${recipe.id}`}
+        className="flex flex-col gap-1 px-4 py-3.5 text-foreground no-underline transition-colors hover:bg-accent/60 hover:no-underline"
+      >
+        <span className="flex items-start gap-2">
+          <span className="font-display text-lg leading-snug font-semibold">{recipe.title}</span>
           {recipe.is_favorite && (
-            <span role="img" aria-label="Favorite">
-              {' '}
-              ★
-            </span>
+            <Star
+              role="img"
+              aria-label="Favorite"
+              className="mt-1 size-4 shrink-0 fill-primary text-primary"
+            />
           )}
         </span>
-        {recipe.description && <span className="recipe-description">{recipe.description}</span>}
-        {facts.length > 0 && <span className="recipe-facts">{facts.join(' · ')}</span>}
+        {recipe.description && (
+          <span className="line-clamp-2 text-sm text-muted-foreground">{recipe.description}</span>
+        )}
+        {(recipe.servings != null || minutes > 0) && (
+          <span className="flex flex-wrap gap-x-4 text-sm text-muted-foreground">
+            {recipe.servings != null && (
+              <span className="inline-flex items-center gap-1.5">
+                <Users aria-hidden="true" className="size-3.5" />
+                Serves {recipe.servings}
+              </span>
+            )}
+            {minutes > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                <Clock aria-hidden="true" className="size-3.5" />
+                {minutes} min
+              </span>
+            )}
+          </span>
+        )}
       </Link>
     </li>
   )

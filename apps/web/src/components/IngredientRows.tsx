@@ -1,6 +1,10 @@
+import { useId } from 'react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import type { Unit } from '../lib/api/units.ts'
 import { newIngredientRow, type IngredientRow } from '../forms/ingredientRow.ts'
 import FormField from './FormField.tsx'
+import { AddButton, More, RemoveButton } from './RowParts.tsx'
 
 // The API's names for an ingredient's fields, as they appear in its error locations.
 export type IngredientField =
@@ -26,91 +30,127 @@ export default function IngredientRows({ rows, onChange, units, errorFor }: Ingr
     onChange(rows.map((row, i) => (i === index ? { ...row, ...patch } : row)))
   }
   return (
-    <>
-      <h2>Ingredients</h2>
-      <ul aria-label="Ingredients">
-        {rows.map((row, index) => {
-          const moreHasContent =
-            row.note !== '' ||
-            row.section !== '' ||
-            row.optional ||
-            errorFor(index, 'note') !== undefined ||
-            errorFor(index, 'section') !== undefined
-          return (
-            <li key={row.key}>
-              <FormField
-                label="Quantity"
-                type="number"
-                value={row.quantity}
-                error={errorFor(index, 'quantity_min')}
-                onChange={(v) => update(index, { quantity: v })}
-              />
-              <FormField
-                label="to (for a range)"
-                type="number"
-                value={row.quantityMax}
-                error={errorFor(index, 'quantity_max')}
-                onChange={(v) => update(index, { quantityMax: v })}
-              />
-              <label>
-                Unit
-                <select
-                  value={row.unitCode}
-                  onChange={(event) => update(index, { unitCode: event.target.value })}
-                >
-                  <option value="">No unit</option>
-                  {units.map((unit) => (
-                    <option value={unit.code} key={unit.code}>
-                      {unit.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <FormField
-                label="Ingredient"
-                value={row.name}
-                error={errorFor(index, 'name')}
-                onChange={(v) => update(index, { name: v })}
-              />
-              <FormField
-                label="Preparation"
-                value={row.preparation}
-                error={errorFor(index, 'preparation')}
-                onChange={(v) => update(index, { preparation: v })}
-              />
-              <details open={moreHasContent}>
-                <summary>More</summary>
-                <FormField
-                  label="Note"
-                  value={row.note}
-                  error={errorFor(index, 'note')}
-                  onChange={(v) => update(index, { note: v })}
-                />
-                <FormField
-                  label="Section"
-                  value={row.section}
-                  error={errorFor(index, 'section')}
-                  onChange={(v) => update(index, { section: v })}
-                />
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={row.optional}
-                    onChange={(event) => update(index, { optional: event.target.checked })}
-                  />
-                  Optional
-                </label>
-              </details>
-              <button type="button" onClick={() => onChange(rows.filter((_, i) => i !== index))}>
-                Remove
-              </button>
-            </li>
-          )
-        })}
+    <section aria-labelledby="ingredients-heading" className="space-y-3">
+      <h2 id="ingredients-heading">Ingredients</h2>
+      <ul aria-label="Ingredients" className="space-y-3">
+        {rows.map((row, index) => (
+          <IngredientEditor
+            key={row.key}
+            row={row}
+            position={index + 1}
+            units={units}
+            errorFor={(field) => errorFor(index, field)}
+            update={(patch) => update(index, patch)}
+            remove={() => onChange(rows.filter((_, i) => i !== index))}
+          />
+        ))}
       </ul>
-      <button type="button" onClick={() => onChange([...rows, newIngredientRow()])}>
-        Add ingredient
-      </button>
-    </>
+      <AddButton onClick={() => onChange([...rows, newIngredientRow()])}>Add ingredient</AddButton>
+    </section>
+  )
+}
+
+// One ingredient line: amount and unit on one row, name and preparation on the next, the rest
+// under "More". Its own component so it can have ids (useId) for its unit and optional fields.
+function IngredientEditor({
+  row,
+  position,
+  units,
+  errorFor,
+  update,
+  remove,
+}: {
+  row: IngredientRow
+  position: number
+  units: Unit[]
+  errorFor: (field: IngredientField) => string | undefined
+  update: (patch: Partial<IngredientRow>) => void
+  remove: () => void
+}) {
+  const id = useId()
+  const moreHasContent =
+    row.note !== '' ||
+    row.section !== '' ||
+    row.optional ||
+    errorFor('note') !== undefined ||
+    errorFor('section') !== undefined
+  return (
+    <li className="rounded-lg border bg-card p-3 sm:p-4">
+      <div className="grid gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-[7rem_7rem_1fr]">
+          <FormField
+            label="Quantity"
+            type="number"
+            value={row.quantity}
+            error={errorFor('quantity_min')}
+            onChange={(v) => update({ quantity: v })}
+          />
+          <FormField
+            label="to (for a range)"
+            type="number"
+            value={row.quantityMax}
+            error={errorFor('quantity_max')}
+            onChange={(v) => update({ quantityMax: v })}
+          />
+          <div className="col-span-2 grid gap-1.5 sm:col-span-1">
+            <Label htmlFor={`${id}-unit`}>Unit</Label>
+            <select
+              id={`${id}-unit`}
+              value={row.unitCode}
+              onChange={(event) => update({ unitCode: event.target.value })}
+              className="h-11 w-full rounded-md border border-input bg-transparent px-3 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 dark:bg-input/30"
+            >
+              <option value="">No unit</option>
+              {units.map((unit) => (
+                <option value={unit.code} key={unit.code}>
+                  {unit.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <FormField
+            label="Ingredient"
+            value={row.name}
+            error={errorFor('name')}
+            onChange={(v) => update({ name: v })}
+          />
+          <FormField
+            label="Preparation"
+            value={row.preparation}
+            error={errorFor('preparation')}
+            onChange={(v) => update({ preparation: v })}
+          />
+        </div>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <More open={moreHasContent}>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <FormField
+                label="Note"
+                value={row.note}
+                error={errorFor('note')}
+                onChange={(v) => update({ note: v })}
+              />
+              <FormField
+                label="Section"
+                value={row.section}
+                error={errorFor('section')}
+                onChange={(v) => update({ section: v })}
+              />
+            </div>
+            <Label htmlFor={`${id}-optional`} className="min-h-11 cursor-pointer font-normal">
+              <Checkbox
+                id={`${id}-optional`}
+                checked={row.optional}
+                onCheckedChange={(checked) => update({ optional: checked === true })}
+              />
+              Optional
+            </Label>
+          </More>
+          <RemoveButton label={`Remove ingredient ${position}`} onClick={remove} />
+        </div>
+      </div>
+    </li>
   )
 }

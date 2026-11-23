@@ -1,6 +1,9 @@
 'use client'
 
 import { useActionState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { loginAction } from '../app/login/actions.ts'
 
 // The sign-in form. A Client Component only for useActionState, which supplies the pending
@@ -10,20 +13,33 @@ export default function LoginForm({ next }: { next: string }) {
   const [state, formAction, isPending] = useActionState(loginAction, null)
 
   return (
-    <form action={formAction} className="recipe-form login-form">
+    <form action={formAction} className="grid gap-4">
       <input type="hidden" name="next" value={next} />
-      <label>
-        Name
-        <input name="name" autoComplete="username" autoCapitalize="none" required />
-      </label>
-      <label>
-        Password
-        <input name="password" type="password" autoComplete="current-password" required />
-      </label>
-      {state?.error && <p role="alert">{state.error}</p>}
-      <button type="submit" disabled={isPending}>
+      <div className="grid gap-1.5">
+        <Label htmlFor="login-name">Name</Label>
+        <Input id="login-name" name="name" autoComplete="username" autoCapitalize="none" required />
+      </div>
+      <div className="grid gap-1.5">
+        <Label htmlFor="login-password">Password</Label>
+        <Input
+          id="login-password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+        />
+      </div>
+      {state?.error && (
+        <p
+          role="alert"
+          className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive"
+        >
+          {state.error}
+        </p>
+      )}
+      <Button type="submit" disabled={isPending} className="w-full">
         {isPending ? 'Signing in…' : 'Sign in'}
-      </button>
+      </Button>
     </form>
   )
 }

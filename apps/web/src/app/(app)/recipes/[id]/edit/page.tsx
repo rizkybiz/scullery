@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { connection } from 'next/server'
 import { Suspense } from 'react'
+import BackLink from '../../../../../components/BackLink.tsx'
 import RecipeForm from '../../../../../components/RecipeForm.tsx'
 import { fromRecipe } from '../../../../../forms/fromRecipe.ts'
 import { readRecipe, type Recipe } from '../../../../../lib/api/recipes.ts'
@@ -61,8 +62,13 @@ async function EditRecipe({ params }: { params: PageProps<'/recipes/[id]/edit'>[
 
   return (
     <>
-      <Link href={`/recipes/${id}`}>Back to the recipe</Link>
-      <h1>Edit {recipe.title}</h1>
+      <BackLink href={`/recipes/${id}`}>Back to the recipe</BackLink>
+      <h1 className="mb-6">
+        <span className="block font-sans text-sm font-medium tracking-wider text-muted-foreground uppercase">
+          Editing
+        </span>
+        {recipe.title}
+      </h1>
       <RecipeForm
         units={units}
         action={updateRecipeAction.bind(null, id)}

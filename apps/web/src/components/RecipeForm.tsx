@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useActionState, useState } from 'react'
+import { Button } from '@/components/ui/button'
 import type { SaveState } from '../app/(app)/recipes/actions.ts'
 import { emptyFormState, type RecipeFormFields, type RecipeFormState } from '../forms/fromRecipe.ts'
 import type { IngredientRow } from '../forms/ingredientRow.ts'
@@ -62,53 +63,59 @@ export default function RecipeForm({
   }
 
   return (
-    <form action={submit} className="recipe-form">
-      <FormField
-        label="Title"
-        value={fields.title}
-        error={state?.fields?.['title']}
-        onChange={set('title')}
-      />
-      <FormField
-        label="Description"
-        multiline={true}
-        value={fields.description}
-        error={state?.fields?.['description']}
-        onChange={set('description')}
-      />
-      <FormField
-        label="Servings"
-        type="number"
-        value={fields.servings}
-        error={state?.fields?.['servings']}
-        onChange={set('servings')}
-      />
-      <FormField
-        label="Prep minutes"
-        type="number"
-        value={fields.prepMinutes}
-        error={state?.fields?.['prep_minutes']}
-        onChange={set('prepMinutes')}
-      />
-      <FormField
-        label="Cook minutes"
-        type="number"
-        value={fields.cookMinutes}
-        error={state?.fields?.['cook_minutes']}
-        onChange={set('cookMinutes')}
-      />
-      <FormField
-        label="Makes (when servings does not fit)"
-        value={fields.yieldText}
-        error={state?.fields?.['yield_text']}
-        onChange={set('yieldText')}
-      />
-      <FormField
-        label="Source URL"
-        value={fields.sourceUrl}
-        error={state?.fields?.['source_url']}
-        onChange={set('sourceUrl')}
-      />
+    <form action={submit} className="space-y-8">
+      <section aria-label="About the recipe" className="grid gap-4">
+        <FormField
+          label="Title"
+          value={fields.title}
+          error={state?.fields?.['title']}
+          onChange={set('title')}
+        />
+        <FormField
+          label="Description"
+          multiline={true}
+          value={fields.description}
+          error={state?.fields?.['description']}
+          onChange={set('description')}
+        />
+        <div className="grid grid-cols-3 gap-3">
+          <FormField
+            label="Servings"
+            type="number"
+            value={fields.servings}
+            error={state?.fields?.['servings']}
+            onChange={set('servings')}
+          />
+          <FormField
+            label="Prep min"
+            type="number"
+            value={fields.prepMinutes}
+            error={state?.fields?.['prep_minutes']}
+            onChange={set('prepMinutes')}
+          />
+          <FormField
+            label="Cook min"
+            type="number"
+            value={fields.cookMinutes}
+            error={state?.fields?.['cook_minutes']}
+            onChange={set('cookMinutes')}
+          />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField
+            label="Makes (when servings does not fit)"
+            value={fields.yieldText}
+            error={state?.fields?.['yield_text']}
+            onChange={set('yieldText')}
+          />
+          <FormField
+            label="Source URL"
+            value={fields.sourceUrl}
+            error={state?.fields?.['source_url']}
+            onChange={set('sourceUrl')}
+          />
+        </div>
+      </section>
 
       <IngredientRows
         rows={ingredients}
@@ -122,21 +129,38 @@ export default function RecipeForm({
         errorFor={(index, field) => state?.steps?.[index]?.[field]}
       />
 
-      <FormField
-        label="Notes"
-        multiline={true}
-        value={fields.notes}
-        error={state?.fields?.['notes']}
-        onChange={set('notes')}
-      />
+      <section aria-labelledby="notes-heading" className="space-y-3">
+        <h2 id="notes-heading">Notes</h2>
+        <FormField
+          label="Notes"
+          multiline={true}
+          value={fields.notes}
+          error={state?.fields?.['notes']}
+          onChange={set('notes')}
+        />
+      </section>
 
-      {state?.message && <p role="alert">{state.message}</p>}
+      {state?.message && (
+        <p
+          role="alert"
+          className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-destructive"
+        >
+          {state.message}
+        </p>
+      )}
 
-      <div className="form-actions">
-        <button type="submit" disabled={isPending}>
+      {/* The form is long, so Save stays in reach: this bar sticks to the bottom of the screen,
+          just above the tab bar (same --tabbar-height and safe area), and settles into place at
+          the end of the form. The negative margins reach the page gutters. */}
+      <div className="sticky bottom-[calc(var(--tabbar-height)+env(safe-area-inset-bottom))] z-10 -mx-4 flex items-center gap-2 border-t bg-background/95 px-4 py-3 backdrop-blur">
+        <Button type="submit" disabled={isPending}>
           {isPending ? 'Saving…' : submitLabel}
-        </button>
-        <Link href={cancelHref}>Cancel</Link>
+        </Button>
+        <Button variant="ghost" asChild>
+          <Link href={cancelHref} className="text-foreground no-underline hover:no-underline">
+            Cancel
+          </Link>
+        </Button>
       </div>
     </form>
   )

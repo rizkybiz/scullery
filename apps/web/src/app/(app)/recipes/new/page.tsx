@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import BackLink from '../../../../components/BackLink.tsx'
 import { connection } from 'next/server'
 import { Suspense } from 'react'
 import NewRecipeEditor from '../../../../components/NewRecipeEditor.tsx'
@@ -11,8 +11,8 @@ import { isImportDisabled } from '../../../../lib/flags.ts'
 export default function NewRecipePage() {
   return (
     <>
-      <Link href="/recipes">All recipes</Link>
-      <h1>New recipe</h1>
+      <BackLink href="/recipes">All recipes</BackLink>
+      <h1 className="mb-6">New recipe</h1>
       <Suspense fallback={<p>Loading…</p>}>
         <NewRecipeForm />
       </Suspense>

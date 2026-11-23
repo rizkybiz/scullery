@@ -25,6 +25,8 @@
     "allowJs": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
+    /* "@/..." is src/: the import style shadcn/ui's generated components use. */
+    "paths": { "@/*": ["./src/*"] },
     "plugins": [
       {
         "name": "next"

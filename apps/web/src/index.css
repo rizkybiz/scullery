@@ -1,323 +1,116 @@
+/* Tailwind CSS v4: its preflight (a reset), the theme, and the utility classes. */
+@import 'tailwindcss';
+
+/* Dark mode is a class on <html>, set by next-themes (root layout): "dark" or "light", from the
+   person's choice in the header, or from the device setting until they choose. Tailwind's dark:
+   variant and the dark palette below both key off it. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* The palette: "kitchen notebook". Warm paper, dark ink, one terracotta accent. Each colour is a
+   variable so the dark palette only has to redefine them; shadcn/ui's components read the same
+   names (bg-card, text-muted-foreground, ring-ring...). oklch: lightness, chroma, hue. */
 :root {
-  color-scheme: light dark;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    sans-serif;
-  line-height: 1.5;
+  color-scheme: light;
+  --radius: 0.625rem;
+  --background: oklch(0.975 0.012 85); /* paper */
+  --foreground: oklch(0.25 0.02 50); /* ink */
+  --card: oklch(0.99 0.007 85);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.52 0.13 40); /* terracotta */
+  --primary-foreground: oklch(0.985 0.005 85);
+  --secondary: oklch(0.935 0.018 80);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.945 0.015 80);
+  --muted-foreground: oklch(0.47 0.025 55);
+  --accent: oklch(0.925 0.025 70);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.52 0.19 27);
+  --border: oklch(0.87 0.02 75);
+  --input: oklch(0.82 0.022 72);
+  --ring: oklch(0.6 0.13 40);
+  --success: oklch(0.55 0.12 150);
+  /* The tab bar's height, not counting the iPad's home-indicator inset. */
+  --tabbar-height: 3.5rem;
 }
 
-body {
-  margin: 0;
+.dark {
+  color-scheme: dark;
+  --background: oklch(0.2 0.012 60); /* charcoal */
+  --foreground: oklch(0.93 0.015 80);
+  --card: oklch(0.24 0.014 60);
+  --primary: oklch(0.72 0.12 45);
+  --primary-foreground: oklch(0.2 0.02 50);
+  --secondary: oklch(0.29 0.015 60);
+  --muted: oklch(0.27 0.014 60);
+  --muted-foreground: oklch(0.74 0.02 70);
+  --accent: oklch(0.32 0.02 55);
+  --destructive: oklch(0.68 0.17 27);
+  --border: oklch(0.34 0.015 60);
+  --input: oklch(0.4 0.018 60);
+  --ring: oklch(0.72 0.12 45);
+  --success: oklch(0.72 0.13 150);
 }
 
-/* 16px side gutters, centred and capped, so it reads well on an iPad. */
-.app {
-  max-width: 40rem;
-  margin: 0 auto;
-  padding: 1.5rem 1rem;
+/* The names Tailwind's utilities use (bg-primary, rounded-lg, font-display...), pointing at the
+   variables above. `inline` puts the var() into each utility, so the dark palette still applies. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  /* Fraunces comes from next/font (root layout), which names the family at build time and
+     exposes it as --font-fraunces on <html>. */
+  --font-display: var(--font-fraunces), Georgia, 'Times New Roman', serif;
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
-.status[data-state='success'] {
-  color: #2f6f4f;
-}
-
-.status[data-state='error'] {
-  color: #b3261e;
-}
-
-/* App shell: header on top, tab bar pinned to the bottom edge. */
-.shell {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-}
-
-.shell-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-}
-
-.shell-header .status {
-  margin: 0;
-  font-size: 0.85rem;
-}
-
-.shell .app {
-  flex: 1;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.tabbar {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  background: Canvas;
-  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-  /* Keep clear of the iPad's home indicator. */
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.tabbar a {
-  flex: 1;
-  padding: 0.9rem 0.5rem;
-  text-align: center;
-  text-decoration: none;
-  color: inherit;
-  /* 44px+ is Apple's minimum comfortable touch target. */
-  min-height: 1.5rem;
-}
-
-.tabbar a[aria-current='page'] {
-  font-weight: 700;
-  border-top: 3px solid currentColor;
-  padding-top: calc(0.9rem - 3px);
-}
-
-/* Recipe list */
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem 1rem;
-  margin-bottom: 1rem;
-}
-
-.filters input[type='search'] {
-  flex: 1 1 14rem;
-  /* 16px+ stops iOS Safari zooming the page when the field is focused. */
-  font-size: 1rem;
-  padding: 0.6rem 0.75rem;
-}
-
-.recipe-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.recipe-list[aria-busy='true'] {
-  opacity: 0.6;
-}
-
-.recipe-list li + li {
-  border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
-}
-
-.recipe-list a {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  padding: 0.85rem 0.25rem;
-  color: inherit;
-  text-decoration: none;
-}
-
-.recipe-title {
-  font-weight: 600;
-}
-
-.recipe-description,
-.recipe-facts {
-  font-size: 0.9rem;
-  opacity: 0.75;
-}
-
-.pager {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 1rem;
-}
-
-.pager button,
-.pager-link {
-  min-height: 2.75rem;
-  padding: 0 1rem;
-}
-
-/* Previous/Next are links (the server renders them); a span stands in when there is
-   nowhere to go. */
-.pager-link {
-  display: inline-flex;
-  align-items: center;
-}
-
-.pager-link[aria-disabled='true'] {
-  opacity: 0.4;
-}
-
-/* Recipe page header and the actions (kebab) menu */
-.recipe-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.recipe-header h1 {
-  margin: 0.5rem 0;
-}
-
-.actions {
-  position: relative;
-}
-
-.actions-toggle {
-  min-width: 2.75rem;
-  min-height: 2.75rem;
-  font-size: 1.25rem;
-}
-
-.actions-menu {
-  position: absolute;
-  right: 0;
-  top: 100%;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 10rem;
-  padding: 0.25rem;
-  background: Canvas;
-  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
-}
-
-.actions-menu button {
-  min-height: 2.75rem;
-  text-align: left;
-}
-
-/* Edit is a link, Delete a button: the same size and look in the menu. */
-.actions-menu a {
-  display: flex;
-  align-items: center;
-  min-height: 2.75rem;
-  padding-inline: 0.4rem;
-  color: inherit;
-  text-decoration: none;
-}
-
-.actions-confirm {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.actions-confirm button {
-  min-height: 2.75rem;
-  padding: 0 1rem;
-}
-
-/* "+" in the recipe list header: a link that looks like a button. */
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2.75rem;
-  min-height: 2.75rem;
-  border: 1px solid currentColor;
-  border-radius: 0.5rem;
-  color: inherit;
-  text-decoration: none;
-  font-size: 1.25rem;
-}
-
-/* The new recipe form. 16px text stops iOS Safari zooming when a field is focused. */
-.recipe-form label {
-  display: block;
-  margin-top: 0.75rem;
-}
-
-.recipe-form input,
-.recipe-form select,
-.recipe-form textarea {
-  display: block;
-  box-sizing: border-box;
-  width: 100%;
-  margin-top: 0.25rem;
-  padding: 0.6rem 0.75rem;
-  font-size: 1rem;
-}
-
-.recipe-form ul,
-.recipe-form ol {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.recipe-form li {
-  margin-top: 1rem;
-  padding-top: 0.25rem;
-  border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent);
-}
-
-.recipe-form button {
-  min-height: 2.75rem;
-  margin-top: 0.75rem;
-  padding: 0 1rem;
-}
-
-.recipe-form [aria-invalid='true'] {
-  border-color: #b3261e;
-}
-
-.field-error {
-  display: block;
-  color: #b3261e;
-  font-size: 0.9rem;
-}
-
-.form-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-/* The recipe form is long, so its Save stays in reach: the actions stick to the bottom of the
-   screen, just above the tab bar, and settle into place at the end of the form. The offset is
-   the tab bar's height (link padding, one line of text, its top border, the safe area). The
-   negative side margins reach the page gutters, so the bar spans the page. */
-.recipe-form .form-actions {
-  position: sticky;
-  bottom: calc(3.3rem + 1px + env(safe-area-inset-bottom));
-  z-index: 1;
-  margin-inline: -1rem;
-  padding: 0.75rem 1rem;
-  background: Canvas;
-  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
-}
-
-/* Who is signed in, in the header. */
-.user-menu {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-}
-
-.user-menu button {
-  min-height: 2.75rem;
-  padding: 0 0.75rem;
-}
-
-/* The sign-in page: a narrow column with no app frame around it. */
-.login {
-  max-width: 22rem;
-  margin: 3rem auto;
-  padding: 0 1rem;
-}
-
-/* Notes keep the line breaks they were written with. */
-.recipe-notes {
-  white-space: pre-line;
+/* The page itself: paper and ink, serif headings, and one focus ring for everything. */
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-semibold tracking-tight text-balance;
+  }
+  h1 {
+    @apply text-3xl sm:text-4xl;
+  }
+  h2 {
+    @apply text-xl sm:text-2xl;
+  }
+  h3 {
+    @apply text-lg;
+  }
+  a {
+    @apply text-primary underline-offset-4 hover:underline;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
 }

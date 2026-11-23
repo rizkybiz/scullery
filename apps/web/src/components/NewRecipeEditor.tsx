@@ -1,5 +1,6 @@
 'use client'
 
+import { CircleCheck } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import { createRecipeAction } from '../app/(app)/recipes/actions.ts'
 import { fromRecipe, type RecipeFormState } from '../forms/fromRecipe.ts'
@@ -38,22 +39,30 @@ export default function NewRecipeEditor({
   )
 
   return (
-    <>
+    <div className="space-y-6">
       {importEnabled ? (
         <ImportPanel onDraft={onDraft} />
       ) : (
-        <p role="status">{IMPORT_DISABLED_MESSAGE}</p>
+        <p role="status" className="rounded-lg border bg-muted px-4 py-3 text-muted-foreground">
+          {IMPORT_DISABLED_MESSAGE}
+        </p>
       )}
       {draft && (
-        <div role="status" className="import-result">
-          <p>
-            Filled in from{' '}
-            {draft.from.via.source === 'jsonld' ? "the page's recipe data" : 'the text'} by{' '}
-            {draft.from.via.model} through AI Gateway, in {(draft.from.via.ms / 1000).toFixed(1)} s.
-            Check every field before saving.
+        <div
+          role="status"
+          className="space-y-2 rounded-lg border border-primary/40 bg-primary/5 px-4 py-3 text-sm"
+        >
+          <p className="flex gap-2">
+            <CircleCheck aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-primary" />
+            <span>
+              Filled in from{' '}
+              {draft.from.via.source === 'jsonld' ? "the page's recipe data" : 'the text'} by{' '}
+              {draft.from.via.model} through AI Gateway, in {(draft.from.via.ms / 1000).toFixed(1)}{' '}
+              s. Check every field before saving.
+            </span>
           </p>
           {draft.from.warnings.length > 0 && (
-            <ul>
+            <ul className="list-disc space-y-1 pl-10 text-muted-foreground">
               {draft.from.warnings.map((warning) => (
                 <li key={warning}>{warning}</li>
               ))}
@@ -67,6 +76,6 @@ export default function NewRecipeEditor({
         action={createRecipeAction}
         initial={draft?.state}
       />
-    </>
+    </div>
   )
 }

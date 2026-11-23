@@ -1,5 +1,6 @@
 import { newStepRow, type StepRow } from '../forms/stepRow.ts'
 import FormField from './FormField.tsx'
+import { AddButton, More, RemoveButton } from './RowParts.tsx'
 
 // The API's names for a step's fields, as they appear in its error locations.
 export type StepField = 'instruction' | 'timer_seconds' | 'section'
@@ -20,9 +21,9 @@ export default function StepRows({ rows, onChange, errorFor }: StepRowsProps) {
     onChange(rows.map((row, i) => (i === index ? { ...row, ...patch } : row)))
   }
   return (
-    <>
-      <h2>Steps</h2>
-      <ol aria-label="Steps">
+    <section aria-labelledby="steps-heading" className="space-y-3">
+      <h2 id="steps-heading">Steps</h2>
+      <ol aria-label="Steps" className="space-y-3">
         {rows.map((row, index) => {
           const moreHasContent =
             row.timerMinutes !== '' ||
@@ -30,40 +31,44 @@ export default function StepRows({ rows, onChange, errorFor }: StepRowsProps) {
             errorFor(index, 'timer_seconds') !== undefined ||
             errorFor(index, 'section') !== undefined
           return (
-            <li key={row.key}>
-              <FormField
-                label={`Step ${index + 1}`}
-                multiline={true}
-                value={row.instruction}
-                error={errorFor(index, 'instruction')}
-                onChange={(value) => update(index, { instruction: value })}
-              />
-              <details open={moreHasContent}>
-                <summary>More</summary>
+            <li key={row.key} className="rounded-lg border bg-card p-3 sm:p-4">
+              <div className="grid gap-3">
                 <FormField
-                  label="Timer (minutes)"
-                  type="number"
-                  value={row.timerMinutes}
-                  error={errorFor(index, 'timer_seconds')}
-                  onChange={(value) => update(index, { timerMinutes: value })}
+                  label={`Step ${index + 1}`}
+                  multiline={true}
+                  value={row.instruction}
+                  error={errorFor(index, 'instruction')}
+                  onChange={(value) => update(index, { instruction: value })}
                 />
-                <FormField
-                  label="Section"
-                  value={row.section}
-                  error={errorFor(index, 'section')}
-                  onChange={(value) => update(index, { section: value })}
-                />
-              </details>
-              <button type="button" onClick={() => onChange(rows.filter((_, i) => i !== index))}>
-                Remove
-              </button>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <More open={moreHasContent}>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <FormField
+                        label="Timer (minutes)"
+                        type="number"
+                        value={row.timerMinutes}
+                        error={errorFor(index, 'timer_seconds')}
+                        onChange={(value) => update(index, { timerMinutes: value })}
+                      />
+                      <FormField
+                        label="Section"
+                        value={row.section}
+                        error={errorFor(index, 'section')}
+                        onChange={(value) => update(index, { section: value })}
+                      />
+                    </div>
+                  </More>
+                  <RemoveButton
+                    label={`Remove step ${index + 1}`}
+                    onClick={() => onChange(rows.filter((_, i) => i !== index))}
+                  />
+                </div>
+              </div>
             </li>
           )
         })}
       </ol>
-      <button type="button" onClick={() => onChange([...rows, newStepRow()])}>
-        Add step
-      </button>
-    </>
+      <AddButton onClick={() => onChange([...rows, newStepRow()])}>Add step</AddButton>
+    </section>
   )
 }
