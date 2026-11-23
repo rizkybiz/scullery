@@ -10,7 +10,7 @@ export default async function UserMenu() {
   if (!session) return null
 
   return (
-    <form action={logoutAction} className="ml-auto flex shrink-0 items-center gap-2">
+    <form action={logoutAction} className="flex shrink-0 items-center gap-2">
       <span className="hidden text-sm text-muted-foreground sm:inline">{session.name}</span>
       <Button type="submit" variant="ghost" size="sm">
         Sign out

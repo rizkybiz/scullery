@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Suspense, type ReactNode } from 'react'
 import ApiStatus from '../../components/ApiStatus.tsx'
 import TabLink from '../../components/TabLink.tsx'
+import ThemeSwitch from '../../components/ThemeSwitch.tsx'
 import UserMenu from '../../components/UserMenu.tsx'
 
 // The frame around every signed-in page: a header, the current page, and a tab bar along
@@ -23,6 +24,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         >
           Scullery
         </Link>
+        <div className="ml-auto">
+          <ThemeSwitch />
+        </div>
         <Suspense fallback={null}>
           <UserMenu />
         </Suspense>
