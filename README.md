@@ -294,6 +294,10 @@ What worked well, and what I'd change, from building this.
 | `apps/web` | The Next.js app (Vercel project root) | [apps/web/README.md](apps/web/README.md): decisions D1–D7, security rules, known limitations |
 | `services/api` | The Go API, its migrations and its container image | [services/api/README.md](services/api/README.md) |
 | `infra/terraform` | Google Cloud: network, database, Cloud Run, and the trust Vercel uses | [infra/terraform/README.md](infra/terraform/README.md) |
+| `.github` | CI workflow and the pull request template (GitHub reads only the root `.github`) | [ci.yml](.github/workflows/ci.yml) |
+
+Inside the web app, `src/` is three folders: `app` (routes), `components` and `lib` (everything
+else). The [layout section](apps/web/README.md#layout) has the rules.
 
 ## Working on it
 

@@ -252,6 +252,20 @@ apps/web/src/
   proxy.ts             first gate: redirects to /login without a valid cookie
 ```
 
+Three folders, and a rule for each:
+
+- **`app/`** holds routes only: pages, layouts, route handlers and the Server Actions that belong
+  to a page. Next requires these files here; keep logic out of them.
+- **`components/`** holds React components, one per file, named for what the component is
+  (`RecipeForm`, `UserMenu`). Components are flat; `components/ui/` is the shadcn primitives.
+- **`lib/`** holds everything else: helpers, the API client, auth, form logic, the import
+  pipeline and the Workflow that runs it. A folder in `lib/` is a concern (`lib/import`), not a
+  kind of file.
+
+Cross-folder imports use `@/` (`@/lib/audit.ts`). The import pipeline in `lib/import` and the
+eval scripts use relative paths, because the scripts run under plain `node`, which does not read
+tsconfig `paths`.
+
 ### Security rules for this app
 
 1. The browser never calls the Scullery API.
