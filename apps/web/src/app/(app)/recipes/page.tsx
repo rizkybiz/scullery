@@ -12,8 +12,8 @@ import {
   type ListQuery,
   type RecipeList,
   type RecipeSummary,
-} from '../../../lib/api/recipes.ts'
-import { requireSession } from '../../../lib/auth/dal.ts'
+} from '@/lib/api/recipes.ts'
+import { requireSession } from '@/lib/auth/dal.ts'
 
 const PAGE_SIZE = 20
 

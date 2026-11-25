@@ -1,10 +1,10 @@
-import BackLink from '../../../../components/BackLink.tsx'
+import BackLink from '@/components/BackLink.tsx'
 import { connection } from 'next/server'
 import { Suspense } from 'react'
-import NewRecipeEditor from '../../../../components/NewRecipeEditor.tsx'
-import { listUnits, type Unit } from '../../../../lib/api/units.ts'
-import { requireSession } from '../../../../lib/auth/dal.ts'
-import { isImportDisabled } from '../../../../lib/flags.ts'
+import NewRecipeEditor from '@/components/NewRecipeEditor.tsx'
+import { listUnits, type Unit } from '@/lib/api/units.ts'
+import { requireSession } from '@/lib/auth/dal.ts'
+import { isImportDisabled } from '@/lib/flags.ts'
 
 // The page itself is a static shell: a link, a heading and a fallback. The form (with the
 // import panel above it) needs the list of units from the API, so it streams in behind <Suspense>.

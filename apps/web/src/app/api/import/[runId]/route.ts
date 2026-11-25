@@ -4,9 +4,9 @@
 // user can read any run: there are two users with the same permissions, run ids are random and
 // never listed, and a run holds only a draft built from what that person pasted.
 import { getRun } from 'workflow/api'
-import { audit } from '../../../../lib/audit.ts'
-import { getSession } from '../../../../lib/auth/dal.ts'
-import type { ImportOutcome } from '../../../../workflows/importRecipe.ts'
+import { audit } from '@/lib/audit.ts'
+import { getSession } from '@/lib/auth/dal.ts'
+import type { ImportOutcome } from '@/workflows/importRecipe.ts'
 
 export type ImportStatus =
   | { status: 'running' }

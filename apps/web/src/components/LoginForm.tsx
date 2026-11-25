@@ -4,7 +4,7 @@ import { useActionState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { loginAction } from '../app/login/actions.ts'
+import { loginAction } from '@/app/login/actions.ts'
 
 // The sign-in form. A Client Component only for useActionState, which supplies the pending
 // state and the error message the action returns. `next` rides along as a hidden field and

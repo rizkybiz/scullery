@@ -2,11 +2,11 @@
 
 import { CircleCheck } from 'lucide-react'
 import { useCallback, useState } from 'react'
-import { createRecipeAction } from '../app/(app)/recipes/actions.ts'
-import { fromRecipe, type RecipeFormState } from '../forms/fromRecipe.ts'
-import { IMPORT_DISABLED_MESSAGE } from '../lib/flags.ts'
-import type { Unit } from '../lib/api/units.ts'
-import type { ImportOutcome } from '../workflows/importRecipe.ts'
+import { createRecipeAction } from '@/app/(app)/recipes/actions.ts'
+import { fromRecipe, type RecipeFormState } from '@/forms/fromRecipe.ts'
+import { IMPORT_DISABLED_MESSAGE } from '@/lib/flags.ts'
+import type { Unit } from '@/lib/api/units.ts'
+import type { ImportOutcome } from '@/workflows/importRecipe.ts'
 import ImportPanel from './ImportPanel.tsx'
 import RecipeForm from './RecipeForm.tsx'
 

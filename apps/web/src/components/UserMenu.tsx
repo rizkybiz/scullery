@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
-import { logoutAction } from '../app/login/actions.ts'
-import { getSession } from '../lib/auth/dal.ts'
+import { logoutAction } from '@/app/login/actions.ts'
+import { getSession } from '@/lib/auth/dal.ts'
 
 // Who is signed in, and a way to sign out. A Server Component: the Sign out button is a
 // plain form wired to a Server Action, so it needs no client JavaScript. Renders nothing

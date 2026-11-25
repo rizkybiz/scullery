@@ -16,7 +16,7 @@ import type { ReactNode } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import ThemeSwitch from '../components/ThemeSwitch.tsx'
+import ThemeSwitch from '@/components/ThemeSwitch.tsx'
 
 export const metadata: Metadata = { title: 'Overview' }
 

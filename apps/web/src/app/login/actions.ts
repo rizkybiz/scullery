@@ -2,11 +2,11 @@
 
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { audit } from '../../lib/audit.ts'
-import { authSecret, sessionCookie } from '../../lib/auth/cookie.ts'
-import { safeNext } from '../../lib/auth/redirect.ts'
-import { signSession } from '../../lib/auth/session.ts'
-import { checkLogin, loadUsers } from '../../lib/auth/users.ts'
+import { audit } from '@/lib/audit.ts'
+import { authSecret, sessionCookie } from '@/lib/auth/cookie.ts'
+import { safeNext } from '@/lib/auth/redirect.ts'
+import { signSession } from '@/lib/auth/session.ts'
+import { checkLogin, loadUsers } from '@/lib/auth/users.ts'
 
 // What the login form gets back when sign-in did not happen. On success the action
 // redirects instead of returning, so `null` is only the initial state.
