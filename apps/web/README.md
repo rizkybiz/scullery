@@ -107,7 +107,7 @@ requests only from this app.
 - _Worked example (new recipe form):_ the form keeps every value as a string in `useState`
   and submits plain data to `createRecipeAction` through `useActionState`. Because the
   inputs are controlled, nothing typed is lost when the server sends errors back. The
-  conversion lives in `src/forms/recipeForm.ts`, which imports nothing from the framework:
+  conversion lives in `src/lib/forms/recipeForm.ts`, which imports nothing from the framework:
   it trims text, parses numbers, drops rows left blank, and catches what a person can fix
   at once. The API still validates, in two stages (schema rules, then rules such as "the
   unit exists"). Its error locations (`body.ingredients[1].unit_code`) are translated back
@@ -204,7 +204,7 @@ requests only from this app.
   gives one model ID format, fallbacks and spend in one place.
 - _No stored AI secret:_ a plain `provider/model` string goes to AI Gateway, which authenticates
   with the deployment's OIDC token. There is no AI Gateway or provider API key anywhere.
-- _How an import runs_ (`src/workflows/importRecipe.ts`): the new recipe page's import panel calls
+- _How an import runs_ (`src/lib/workflows/importRecipe.ts`): the new recipe page's import panel calls
   `startImportAction` (session and input checked, cached units passed in), which starts the run
   and returns its id at once; the panel polls `GET /api/import/<runId>` every 1.5 s. The run's
   steps: read the source (fetch the link through `fetchPage`'s SSRF guard, or take the text), one
@@ -245,8 +245,10 @@ apps/web/src/
   lib/auth/            sessions, password hashes, users, requireSession()
   lib/audit.ts         one-line JSON audit log entries
   lib/flags.ts         the READ_ONLY kill switch
+  lib/forms/           form logic (pure functions)
+  lib/import/          the import pipeline: fetch, structure, normalize
+  lib/workflows/       the import as a durable Workflow run
   components/          shared components (client components marked 'use client')
-  forms/               form logic (pure functions)
   proxy.ts             first gate: redirects to /login without a valid cookie
 ```
 

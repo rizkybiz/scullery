@@ -1,7 +1,7 @@
 // The "new recipe" form, as plain logic with no framework imports: what the browser
 // sends, turning it into the API's request, and turning the API's complaints back into
 // messages for the right field. Keeping it free of Next.js lets it be tested on its own.
-import type { ErrorDetail, NewRecipe } from '../lib/api/recipes.ts'
+import type { ErrorDetail, NewRecipe } from '../api/recipes.ts'
 import { isBlankRow } from './ingredientRow.ts'
 
 // What the browser sends. Every value is a string, exactly as typed: converting to

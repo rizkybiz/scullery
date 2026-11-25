@@ -4,10 +4,14 @@ import Link from 'next/link'
 import { useActionState, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import type { SaveState } from '@/app/(app)/recipes/actions.ts'
-import { emptyFormState, type RecipeFormFields, type RecipeFormState } from '@/forms/fromRecipe.ts'
-import type { IngredientRow } from '@/forms/ingredientRow.ts'
-import type { RecipeFormInput } from '@/forms/recipeForm.ts'
-import type { StepRow } from '@/forms/stepRow.ts'
+import {
+  emptyFormState,
+  type RecipeFormFields,
+  type RecipeFormState,
+} from '@/lib/forms/fromRecipe.ts'
+import type { IngredientRow } from '@/lib/forms/ingredientRow.ts'
+import type { RecipeFormInput } from '@/lib/forms/recipeForm.ts'
+import type { StepRow } from '@/lib/forms/stepRow.ts'
 import type { Unit } from '@/lib/api/units.ts'
 import FormField from './FormField.tsx'
 import IngredientRows from './IngredientRows.tsx'

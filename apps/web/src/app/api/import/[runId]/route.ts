@@ -6,7 +6,7 @@
 import { getRun } from 'workflow/api'
 import { audit } from '@/lib/audit.ts'
 import { getSession } from '@/lib/auth/dal.ts'
-import type { ImportOutcome } from '@/workflows/importRecipe.ts'
+import type { ImportOutcome } from '@/lib/workflows/importRecipe.ts'
 
 export type ImportStatus =
   | { status: 'running' }

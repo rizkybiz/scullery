@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { startImportAction, type StartImportState } from '@/app/(app)/recipes/import/actions.ts'
 import type { ImportStatus } from '@/app/api/import/[runId]/route.ts'
-import type { ImportOutcome } from '@/workflows/importRecipe.ts'
+import type { ImportOutcome } from '@/lib/workflows/importRecipe.ts'
 
 type Done = Extract<ImportOutcome, { ok: true }>
 

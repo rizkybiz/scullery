@@ -1,4 +1,4 @@
-import { newStepRow, type StepRow } from '@/forms/stepRow.ts'
+import { newStepRow, type StepRow } from '@/lib/forms/stepRow.ts'
 import FormField from './FormField.tsx'
 import { AddButton, More, RemoveButton } from './RowParts.tsx'
 
