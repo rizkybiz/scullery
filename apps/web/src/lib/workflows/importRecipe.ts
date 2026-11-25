@@ -11,6 +11,7 @@ import { FatalError, RetryableError } from 'workflow'
 import type { NewRecipe } from '../api/recipes.ts'
 import type { Unit } from '../api/units.ts'
 import { fetchPage, PageFetchError } from '../import/fetchPage.ts'
+import { isPermanent } from '../import/gatewayError.ts'
 import { normalizeDraft } from '../import/normalize.ts'
 import type { Draft } from '../import/schema.ts'
 import { sourceFromHtml, sourceFromText, type ImportSource } from '../import/source.ts'
@@ -51,15 +52,6 @@ type StructuredStep = {
   model: string
   provider: string | null
   ms: number
-}
-
-// Gateway errors that no retry can fix: authentication, the free tier refusing a model, no
-// credits, a bad request. The spike saw "Free tier users do not have access to this model"
-// retried three times for nothing; this ends the run at once instead.
-function isPermanent(error: GatewayError): boolean {
-  if (/free tier|insufficient|credit|budget/i.test(error.message)) return true
-  if (error.statusCode === 408 || error.statusCode === 429) return false
-  return !error.isRetryable || (error.statusCode >= 400 && error.statusCode < 500)
 }
 
 async function structure(source: ImportSource, units: Unit[]): Promise<StructuredStep> {
