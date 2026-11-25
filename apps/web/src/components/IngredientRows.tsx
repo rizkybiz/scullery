@@ -2,7 +2,7 @@ import { useId } from 'react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import type { Unit } from '@/lib/api/units.ts'
-import { newIngredientRow, type IngredientRow } from '@/forms/ingredientRow.ts'
+import { newIngredientRow, type IngredientRow } from '@/lib/forms/ingredientRow.ts'
 import FormField from './FormField.tsx'
 import { AddButton, More, RemoveButton } from './RowParts.tsx'
 

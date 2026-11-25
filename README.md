@@ -116,7 +116,7 @@ sequenceDiagram
 | Piece | Code | Job |
 |---|---|---|
 | Start | [`recipes/import/actions.ts`](apps/web/src/app/%28app%29/recipes/import/actions.ts) | A Server Action: checks the session and the kill switches, validates the input, loads the API's unit list, calls `start()` and returns the run id in milliseconds |
-| The run | [`workflows/importRecipe.ts`](apps/web/src/workflows/importRecipe.ts) | `'use workflow'` function calling three `'use step'` functions: read, structure, tidy |
+| The run | [`lib/workflows/importRecipe.ts`](apps/web/src/lib/workflows/importRecipe.ts) | `'use workflow'` function calling three `'use step'` functions: read, structure, tidy |
 | Step 1: read | [`lib/import/fetchPage.ts`](apps/web/src/lib/import/fetchPage.ts), [`source.ts`](apps/web/src/lib/import/source.ts) | Fetches a link (public addresses only, 3 redirects, 10 s, 2 MB), then shrinks it: the page's schema.org JSON-LD recipe if it has one, else its visible text, capped at 20,000 characters |
 | Step 2: structure | [`lib/import/structure.ts`](apps/web/src/lib/import/structure.ts), [`prompt.ts`](apps/web/src/lib/import/prompt.ts), [`schema.ts`](apps/web/src/lib/import/schema.ts), [`models.ts`](apps/web/src/lib/import/models.ts) | One AI SDK `generateText` call with `Output.object`, sent to AI Gateway |
 | Step 3: tidy | [`lib/import/normalize.ts`](apps/web/src/lib/import/normalize.ts) | Treats the answer as untrusted input: applies the API's limits, keeps a unit only if the source spells it, fills times from the source's own durations |

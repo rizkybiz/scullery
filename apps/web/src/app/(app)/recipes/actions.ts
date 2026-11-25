@@ -10,7 +10,7 @@ import {
   isRecipeFormInput,
   mapApiErrors,
   type FormErrors,
-} from '@/forms/recipeForm.ts'
+} from '@/lib/forms/recipeForm.ts'
 import {
   createRecipe,
   deleteRecipe,

@@ -8,13 +8,13 @@
 // fetched) are returned as values for the page to show; only the unexpected fails the run.
 import { GatewayError } from '@ai-sdk/gateway'
 import { FatalError, RetryableError } from 'workflow'
-import type { NewRecipe } from '../lib/api/recipes.ts'
-import type { Unit } from '../lib/api/units.ts'
-import { fetchPage, PageFetchError } from '../lib/import/fetchPage.ts'
-import { normalizeDraft } from '../lib/import/normalize.ts'
-import type { Draft } from '../lib/import/schema.ts'
-import { sourceFromHtml, sourceFromText, type ImportSource } from '../lib/import/source.ts'
-import { structureRecipe } from '../lib/import/structure.ts'
+import type { NewRecipe } from '../api/recipes.ts'
+import type { Unit } from '../api/units.ts'
+import { fetchPage, PageFetchError } from '../import/fetchPage.ts'
+import { normalizeDraft } from '../import/normalize.ts'
+import type { Draft } from '../import/schema.ts'
+import { sourceFromHtml, sourceFromText, type ImportSource } from '../import/source.ts'
+import { structureRecipe } from '../import/structure.ts'
 
 export type ImportInput = { kind: 'url'; url: string } | { kind: 'text'; text: string }
 

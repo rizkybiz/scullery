@@ -1,7 +1,7 @@
 // The reverse of buildRecipe: turns a recipe in the API's shape into the form's state, so the
 // form can start filled in. Used for an import's draft, and later for editing a saved recipe.
 // Plain logic, no framework imports.
-import type { NewRecipe } from '../lib/api/recipes.ts'
+import type { NewRecipe } from '../api/recipes.ts'
 import { newIngredientRow, type IngredientRow } from './ingredientRow.ts'
 import { newStepRow, type StepRow } from './stepRow.ts'
 
