@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
-import { getHealth } from '../lib/api/health.ts'
-import { getSession } from '../lib/auth/dal.ts'
+import { getHealth } from '@/lib/api/health.ts'
+import { getSession } from '@/lib/auth/dal.ts'
 
 // Splitting out try/catch business logic from rendering JSX
 async function readHealth() {

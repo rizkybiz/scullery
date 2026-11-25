@@ -1,12 +1,12 @@
 'use server'
 
 import { start } from 'workflow/api'
-import { audit } from '../../../../lib/audit.ts'
-import { listUnits, type Unit } from '../../../../lib/api/units.ts'
-import { requireSession } from '../../../../lib/auth/dal.ts'
-import { IMPORT_DISABLED_MESSAGE, isImportDisabled } from '../../../../lib/flags.ts'
-import { MAX_SOURCE_CHARS } from '../../../../lib/import/source.ts'
-import { importRecipeWorkflow, type ImportInput } from '../../../../workflows/importRecipe.ts'
+import { audit } from '@/lib/audit.ts'
+import { listUnits, type Unit } from '@/lib/api/units.ts'
+import { requireSession } from '@/lib/auth/dal.ts'
+import { IMPORT_DISABLED_MESSAGE, isImportDisabled } from '@/lib/flags.ts'
+import { MAX_SOURCE_CHARS } from '@/lib/import/source.ts'
+import { importRecipeWorkflow, type ImportInput } from '@/workflows/importRecipe.ts'
 
 export type StartImportState = { runId: string } | { error: string } | null
 

@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { Card } from '@/components/ui/card'
-import LoginForm from '../../components/LoginForm.tsx'
-import { getSession } from '../../lib/auth/dal.ts'
-import { safeNext } from '../../lib/auth/redirect.ts'
+import LoginForm from '@/components/LoginForm.tsx'
+import { getSession } from '@/lib/auth/dal.ts'
+import { safeNext } from '@/lib/auth/redirect.ts'
 
 // The sign-in page. The heading is part of the static shell; the form streams in behind
 // <Suspense> because it depends on the URL (?next=) and on whether you are already in.

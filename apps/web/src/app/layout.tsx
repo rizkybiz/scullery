@@ -4,7 +4,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import { Fraunces } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 import type { ReactNode } from 'react'
-import { deploymentTag } from '../lib/deployment.ts'
+import { deploymentTag } from '@/lib/deployment.ts'
 import '../index.css'
 
 // Every tab reads "Scullery", or "<page> · Scullery" once a page sets its own title. Outside

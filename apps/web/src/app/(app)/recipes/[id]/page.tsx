@@ -2,19 +2,14 @@ import { Clock, ExternalLink, Flame, Package, Star, Timer, Users } from 'lucide-
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Fragment, Suspense } from 'react'
-import BackLink from '../../../../components/BackLink.tsx'
-import RecipeActions from '../../../../components/RecipeActions.tsx'
+import BackLink from '@/components/BackLink.tsx'
+import RecipeActions from '@/components/RecipeActions.tsx'
 import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { getRecipe, type Recipe } from '../../../../lib/api/recipes.ts'
-import { requireSession } from '../../../../lib/auth/dal.ts'
-import {
-  formatTimer,
-  groupBySection,
-  ingredientLine,
-  webAddress,
-} from '../../../../lib/recipeDisplay.ts'
+import { getRecipe, type Recipe } from '@/lib/api/recipes.ts'
+import { requireSession } from '@/lib/auth/dal.ts'
+import { formatTimer, groupBySection, ingredientLine, webAddress } from '@/lib/recipeDisplay.ts'
 
 type RecipeResult =
   { state: 'success'; recipe: Recipe | null } | { state: 'error'; message: string }

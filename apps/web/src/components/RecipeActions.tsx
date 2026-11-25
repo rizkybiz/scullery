@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { deleteRecipeAction } from '../app/(app)/recipes/actions.ts'
+import { deleteRecipeAction } from '@/app/(app)/recipes/actions.ts'
 
 // The recipe's actions: a ⋮ button opening a menu (Edit, Delete), and a confirm step for Delete.
 //
