@@ -93,22 +93,22 @@ agent**: a durable pipeline with one model call, no tools, and a person approvin
 
 ```mermaid
 sequenceDiagram
-  participant P as Browser (import panel)
+  participant P as Browser, import panel
   participant A as Server Action
   participant W as Workflow run
   participant G as AI Gateway
   P->>A: link or pasted text
   A->>A: session, kill switch, input checks
-  A->>W: start(importRecipeWorkflow), returns runId
-  A-->>P: runId at once
-  W->>W: step 1: read source (SSRF-guarded fetch)
-  W->>G: step 2: structured output, Flash-Lite, nano as fallback
+  A->>W: start importRecipeWorkflow
+  A-->>P: runId, at once
+  W->>W: step 1, read source with an SSRF-guarded fetch
+  W->>G: step 2, structured output from Flash-Lite, nano as fallback
   G-->>W: draft in the schema
-  W->>W: step 3: tidy against the API's rules and the source text
+  W->>W: step 3, tidy against the API rules and the source text
   loop until done
     P->>P: GET /api/import/runId
   end
-  P->>P: fills the form; a person edits and saves
+  P->>P: fill the form, then a person edits and saves
 ```
 
 **The pieces, and where they live** (all under [`apps/web/src`](apps/web/src)):
